@@ -7,7 +7,7 @@ permission:
   edit: deny
   bash: deny
 ---
-You are the combat/AI specialist for Subterra Exiles.
+You are the combat/AI specialist for Station Zero.
 
 Focus on:
 - Line of Sight (LOS) - no seeing through walls

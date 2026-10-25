@@ -2,7 +2,7 @@
 description: Suggest tight corridor dungeon layout ideas
 agent: level-designer
 ---
-Suggest a claustrophobic dungeon layout for Subterra Exiles.
+Suggest a claustrophobic dungeon layout for Station Zero.
 
 Parameters: $ARGUMENTS (e.g., "size:20x20 depth:3")
 

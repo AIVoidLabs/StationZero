@@ -7,7 +7,7 @@ permission:
   edit: deny
   bash: deny
 ---
-You are the entity scripter for Subterra Exiles.
+You are the entity scripter for Station Zero.
 
 Focus on:
 - Component-driven composition over inheritance

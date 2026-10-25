@@ -1,6 +1,6 @@
 ---
 name: dungeon-tight-corridors
-description: Generate claustrophobic room+corridor dungeons for Subterra Exiles
+description: Generate claustrophobic room+corridor dungeons for Station Zero
 license: MIT
 compatibility: opencode
 metadata:

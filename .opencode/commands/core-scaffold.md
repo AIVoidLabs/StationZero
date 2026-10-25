@@ -2,7 +2,7 @@
 description: Scaffold core utilities and systems (iso, grid, DepthSort)
 agent: isometric-engineer
 ---
-Scaffold minimal core files for Subterra Exiles:
+Scaffold minimal core files for Station Zero:
 
 - src/utils/iso.ts (use exact formulas from AGENTS.md)
 - src/utils/grid.ts (grid helpers, bounds checks)

@@ -7,7 +7,7 @@ permission:
   edit: deny
   bash: deny
 ---
-You are the perf/QA reviewer for Subterra Exiles.
+You are the perf/QA reviewer for Station Zero.
 
 Check for:
 - TypeScript strict compliance (no any, proper null checks)

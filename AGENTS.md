@@ -1,6 +1,6 @@
-# AGENTS.md - Subterra Exiles (AI Agent Context & Rules)
+# AGENTS.md - Station Zero (AI Agent Context & Rules)
 
-Welcome, AI Agent! You are helping build **Subterra Exiles**, a 2D isometric retro-futuristic dungeon crawler mini-game focused on pure survival.
+Welcome, AI Agent! You are helping build **Station Zero**, a 2D isometric retro-futuristic dungeon crawler mini-game focused on pure survival.
 
 ---
 
@@ -16,7 +16,7 @@ Welcome, AI Agent! You are helping build **Subterra Exiles**, a 2D isometric ret
 
 ## Setting & Tone
 
-- **Title:** `Subterra Exiles`
+- **Title:** `Station Zero`
 - **Location:** `Penal Colony-Null` - A subterranean penal-mining colony that has been completely cut off from the surface.
 - **Time & Style:** Late 70s - early 80s retro-futurism. Think rusted steel, bare concrete, flickering fluorescents, analog readouts and cold industrial lighting.
 - **Protagonist:** An unnamed `Exile`. A forgotten prisoner with fragmented memories, tossed into the depths with no records of why.

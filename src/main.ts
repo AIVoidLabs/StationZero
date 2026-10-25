@@ -1,22 +1,26 @@
-import { Game as PhaserGame, AUTO } from 'phaser';
+import { Game as PhaserGame, AUTO, Scale } from 'phaser';
+import { GAME_HEIGHT, GAME_WIDTH } from './data/config';
 import { Boot } from './scenes/Boot';
 import { Preload } from './scenes/Preload';
 import { Game } from './scenes/Game';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: AUTO,
-  width: 1024,
-  height: 768,
+  width: GAME_WIDTH,
+  height: GAME_HEIGHT,
   parent: 'app',
   backgroundColor: '#050505',
   pixelArt: true,
+  roundPixels: true,
+  scale: {
+    mode: Scale.ScaleModes.FIT,
+    autoCenter: Scale.Center.CENTER_BOTH,
+  },
   scene: [Boot, Preload, Game],
-  physics: {
-    default: 'arcade',
-    arcade: {
-      debug: false
-    }
-  }
 };
 
-new PhaserGame(config);
+const game = new PhaserGame(config);
+
+if (window.location.search.includes('debug')) {
+  (window as unknown as { __game?: PhaserGame }).__game = game;
+}

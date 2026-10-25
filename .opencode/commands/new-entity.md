@@ -2,7 +2,7 @@
 description: Scaffold a minimal Phaser entity class/component structure
 agent: entity-scripter
 ---
-Create a minimal, component-driven entity for Subterra Exiles.
+Create a minimal, component-driven entity for Station Zero.
 
 Name: $ARGUMENTS
 

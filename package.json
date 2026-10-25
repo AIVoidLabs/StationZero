@@ -1,5 +1,5 @@
 {
-  "name": "subterra-exiles",
+  "name": "station-zero",
   "version": "0.0.1",
   "description": "A 2D isometric retro-futuristic dungeon crawler focused on pure survival",
   "type": "module",
@@ -10,10 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "phaser": "^4.0.0"
+    "phaser": "^4.2.1"
   },
   "devDependencies": {
-    "typescript": "^5.6.0",
-    "vite": "^5.4.0"
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
   }
 }
