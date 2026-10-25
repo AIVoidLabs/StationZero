@@ -273,24 +273,31 @@ function drawPlayer(ctx: CanvasRenderingContext2D, direction: Direction): void {
   ctx.restore();
 }
 
-function drawMarker(ctx: CanvasRenderingContext2D, reachable: boolean): void {
-  const color = reachable ? PALETTE.amber : PALETTE.rust;
-  const points: readonly (readonly [number, number])[] = [
-    [32, 2],
-    [62, 16],
-    [32, 30],
-    [2, 16],
-  ];
+const DIAMOND: readonly (readonly [number, number])[] = [
+  [32, 2],
+  [62, 16],
+  [32, 30],
+  [2, 16],
+];
+
+function traceDiamond(ctx: CanvasRenderingContext2D): boolean {
+  const first = DIAMOND[0];
+  if (!first) return false;
 
   ctx.beginPath();
-  const first = points[0];
-  if (!first) return;
   ctx.moveTo(first[0], first[1]);
-  for (let i = 1; i < points.length; i += 1) {
-    const point = points[i];
+  for (let i = 1; i < DIAMOND.length; i += 1) {
+    const point = DIAMOND[i];
     if (point) ctx.lineTo(point[0], point[1]);
   }
   ctx.closePath();
+  return true;
+}
+
+function drawMarker(ctx: CanvasRenderingContext2D, reachable: boolean): void {
+  const color = reachable ? PALETTE.amber : PALETTE.rust;
+
+  if (!traceDiamond(ctx)) return;
 
   ctx.fillStyle = `rgba(5, 5, 5, 0.28)`;
   ctx.fill();
@@ -311,6 +318,34 @@ function drawMarker(ctx: CanvasRenderingContext2D, reachable: boolean): void {
     ctx.lineTo(40, 24);
     ctx.moveTo(40, 8);
     ctx.lineTo(24, 24);
+    ctx.stroke();
+  }
+}
+
+function drawHover(ctx: CanvasRenderingContext2D, reachable: boolean): void {
+  const color = reachable ? PALETTE.amber : PALETTE.signal;
+
+  if (!traceDiamond(ctx)) return;
+
+  ctx.fillStyle = `rgba(5, 5, 5, 0.16)`;
+  ctx.fill();
+  ctx.strokeStyle = hex(color);
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 3]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = hex(color);
+  if (reachable) {
+    ctx.fillRect(30, 14, 4, 4);
+  } else {
+    ctx.fillRect(29, 15, 6, 2);
+    ctx.strokeStyle = hex(color);
+    ctx.beginPath();
+    ctx.moveTo(27, 11);
+    ctx.lineTo(37, 21);
+    ctx.moveTo(37, 11);
+    ctx.lineTo(27, 21);
     ctx.stroke();
   }
 }
@@ -341,11 +376,21 @@ export function ensureArt(scene: Scene): void {
   }
 
   for (const reachable of [true, false]) {
-    const key = reachable ? 'tile_marker_ok' : 'tile_marker_blocked';
-    if (scene.textures.exists(key)) continue;
-    const ctx = createCanvasContext(scene, key, 64, 32);
-    drawMarker(ctx, reachable);
-    refreshCanvasTexture(scene, key);
+    const suffix = reachable ? 'ok' : 'blocked';
+
+    const markerKey = `tile_marker_${suffix}`;
+    if (!scene.textures.exists(markerKey)) {
+      const ctx = createCanvasContext(scene, markerKey, 64, 32);
+      drawMarker(ctx, reachable);
+      refreshCanvasTexture(scene, markerKey);
+    }
+
+    const hoverKey = `tile_hover_${suffix}`;
+    if (!scene.textures.exists(hoverKey)) {
+      const ctx = createCanvasContext(scene, hoverKey, 64, 32);
+      drawHover(ctx, reachable);
+      refreshCanvasTexture(scene, hoverKey);
+    }
   }
 
   if (!scene.textures.exists('shadow')) {

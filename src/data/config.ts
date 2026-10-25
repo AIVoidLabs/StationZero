@@ -26,7 +26,8 @@ export const LANTERN_RADIUS = 185;
 export const LANTERN_OFFSET_Y = -4;
 
 export const DEPTH_FLOOR = -10000;
-export const DEPTH_MARKER = -9000;
+export const DEPTH_CURSOR = 700000;
+export const DEPTH_MARKER = DEPTH_CURSOR;
 export const DEPTH_LANTERN = 800000;
 export const DEPTH_DARKNESS = 900000;
 

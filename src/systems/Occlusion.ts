@@ -1,13 +1,19 @@
 import type { GameObjects, Scene } from 'phaser';
 import { TILE_HEIGHT } from '../data/config';
 
+export interface OcclusionFocus {
+  readonly x: number;
+  readonly y: number;
+}
+
 interface Occluder {
   readonly sprite: GameObjects.Image;
   readonly baseY: number;
-  faded: boolean;
+  targetAlpha: number;
 }
 
-const FADE_ALPHA = 0.28;
+const PLAYER_ALPHA = 0.28;
+const HOVER_ALPHA = 0.4;
 const FADE_DURATION = 130;
 const FRONT_RANGE = TILE_HEIGHT * 1.9;
 const SIDE_RANGE = 48;
@@ -21,25 +27,23 @@ export class Occlusion {
     this.occluders = walls.map((sprite) => ({
       sprite,
       baseY: sprite.y - TILE_HEIGHT / 2,
-      faded: false,
+      targetAlpha: 1,
     }));
   }
 
-  update(feetX: number, feetY: number): void {
+  update(feetX: number, feetY: number, hover: OcclusionFocus | null): void {
     for (const occluder of this.occluders) {
-      const distance = occluder.baseY - feetY;
-      const shouldFade =
-        distance > 0 &&
-        distance < FRONT_RANGE &&
-        Math.abs(occluder.sprite.x - feetX) < SIDE_RANGE;
+      const playerCovers = this.covers(occluder, feetX, feetY);
+      const hoverCovers = hover !== null && this.covers(occluder, hover.x, hover.y);
+      const targetAlpha = playerCovers ? PLAYER_ALPHA : hoverCovers ? HOVER_ALPHA : 1;
 
-      if (shouldFade === occluder.faded) continue;
-      occluder.faded = shouldFade;
+      if (Math.abs(targetAlpha - occluder.targetAlpha) < 0.001) continue;
+      occluder.targetAlpha = targetAlpha;
 
       this.scene.tweens.killTweensOf(occluder.sprite);
       this.scene.tweens.add({
         targets: occluder.sprite,
-        alpha: shouldFade ? FADE_ALPHA : 1,
+        alpha: targetAlpha,
         duration: FADE_DURATION,
         ease: 'Quad.easeOut',
       });
@@ -50,5 +54,14 @@ export class Occlusion {
     for (const occluder of this.occluders) {
       this.scene.tweens.killTweensOf(occluder.sprite);
     }
+  }
+
+  private covers(occluder: Occluder, focusX: number, focusY: number): boolean {
+    const distance = occluder.baseY - focusY;
+    return (
+      distance > 0 &&
+      distance < FRONT_RANGE &&
+      Math.abs(occluder.sprite.x - focusX) < SIDE_RANGE
+    );
   }
 }

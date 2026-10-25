@@ -13,7 +13,8 @@ import { generateDungeon } from '../systems/DungeonGen';
 import { Lantern } from '../systems/Lantern';
 import { Level } from '../systems/Level';
 import { Occlusion } from '../systems/Occlusion';
-import { worldToGrid } from '../utils/iso';
+import { TileCursor, type HoverTarget } from '../systems/TileCursor';
+import { gridVectorToWorld, worldToGrid } from '../utils/iso';
 
 interface DebugWindow extends Window {
   __sz?: {
@@ -25,15 +26,20 @@ interface DebugWindow extends Window {
 
 export class Game extends Scene {
   private player: Player | undefined = undefined;
+  private level: Level | undefined = undefined;
   private darkness: Darkness | undefined = undefined;
   private lantern: Lantern | undefined = undefined;
   private occlusion: Occlusion | undefined = undefined;
+  private tileCursor: TileCursor | undefined = undefined;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined = undefined;
   private wKey: Input.Keyboard.Key | undefined = undefined;
   private aKey: Input.Keyboard.Key | undefined = undefined;
   private sKey: Input.Keyboard.Key | undefined = undefined;
   private dKey: Input.Keyboard.Key | undefined = undefined;
   private pointerHandler: ((pointer: Phaser.Input.Pointer) => void) | undefined = undefined;
+  private pointerMoveHandler: (() => void) | undefined = undefined;
+  private pointerOutHandler: (() => void) | undefined = undefined;
+  private pointerInside = false;
 
   constructor() {
     super({ key: 'Game' });
@@ -48,13 +54,16 @@ export class Game extends Scene {
     const lantern = new Lantern(this, player.x, player.y);
     const darkness = new Darkness(this);
     const occlusion = new Occlusion(this, level.walls);
+    const tileCursor = new TileCursor(this);
 
     darkness.update(player.x, player.y);
 
     this.player = player;
+    this.level = level;
     this.lantern = lantern;
     this.darkness = darkness;
     this.occlusion = occlusion;
+    this.tileCursor = tileCursor;
 
     const camera = this.cameras.main;
     camera.setZoom(CAMERA_ZOOM);
@@ -80,13 +89,25 @@ export class Game extends Scene {
         this.input.off('pointerdown', this.pointerHandler);
         this.pointerHandler = undefined;
       }
+      if (this.pointerMoveHandler) {
+        this.input.off('pointermove', this.pointerMoveHandler);
+        this.pointerMoveHandler = undefined;
+      }
+      if (this.pointerOutHandler) {
+        this.input.off('gameout', this.pointerOutHandler);
+        this.pointerOutHandler = undefined;
+      }
+      this.pointerInside = false;
       this.occlusion?.destroy();
       this.occlusion = undefined;
+      this.tileCursor?.destroy();
+      this.tileCursor = undefined;
       this.lantern?.destroy();
       this.lantern = undefined;
       this.darkness?.destroy();
       this.darkness = undefined;
       this.player = undefined;
+      this.level = undefined;
       this.cursors = undefined;
       this.wKey = undefined;
       this.aKey = undefined;
@@ -111,7 +132,11 @@ export class Game extends Scene {
       -lead.y * CAMERA_LOOK_AHEAD,
     );
 
-    occlusion.update(player.x, player.y);
+    const hover = this.resolveHover();
+    if (hover) this.tileCursor?.show(hover);
+    else this.tileCursor?.hide();
+
+    occlusion.update(player.x, player.y, hover?.walkable === true ? hover : null);
     lantern.update(player.x, player.y);
     darkness.update(player.x, player.y);
   }
@@ -127,13 +152,54 @@ export class Game extends Scene {
     }
 
     const handler = (pointer: Phaser.Input.Pointer): void => {
+      this.pointerInside = true;
       const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
       const grid = worldToGrid(world.x, world.y, TILE_WIDTH, TILE_HEIGHT);
       player.setDestination(grid.gridX, grid.gridY);
     };
 
+    const moveHandler = (): void => {
+      this.pointerInside = true;
+    };
+
+    const outHandler = (): void => {
+      this.pointerInside = false;
+      this.tileCursor?.hide();
+    };
+
     this.input.on('pointerdown', handler);
+    this.input.on('pointermove', moveHandler);
+    this.input.on('gameout', outHandler);
     this.pointerHandler = handler;
+    this.pointerMoveHandler = moveHandler;
+    this.pointerOutHandler = outHandler;
+  }
+
+  private resolveHover(): HoverTarget | null {
+    const level = this.level;
+    if (!level || !this.pointerInside) return null;
+
+    const pointer = this.input.activePointer;
+    const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
+    const grid = worldToGrid(world.x, world.y, TILE_WIDTH, TILE_HEIGHT);
+
+    if (
+      grid.gridX < 0 ||
+      grid.gridY < 0 ||
+      grid.gridX >= level.width ||
+      grid.gridY >= level.height
+    ) {
+      return null;
+    }
+
+    const center = gridVectorToWorld(grid.gridX, grid.gridY, TILE_WIDTH, TILE_HEIGHT);
+    return {
+      x: center.x,
+      y: center.y,
+      gridX: grid.gridX,
+      gridY: grid.gridY,
+      walkable: level.isWalkable(grid.gridX, grid.gridY),
+    };
   }
 
   private readInput(): MoveInput | null {

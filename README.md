@@ -55,6 +55,7 @@ npm run preview
 ### Controls
 
 - **WASD / Arrow keys** — Move (8 directions, screen-relative)
+- **Hover** — Preview the tile under the pointer; walls blocking that tile fade out
 - **Left click** — Walk to a reachable tile (A* pathfinding)
 - Any movement key cancels a click path.
 
