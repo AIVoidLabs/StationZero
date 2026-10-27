@@ -139,6 +139,7 @@ dist
 
 # Generated art previews
 art-preview/
+art-source/
 
 # Vite files
 vite.config.js.timestamp-*
