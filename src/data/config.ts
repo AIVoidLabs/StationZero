@@ -38,6 +38,7 @@ export const DEPTH_CURSOR = 700000;
 export const DEPTH_MARKER = DEPTH_CURSOR;
 export const DEPTH_LANTERN = 800000;
 export const DEPTH_DARKNESS = 900000;
+export const DEPTH_VFX = DEPTH_DARKNESS + 200;
 
 export const WARDEN_ALARM_RAMP_MS = 540000;
 export const WARDEN_PULSE_MIN_MS = 21000;
@@ -72,11 +73,19 @@ export const DRONE_DISENGAGE_GRACE_MS = 2200;
 export const DRONE_DISENGAGE_SIGHT_SCALE = 0.55;
 export const DRONE_MIN_SPAWN_DISTANCE = 11;
 
-// Combat / Melee
+// Combat
 export const PLAYER_MAX_HP = 4;
 export const PLAYER_IFRAMES_MS = 600;
 
-export const MELEE_RANGE = 1.9;
+// Pistol
+export const PISTOL_AMMO_START = 12;
+export const PISTOL_MAX_AMMO = 12;
+export const PISTOL_RANGE = 5.5;
+export const PISTOL_DAMAGE = 1;
+export const PISTOL_COOLDOWN_MS = 320;
+
+// Melee
+export const MELEE_RANGE = 1.8;
 export const MELEE_ARC_DEGREES = 95;
 export const MELEE_COOLDOWN_MS = 280;
 export const MELEE_DAMAGE = 1;
@@ -86,6 +95,7 @@ export const DRONE_DAMAGE = 1;
 export const DRONE_CONTACT_COOLDOWN_MS = 800;
 export const DRONE_CONTACT_DAMAGE_RANGE = 1.25;
 
+export const LOOT_PICKUP_RANGE = 0.62;
 export const LOOT_DROP_CHANCE = 0.18;
 export const LOOT_HEAL_AMOUNT = 1;
 

@@ -10,6 +10,8 @@ import {
 import {
   DEPTH_MARKER,
   MELEE_COOLDOWN_MS,
+  PISTOL_AMMO_START,
+  PISTOL_MAX_AMMO,
   PLAYER_FOOTPRINT,
   PLAYER_IFRAMES_MS,
   PLAYER_MAX_HP,
@@ -24,6 +26,9 @@ import { findPath, type GridPoint } from '../systems/Pathfinding';
 import { facingForGridStep } from '../utils/facing';
 import { gridVectorToWorld, worldVectorToGrid } from '../utils/iso';
 import { Entity } from './Entity';
+
+export type WeaponType = 'PISTOL' | 'MELEE';
+export type PlayerCombatState = 'IDLE' | 'MOVING_TO_ATTACK' | 'ATTACKING';
 
 const WAYPOINT_EPSILON = 0.08;
 const MAX_STEP_SECONDS = 0.05;
@@ -57,8 +62,64 @@ export class Player extends Entity {
   private lastHitAt = -1000000;
   private attackCooldownUntil = 0;
 
-  getHealth(): { hp: number; maxHp: number } {
-    return { hp: this.hp, maxHp: this.maxHp };
+  private weaponType: WeaponType = 'PISTOL';
+  private ammo: number = PISTOL_AMMO_START;
+  private maxAmmo: number = PISTOL_MAX_AMMO;
+  private combatState: PlayerCombatState = 'IDLE';
+
+  getHealth(): { hp: number; maxHp: number; ammo: number; maxAmmo: number; weaponType: WeaponType } {
+    const w = this.getActiveWeapon();
+    return { hp: this.hp, maxHp: this.maxHp, ammo: this.ammo, maxAmmo: this.maxAmmo, weaponType: w };
+  }
+
+  get weapon(): WeaponType {
+    return this.getActiveWeapon();
+  }
+
+  get ammoCount(): number {
+    return this.ammo;
+  }
+
+  get combatMode(): PlayerCombatState {
+    return this.combatState;
+  }
+
+  getActiveWeapon(): WeaponType {
+    if (this.weaponType === 'PISTOL' && this.ammo <= 0) return 'MELEE';
+    return this.weaponType;
+  }
+
+  setAttackTarget(target: { gridX: number; gridY: number } | null): void {
+    if (target) {
+      this.combatState = 'MOVING_TO_ATTACK';
+    } else {
+      this.combatState = 'IDLE';
+    }
+  }
+
+  beginAttacking(): void {
+    this.combatState = 'ATTACKING';
+  }
+
+  isStationary(): boolean {
+    return !this.moving && this.path.length === 0;
+  }
+
+  consumeAmmo(): boolean {
+    if (this.getActiveWeapon() !== 'PISTOL') return true;
+    if (this.ammo <= 0) return false;
+    this.ammo -= 1;
+    return true;
+  }
+
+  canRightClickPistol(timeNow: number): boolean {
+    return (
+      !this.dead &&
+      this.getActiveWeapon() === 'PISTOL' &&
+      this.ammo > 0 &&
+      !this.hasPath &&
+      timeNow >= this.attackCooldownUntil
+    );
   }
 
   get isDeadState(): boolean {
@@ -66,11 +127,11 @@ export class Player extends Entity {
   }
 
   canAttack(timeNow: number): boolean {
-    return !this.dead && timeNow >= this.attackCooldownUntil;
+    return !this.dead && timeNow >= this.attackCooldownUntil && !this.hasPath;
   }
 
-  startAttackCooldown(timeNow: number): void {
-    this.attackCooldownUntil = timeNow + MELEE_COOLDOWN_MS;
+  startAttackCooldown(timeNow: number, ms: number = MELEE_COOLDOWN_MS): void {
+    this.attackCooldownUntil = timeNow + ms;
   }
 
   takeDamage(amount: number, timeNow: number): boolean {
@@ -81,6 +142,7 @@ export class Player extends Entity {
     if (this.hp <= 0) {
       this.hp = 0;
       this.dead = true;
+      this.sprite.setTint(0x6b2b2b);
     }
     return true;
   }
@@ -100,6 +162,10 @@ export class Player extends Entity {
     this.gridPosY = gridY;
     this.maxHp = PLAYER_MAX_HP;
     this.hp = PLAYER_MAX_HP;
+    this.weaponType = 'PISTOL';
+    this.ammo = PISTOL_AMMO_START;
+    this.maxAmmo = PISTOL_MAX_AMMO;
+    this.combatState = 'IDLE';
 
     this.shadow = scene.add.image(0, 0, 'shadow').setOrigin(0.5, 0.5);
     const hasIdleAtlas = scene.textures.exists(PLAYER_SPRITE_KEY);
@@ -142,6 +208,12 @@ export class Player extends Entity {
 
   update(deltaMs: number, input: MoveInput | null): void {
     const dt = Math.min(deltaMs, MAX_STEP_SECONDS * 1000) / 1000;
+    if (this.dead) {
+      this.path = [];
+      this.moving = false;
+      this.updateVisual(dt, 0);
+      return;
+    }
     const hasInput = input !== null && (input.x !== 0 || input.y !== 0);
     const fromX = this.gridPosX;
     const fromY = this.gridPosY;
@@ -164,18 +236,19 @@ export class Player extends Entity {
     this.updateVisual(dt, travelled);
   }
 
-  setDestination(gridX: number, gridY: number): void {
+  setDestination(gridX: number, gridY: number): boolean {
     const startX = Math.round(this.gridPosX);
     const startY = Math.round(this.gridPosY);
     const path = findPath(this.level, startX, startY, gridX, gridY);
 
     if (path === null) {
       this.showMarker(gridX, gridY, false);
-      return;
+      return false;
     }
 
     this.path = path;
     this.showMarker(gridX, gridY, true);
+    return true;
   }
 
   cancelPath(): void {

@@ -31,7 +31,7 @@ Kullanıcının isteğini al -> filtrele -> küçült -> doğru rotaya koy.
 3. **Küçült** – "En az kodla, test edilebilir halde" ne yapabiliriz?
 4. **Yönlendir** – Hangi ajan bu işi en verimli yapar?
    - `isometric-engineer` -> İzometri, kamera, depth sort
-   - `entity-scripter` -> Player/Prop/Enemy entity yapısı
+   - `entity-scripter` -> Player/Prop/Enemy entity yapısı, weapon/ammo, HUD
    - `combat-ai` -> LOS, aggro/disengage
    - `level-designer` -> Koridor düzeni
    - `narrative-director` -> Ton/atmosfer/çevresel hikâye
@@ -39,6 +39,8 @@ Kullanıcının isteğini al -> filtrele -> küçült -> doğru rotaya koy.
    - `game-architect` -> Mimari belirsizliklerde
    - `perf-reviewer` -> Performans/strict TS kontrolü
    - `vibe-conductor` ile işbirliği gerektirmeyen durumlarda direkt ilgili ajana yönlendir
+   - `hud`, `weapon`, `ammo` -> `entity-scripter` (+ gerekliyse `isometric-engineer`)
+   - `contextual-input` / `left-click` / `right-click` combat -> `entity-scripter` + `game-architect`
 5. **Talimat Ver** – Ana ajana **uygulanabilir, net bir görev brifi** yaz
 
 ## Kurallar
@@ -50,6 +52,8 @@ Kullanıcının isteğini al -> filtrele -> küçült -> doğru rotaya koy.
 - **AGENTS.md'e sadık kal** – Depth sorting, iso formülleri, strict TS asla görmezden gelme
 - **Göster, anlatma** – Atmosfer isteklerinde UI/metin yerine çevreyle çözümü öner
 - **Scope creep'i öldür** – Gerekli değilse net şekilde "şu an için kapsam dışı, VS-X'e bırakılabilir" de
+- **HP + Ammo only** – Reject inventory, loadout menus, XP/UI panels
+- **Contextual combat** – Right-click pistol requires ammo and forces stop. Left-click enemy = approach then stop and attack. Left-click empty = move
 
 ## Çıktı Formatı
 

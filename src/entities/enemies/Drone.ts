@@ -8,6 +8,7 @@ import {
   DRONE_DISENGAGE_GRACE_MS,
   DRONE_DISENGAGE_SIGHT_SCALE,
   DRONE_FOOTPRINT,
+  DRONE_HEIGHT,
   DRONE_IDLE_MAX_MS,
   DRONE_IDLE_MIN_MS,
   DRONE_LOSE_SIGHT_MS,
@@ -38,6 +39,9 @@ export type DroneState = 'IDLE' | 'PATROL' | 'CHASE' | 'SEARCH' | 'DISENGAGE';
 
 const WAYPOINT_EPSILON = 0.08;
 const MAX_STEP_SECONDS = 0.05;
+const HEALTH_BAR_WIDTH = 24;
+const HEALTH_BAR_HEIGHT = 3;
+const HEALTH_BAR_Y = -DRONE_HEIGHT - 6;
 
 export class Drone extends Entity {
   private readonly level: Level;
@@ -46,6 +50,8 @@ export class Drone extends Entity {
   private readonly rng: () => number;
   private readonly sprite: GameObjects.Image;
   private readonly shadow: GameObjects.Image;
+  private readonly healthBarBack: GameObjects.Rectangle;
+  private readonly healthBarFill: GameObjects.Rectangle;
   private readonly homeX: number;
   private readonly homeY: number;
   private readonly bobPhase: number;
@@ -108,7 +114,14 @@ export class Drone extends Entity {
     this.visualKey = hasAtlas ? DRONE_SPRITE_KEY : `drone_${this.facing}`;
     this.visualFrame = hasAtlas ? DRONE_FRAME[this.facing] : -1;
     this.sprite.setOrigin(0.5, 1);
-    this.add([this.shadow, this.sprite]);
+    this.healthBarBack = scene.add
+      .rectangle(0, HEALTH_BAR_Y, HEALTH_BAR_WIDTH + 2, HEALTH_BAR_HEIGHT + 2, 0x0a0a0a, 0.9)
+      .setOrigin(0.5, 0.5);
+    this.healthBarFill = scene.add
+      .rectangle(-HEALTH_BAR_WIDTH / 2, HEALTH_BAR_Y, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT, 0x6fae4f, 1)
+      .setOrigin(0, 0.5);
+    this.add([this.shadow, this.sprite, this.healthBarBack, this.healthBarFill]);
+    this.updateHealthBar();
 
     this.setDepth(iso.y);
   }
@@ -139,6 +152,9 @@ export class Drone extends Entity {
     if (this.hp <= 0) {
       this.hp = 0;
       this.dead = true;
+      this.setHealthBarVisible(false);
+    } else {
+      this.updateHealthBar();
     }
     return true;
   }
@@ -154,6 +170,7 @@ export class Drone extends Entity {
     if (this.dead) {
       this.sprite.setVisible(false);
       this.shadow.setVisible(false);
+      this.setHealthBarVisible(false);
       return;
     }
     const dt = Math.min(deltaMs, MAX_STEP_SECONDS * 1000) / 1000;
@@ -486,6 +503,16 @@ export class Drone extends Entity {
     this.gridX = Math.round(this.posX);
     this.gridY = Math.round(this.posY);
     this.setDepth(world.y);
+  }
+
+  private updateHealthBar(): void {
+    const ratio = this.maxHp > 0 ? Math.max(0, Math.min(1, this.hp / this.maxHp)) : 0;
+    this.healthBarFill.setScale(ratio, 1);
+  }
+
+  private setHealthBarVisible(visible: boolean): void {
+    this.healthBarBack.setVisible(visible);
+    this.healthBarFill.setVisible(visible);
   }
 
   private updateVisual(): void {

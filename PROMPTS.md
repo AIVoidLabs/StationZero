@@ -234,7 +234,7 @@ Sadece sürekli ambience katmanı var (`assets/audio/ambience.ogg`, `tools/build
 | FAZ 6: Minimal Drone & Avoidance | `[x]` Tamamlandı | LOS + aggro/disengage + kaçınma döngüsü çalışıyor; placeholder sprite |
 | FAZ 7: Derinlik & Escalation | `[x]` Tamamlandı | VS-06'da kat indeksine taşındı; ışık/sessizlik/farkındalık kat başına ölçekleniyor |
 | FAZ 8: Test & Kapanış | `[~]` Devam ediyor | 8.1–8.3 tamam; kullanıcı 0→3 run onayı (8.4) bekliyor |
-| FAZ 9: Minimal Combat | `[ ]` Beklemede | VS-07: melee, HP, hasar, ölüm, iframe, temas hasarı, minimal HUD, çok minimal loot |
+| FAZ 9: Contextual Combat + HUD | `[~]` Devam ediyor | 9.1–9.11 tamam; kullanıcı testi bekliyor |
 
 ### Oturum Kayıtları
 > Her oturum sonunda güncelle.
@@ -251,6 +251,8 @@ Sadece sürekli ambience katmanı var (`assets/audio/ambience.ogg`, `tools/build
 | `2026-10-26` | Kullanıcı 2. kat ambarını bulamadı ("vallaha yok"). Ambar mevcut ve render ediliyor (komşu zeminde parlaklık ~100 vs ~64); kök neden sunum: sinyal menzili 14 karo ama kamera görüşü ~7 karo, uzakta alfa 0.12–0.2, kapak koyu üstüne koyu. `?debug` hiç görsel harita çizmiyordu. Bu oturum: katlar `src/data/levels/floor-0..3.json`'a alındı (`@`/`X`/`.`/`#`, `seed`, `rooms`), `systems/LevelLoader.ts` sıkı doğrulama + önbellek, `Game` artık `loadDungeon(floor)` kullanıyor; `tools/bake-levels.mjs` + `tools/check-levels.mjs`, `levels:bake`/`levels:check`; `systems/DebugMap.ts` (`?debug`, sağ üst, karanlık üstü, 5 px hücre, oyuncu/ambar/drone izleri, restart'ta yeniden kurulum); ambar keşfedilebilirliği: `DescentGate` karanlık üstü amber ışık sütunu (`descent_shaft`, yaklaşınca yükseliyor), kapak/hale/sinyal parlaklığı arttı, `systems/RouteMarks.ts` A* yoluna 4–5 zemin lambası (`route_light`) koyuyor (LOS kapılı, duvar arkasından görünmez, yaklaşınca yumuşak yanıyor) | Kullanıcı yeni ambar ipuçlarıyla 0→3 run'ı oynar | JSON'a geçiş sonrası 0→3 inişi hâlâ çalışıyor; debug haritası dört katta piksel örneklemesiyle %100 eşleşti (zemin/duvar), panel 813,6–954,147, 0 konsol hatası. Yol lambaları spawn'da 2 tanesi görünür (kat 2: 13,11 ve 13,16), dönüşte batı lambaları yanıyor; sütun piksel deltası +66/+57/+37 (yakın), restart'ta ikizlenme yok | Kullanıcı oynayıp ambarı bulabildiğini onaylar → VS-06 kapanışı |
 | `2026-10-27` | Kullanıcı yol lambalarını istemedi: "lambaları kaldıralım". Lambalar zaten deterministikti (A* rotası, LOS kapılı, 5–6 nokta) ama menzil/LOS/nabız yüzünden rastgele görünüyordu | VS-06 ambar keşfini sadeleştir | `systems/RouteMarks.ts` silindi; `PlaceholderArt`'tan `route_light` dokusu + `ROUTE_LIGHT_KEY`, `Game`'den kurulum/`update`/`destroy` ve `__sz.routeMarks` kaldırıldı. Ambar keşfi artık sadece `descent_shaft` + kapak/hale/sinyal | Kullanıcı 0→3 run'ı oynar → VS-06 kapanışı |
 | `2026-10-27` | VS-06 kapanış doğrulaması (FAZ 8.1–8.3): dört katta spawn/ambar/drone/bant eşleşmesi, 3 inişte dolum erken tetiklenmiyor + hücreden çıkınca dwell sıfırlanıyor + fade kilidi, varış spawn'ı, route_light kalıntısı yok, 0 konsol hatası; `levels:check` 4/4, `typecheck` + `build` temiz. `narrative-director` denetimi PASS WITH NOTES. Uygulanan minimal not: 3. kat terminali sabit `> SECTOR 7 :: SEALED` gösteriyor (`LogFeed` sealed bayrağı), README'deki sütun/varış ifadeleri kodla hizalandı. FAZ 7 `[x]`, FAZ 8 `[~]` | VS-06 / FAZ 8.4 kullanıcı onayı | Kapsam temiz: crafting/envanter/quest/diyalog/skill yok; WARDEN hâlâ dolaylı. Hasar/can yok (kullanıcı kararı) — kaçınma davranışsal, sonuçsuz. Drone sheet hâlâ yok | Kullanıcı 0→3 run'ı oynar → onaylarsa VS-06 kapanır |
+| `2026-10-27` | 9.9 loot + ölüm geri bildirimi. `systems/PlaceholderArt.ts`: 16×16 prosedürel `loot_stim` (çelik gövde, amber pencere, kemik kapak, `LOOT_SPRITE_KEY`); `entities/props/LootPickup.ts` (amber `descent_signal` halesi, nabız tween'i, depth `iso.y`, toplanınca kıvılcım + sönme); `systems/LootSystem.ts` (ilk drone ölümünde garanti, sonra `LOOT_DROP_CHANCE=0.18`, can dolu iken yerde kalır, `LOOT_PICKUP_RANGE=0.62` içinde +1 HP); `Combat` `onDroneKilled` + `reportedDeaths` ile alive→dead geçişini bir kez bildiriyor; `Game` loot kurulum/update/destroy + `__sz.loot`. Ölüm: `HudScene` radyal koyu kırmızı vinyet + `SIGNAL LOST`, HP>0 olunca sıfırlanıyor. CDP: ilk kill → 1 loot; %17.6 düşme oranı (176/1000); can doluyken loot yerde kalıyor; HP 2→3 + HUD `HP 3/4`; loot sprite görünürlüğü 648 değişen piksel; ölümde overlay/text alfa 1, canlanınca 0; 0 konsol hatası; `typecheck` + `build` temiz | VS-07 kullanıcı testi | Loot sadece drone ölümünden geliyor (kat başına sabit yerleşim yok); ilk kill garantisi mekaniği bir kez görmeyi sağlıyor. Denge hâlâ ayarlanmadı | Kullanıcı 0→3 oynar → VS-07 + VS-06/8.4 onayı → denge |
+| `2026-10-27` | VS-07 ilk uygulama kullanıcıda "hiç değişiklik yok" döndü. İki kök neden: (1) HUD `setScrollFactor(0)` + kamera zoom 2 yüzünden ekranın dışına çiziliyordu → `scenes/Hud.ts` ayrı sahne (zoom 1), `main.ts` kaydı ve `Game.hudState`; (2) sol tık düşmana yaklaşma yoktu (sadece state bayrağı) → canlı `Drone` referansı (`attackTarget`), her frame menzil/LOS kontrolü, menzil dışında A* ile yaklaşma, menzilde durup `ATTACKING` + cooldown'lu vuruş; hedef ölünce temizlik. Ayrıca sağ tık `disableContextMenu`, hareket halinde path iptali + durarak hitscan; `tryPistol` cooldown kapısı; `setDestination` başarı döndürüyor; SPACE saldırısı bağlandı. CDP doğrulaması: HUD sahnesi aktif + ekran görüntüsünde HUD bölgesinde 259 parlak piksel; sağ tık hareket halinde ammo 12→11, drone 2→1; sol tık tabanca 320 ms arayla 12→11→10, HUD `AMMO 10/12`; sol tık melee 4.61→1.29 yaklaşıp drone 2→1; kurşunsuz sağ tık no-op `AMMO ---`; 0 konsol hatası; `typecheck` + `build` temiz. Drone üstü yeşil can barı eklendi (24×3 px, hasar oranına göre kısalır, ölünce gizlenir). Mermi görünürlüğü: `PlayerCombat` artık muzzle flash + ince iz (tracer) + hedefe 70 ms'de giden parlak mermi + isabet kıvılcımı çiziyor; tümü `DEPTH_VFX` (karanlık katmanının üstü, 2.4 px kalınlıkta okunur) ile render ediliyor ve tween bitince yok ediliyor | VS-07 kullanıcı testi (9.9 loot hariç) | HP/ammo/HUD çalışıyor; canlı doğrulama için headless Chrome + CDP kullanıldı. Denge (drone temas hasarı 4 canı ~3 sn'de bitiriyor) ve ölüm sonrası ekran/akış yok | Kullanıcı oynar → his/denge onayı; sonra 9.9 loot + ölüm durumu |
 
 ### Hızlı Hatırlatma
 > Bunlar görev maddesi değil; her oturumda uygulanacak ilkelerdir.
@@ -264,8 +266,11 @@ Sadece sürekli ambience katmanı var (`assets/audio/ambience.ogg`, `tools/build
 - Az göster, çok hissettir
 - Daha az ama oynanabilir
 - Dövüş son çare olmalı, kaçınma daha kârlı olmalı
-- Sadece tek melee silahı, envanter yok
-- UI sadece can göstergesi (brutalist)
+- Başlangıçta tabanca + sınırlı kurşun, kurşun bitince otomatik yumruk/melee
+- Sol tık bağlamsal (hareket / düşmana yaklaşarak durup saldırı), sağ tık sadece tabanca+kurşun varsa durarak ateş
+- Vurmak için durmak zorunlu, menzil dışındaysa yaklaşsın
+- Envanter yok
+- UI sadece HP + Kurşun (brutalist)
 - Loot sadece çok nadir can iksiri, direkt temasla alınsın
 
 ---
@@ -288,35 +293,38 @@ Oyunun ruhunu adım adım ortaya koymak için, her biri kendi başına oynanabil
 | **VS-03** | `THE WATCHED` | *"Biri beni izliyor"* | `systems/WardenAtmosphere.ts`, ışık titreşmesi, aniden çöken sessizlik, nadir dolaylı tetikleyiciler | Düşman görmeden "izleniyor" hissi veriyor. Jump-scare yok, sadece baskı. | `[x]` Tamamlandı |
 | **VS-04** | `UNWANTED COMPANY` | *"Kaçınmam daha akıllıca"* | `entities/enemies/Drone.ts`, grid tabanlı LOS, `systems/Combat.ts` (sadece LOS/aggro/disengage), state machine (`IDLE/PATROL/CHASE/SEARCH/DISENGAGE`), `combat-ai` ile dengeleme | Düşman tehditkar ama zorunlu savaş değil. Kaçınarak geçilebiliyor. Aggro kaybolunca geri dönüyor. | `[x]` Tamamlandı |
 | **VS-05** | `GOING DEEPER` | *"Aşağı indikçe daha sessizleşiyor"* | `systems/DepthManager.ts`, derinliğe göre ışık azaltma, daha uzun sessizlik aralıkları, kademeli karşılaşma sıklığı, çevrenin daha harap görünümü | Derinliğe indikçe oyun daha zor değil, **daha baskıcı** hale geliyor. | `[x]` Tamamlandı |
-| **VS-07** | `BLOOD IN THE CORRIDOR` | *"Kaçınmak yetmeyebilir"* | Tek melee silahı, oyuncu/drone HP, hasar, ölüm, iframe, temas hasarı, minimal can UI, çok minimal loot | Dar koridorda dronla karşılaştığımda vurabilirim, vurulabilirim ve ölebilirim. Can UI minimal şekilde gösteriliyor. Kaçınmak halen en mantıklı seçim. Envanter yok, gereğinden fazla UI yok. | `[ ]` Beklemede |
+| **VS-07** | `BLOOD IN THE CORRIDOR` | *"Kaçınmak yetmeyebilir"* | Bağlamsal sol tık (boş zemine hareket / düşmana yaklaşarak durup saldırı/ateş), sağ tık durarak tabanca ateşi (tabanca + kurşun varsa), başlangıçta tabanca + sınırlı kurşun, kurşun bitince otomatik yumruk/melee, melee ve tabanca için farklı menzil, vurmak için durmak, yaklaşarak saldırma, oyuncu/drone HP, hasar, ölüm, iframe, temas hasarı, minimal HUD (Can + Kurşun), çok minimal loot | Düşmana sol tıkla yaklaşarak durup vurabiliyorum/ateş edebiliyorum. Sağ tıkla hareket etmeyi bırakıp durarak tabanca ateşi edebiliyorum. Kurşun bitince otomatik yumruğa geçiyorum. Can + Kurşun HUD'da görünüyor. Ölen drone ilk seferde garanti, sonra %18 ihtimalle can iksiri bırakıyor; iksir yalnızca can eksikken yere basınca +1 HP veriyor. Ölünce kırmızı vinyet + `SIGNAL LOST`. Kaçınmak halen en mantıklı seçim. Envanter yok. | `[~]` Kullanıcı testi |
 
-### FAZ 9: MINIMAL COMBAT (AKSİYON)
-*Hedef: Kaçınmaya alternatif olarak minimal dövüş hissi vermek.*
+### FAZ 9: CONTEXTUAL COMBAT + HUD (AKSİYON)
+*Hedef: Diablo benzeri hedef odaklı ama Station Zero ruhuna uyumlu minimal combat.*
 
-- [ ] **9.1** Config: `PLAYER_MAX_HP`, `PLAYER_IFRAMES_MS`, `MELEE_DAMAGE`, `MELEE_COOLDOWN_MS`, `MELEE_RANGE`, `MELEE_ARC_DEGREES`, `DRONE_MAX_HP`, `DRONE_DAMAGE`, `DRONE_CONTACT_COOLDOWN_MS`
-- [ ] **9.2** Player: HP, hasar alma, iframe, ölüm durumu
-- [ ] **9.3** Drone: HP, hasar alma, ölüm, temas hasarı
-- [ ] **9.4** `systems/PlayerCombat.ts`: tek melee, kısa yay, cooldown, hit tespiti
-- [ ] **9.5** `systems/Hud.ts`: sadece can göstergesi (brutalist)
-- [ ] **9.6** `entities/props/LootPickup.ts`: çok minimal can iksiri (yere basınca direkt ver, envanter yok)
-- [ ] **9.7** `Combat.ts` & `Game.ts` entegrasyonu + temizleme
-- [ ] **9.8** Denge + `typecheck` + `build` temiz
+- [x] **9.1** Config: `PLAYER_MAX_HP`, `PLAYER_IFRAMES_MS`, `PISTOL_AMMO_START`, `PISTOL_MAX_AMMO`, `PISTOL_RANGE`, `PISTOL_DAMAGE`, `PISTOL_COOLDOWN_MS`, `MELEE_RANGE`, `MELEE_ARC_DEGREES`, `MELEE_DAMAGE`, `MELEE_COOLDOWN_MS`, `DRONE_MAX_HP`, `DRONE_DAMAGE`, `DRONE_CONTACT_COOLDOWN_MS`
+- [x] **9.2** Weapon sistemi: `PISTOL` (kurşun tabanlı) + `MELEE` fallback (kurşun bitince otomatik yumruk)
+- [x] **9.3** Player: HP, hasar alma, iframe, ölüm, silah durumu, ammo
+- [x] **9.4** Drone: HP, hasar alma, ölüm, temas hasarı
+- [x] **9.5** `systems/PlayerCombat.ts`: hitscan tabanca + melee, menzil/LOS, cooldown, durarak saldırı
+- [x] **9.6** Input: Sol tık bağlamsal (boş zemine hareket / düşmana yaklaşarak durup saldırı), sağ tık sadece tabanca+kurşun varsa durarak ateş
+- [x] **9.7** State machine: `IDLE` / `MOVING_TO_ATTACK` / `ATTACKING` (yaklaş -> dur -> saldır)
+- [x] **9.8** `scenes/Hud.ts` (ayrı sahne, kamera zoom'undan bağımsız): HP + Kurşun (brutalist, minimal)
+- [x] **9.9** `entities/props/LootPickup.ts`: çok minimal can iksiri (yere basınca direkt ver, envanter yok)
+- [x] **9.10** `Combat.ts` & `Game.ts` entegrasyonu + temizleme
+- [x] **9.11** Denge + `typecheck` + `build` temiz
 
-**Kriter:** Dövüş kısa, riskli ve genellikle gereksiz. Kaçınma daha kârlı hissettirmeli.
+**Kriter:** Düşmana tıklamak net bir eylem. Hareket ve saldırı ayrılmış hissettiriyor. Sağ tıkla durarak ateş etmek anlamlı ama güçlü hissettirmiyor. Kurşun bitince yumruk zorunlu hale geliyor. Kaçınma halen en kârlı seçim. Envanter yok, sadece HP+Ammo.
 
 ### Kod Yerleşim Rehberi (Kavram -> Dosya)
 
 | Kavram | Dosya/Klasör | Açıklama |
 | :-- | :--- | :--- |
-| **Protagonist (Exile/Player)** | `src/entities/Player.ts` | Hareket, grid tabanlı çarpışma, izometrik konum, HP/iframe/ölüm (VS-07). Büyürse `entities/player/`'a parçalanabilir. |
+| **Protagonist (Exile/Player)** | `src/entities/Player.ts` | Hareket, grid tabanlı çarpışma, izometrik konum, HP/iframe/ölüm, weapon/ammo, combat state (VS-07). Büyürse `entities/player/`'a parçalanabilir. |
 | **Antagonist (Drones)** | `src/entities/enemies/Drone.ts` | Düşmanlar. State machine ile minimal tut. VS-07'de HP/hasar alma/ölüm + temas hasarı. |
 | **WARDEN (Direktör)** | `src/systems/WardenAtmosphere.ts`, `src/systems/WardenDirector.ts` | Entity değil **sistem**. Dolaylı etkiler, spawn kararları, alarm durumu. |
-| **Combat** | `src/systems/Combat.ts` (minimal), `src/systems/PlayerCombat.ts` (VS-07) | Sadece LOS, aggro/disengage ve minimal melee. **Avoidance-first** öncelikli. |
+| **Combat** | `src/systems/Combat.ts` (minimal), `src/systems/PlayerCombat.ts` (VS-07) | Bağlamsal hedefli combat, LOS, aggro/disengage. **Avoidance-first** öncelikli. |
 | **Dungeon (Üretim)** | `src/systems/DungeonGen.ts` | Seed'li oda+koridor üreteci. |
 | **Level (Yerleşim)** | `src/systems/Level.ts` + `src/scenes/Game.ts` | Harita, duvar/zemin, depth. |
 | **Props / Çevresel Hikâye** | `src/entities/props/` | Kırık panel, hasarlı terminal vb. Atmosfer amaçlı. VS-07'de `LootPickup.ts` çok minimal eklenecek. |
 | **Atmosfer/Gerilim** | `src/systems/WardenAtmosphere.ts`, `src/systems/DepthManager.ts` | Işık, sessizlik, derinliğe göre baskı. |
-| **HUD** | `src/systems/Hud.ts` (VS-07) | Sadece can göstergesi, brutalist. |
+| **HUD** | `src/scenes/Hud.ts` (VS-07) | Ayrı sahne (kamera zoom'undan etkilenmez). Sadece HP + Kurşun, brutalist. |
 
 ### VS Checklistleri
 
@@ -443,16 +451,18 @@ Hazır ChatGPT promptları `ART_BRIEF.md` içinde (bölüm 1-5). Oradaki promptl
 
 ### 5.2 Kritik teslim kuralları
 
-- [ ] Dosya adları **birebir** yukarıdaki gibi; farklı isim/uzantı kullanma.
-- [ ] PNG formatı. Karakter, prop ve decal'lerde **şeffaf arka plan**.
-- [ ] ChatGPT şeffaflık vermezse **`#ff00ff` magenta** zemin iste; arka planı ben temizlerim.
-- [ ] Dokular **seamless/tileable** ve **düz top-down** olmalı; izometrik elmas çizme, elmas maskesi kodda.
-- [ ] Dokularda **baked ışık/gölge/ambiyans olmasın**; sadece malzeme ve aşınma.
-- [ ] Karakter/prop/decal'lerde **ground shadow, drop shadow, yazı, logo, watermark yok**.
-- [ ] Oyuncu ayakları **alt kenara** değmeli, yatayda ortalanmalı.
-- [ ] 512–1024 px gelmesi sorun değil; hedef boyuta nearest-neighbor ile ben indireceğim.
-- [ ] 8 yön birbiriyle aynı oran, siluet ve palette olmalı.
-- [ ] Her varlığı ayrı ayrı üret; aynı sohbette kalarak stil sürekliliğini koru. **Tek istisna yürüyüş sheet'i:** onu tek görsel, 8 sütun × 4 satır olarak üret (bkz. `ART_BRIEF.md` 1b).
+> 1. ve 2. tur teslimlerinde uygulandı ve doğrulandı (varlıklar `art:build` ile entegre). 3. tur drone sheet için aynı kurallar geçerlidir.
+
+- [x] Dosya adları **birebir** yukarıdaki gibi; farklı isim/uzantı kullanma.
+- [x] PNG formatı. Karakter, prop ve decal'lerde **şeffaf arka plan**.
+- [x] ChatGPT şeffaflık vermezse **`#ff00ff` magenta** zemin iste; arka planı ben temizlerim.
+- [x] Dokular **seamless/tileable** ve **düz top-down** olmalı; izometrik elmas çizme, elmas maskesi kodda.
+- [x] Dokularda **baked ışık/gölge/ambiyans olmasın**; sadece malzeme ve aşınma.
+- [x] Karakter/prop/decal'lerde **ground shadow, drop shadow, yazı, logo, watermark yok**.
+- [x] Oyuncu ayakları **alt kenara** değmeli, yatayda ortalanmalı.
+- [x] 512–1024 px gelmesi sorun değil; hedef boyuta nearest-neighbor ile ben indireceğim.
+- [x] 8 yön birbiriyle aynı oran, siluet ve palette olmalı.
+- [x] Her varlığı ayrı ayrı üret; aynı sohbette kalarak stil sürekliliğini koru. **Tek istisna yürüyüş sheet'i:** onu tek görsel, 8 sütun × 4 satır olarak üret (bkz. `ART_BRIEF.md` 1b).
 
 ### 5.3 Teslimden sonra yapılanlar
 
@@ -470,4 +480,4 @@ Hazır ChatGPT promptları `ART_BRIEF.md` içinde (bölüm 1-5). Oradaki promptl
 
 Yeni bir sheet üretilirken: tek görsel, sabit genişlik, yönler sütun sırasında; kesici hücre boyunu `genişlik/8` ve `yükseklik/4` olarak hesapladığı için satır yüksekliği serbest.
 
-*Son Güncelleme: 2026-10-27 | VS-06 aktif: 4 katlık iniş (0–3), katlar `src/data/levels/floor-0..3.json` dosyalarından yükleniyor (`LevelLoader` sıkı doğrulama + `levels:bake`/`levels:check`), `?debug` sağ üstte karanlık üstü minimap çiziyor (oyuncu/ambar/drone). Ambar keşfi: ambar üstünde yükselen amber ışık sütunu + kapak/hale/sinyal; kullanıcı isteğiyle yol lambaları kaldırıldı. 900 ms dolum + fade geçişi, varışta zorunlu ışık düşmesi + sessizlik. Basınç kat indeksine bağlı: görüş 1→0.65, fener 1→0.68, sessizlik 0.25→0.6 ve süre ×1.8, ambiyans perdesi ×0.97/kat, drone menzili +%30. 3. kat mühürlü (`exit=null`). `?floor=0..3` ile doğrudan test. VS-05 kapandı. FAZ 7 `[x]`. FAZ 8.1–8.3 tamam: dört katta CDP fonksiyonel testi (spawn/ambar/drone/bant, dolum eşiği, fade kilidi, varış), `levels:check` 4/4, `typecheck` + `build` temiz, `narrative-director` denetimi PASS WITH NOTES; 3. kat terminali artık sabit `> SECTOR 7 :: SEALED` gösteriyor. Sıradaki: kullanıcı 0→3 run'ı oynayıp VS-06 / FAZ 8.4 onayı.*
+*Son Güncelleme: 2026-10-27 | VS-06 aktif: 4 katlık iniş (0–3), katlar `src/data/levels/floor-0..3.json` dosyalarından yükleniyor (`LevelLoader` sıkı doğrulama + `levels:bake`/`levels:check`), `?debug` sağ üstte karanlık üstü minimap çiziyor (oyuncu/ambar/drone). Ambar keşfi: ambar üstünde yükselen amber ışık sütunu + kapak/hale/sinyal; kullanıcı isteğiyle yol lambaları kaldırıldı. 900 ms dolum + fade geçişi, varışta zorunlu ışık düşmesi + sessizlik. Basınç kat indeksine bağlı: görüş 1→0.65, fener 1→0.68, sessizlik 0.25→0.6 ve süre ×1.8, ambiyans perdesi ×0.97/kat, drone menzili +%30. 3. kat mühürlü (`exit=null`). `?floor=0..3` ile doğrudan test. VS-05 kapandı. FAZ 7 `[x]`. FAZ 8.1–8.3 tamam: dört katta CDP fonksiyonel testi (spawn/ambar/drone/bant, dolum eşiği, fade kilidi, varış), `levels:check` 4/4, `typecheck` + `build` temiz, `narrative-director` denetimi PASS WITH NOTES; 3. kat terminali artık sabit `> SECTOR 7 :: SEALED` gösteriyor. VS-07 `[~]`: bağlamsal combat, HUD, drone can barı, görünür mermi efektleri, 9.9 loot ve ölüm vinyeti hazır; sıradaki: kullanıcı 0→3 run'ı oynayıp VS-07 + VS-06 / FAZ 8.4 onayı.*

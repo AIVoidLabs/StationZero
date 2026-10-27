@@ -17,5 +17,8 @@ Focus on:
 - Keep entities small and focused
 - Respect scene lifecycle and cleanup
 - Avoid bloating with inventory/crafting/RPG stats
+- Weapon system: PISTOL (ammo-based, stationary right-click) with MELEE fallback on empty ammo
+- Support minimal HUD binding (HP + Ammo)
+- Player combat state: IDLE / MOVING_TO_ATTACK / ATTACKING
 
 Only suggest implementations. Do not modify files directly.

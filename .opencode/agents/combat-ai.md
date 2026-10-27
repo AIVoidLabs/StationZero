@@ -17,5 +17,7 @@ Focus on:
 - Clear states: idle, patrol, chase, search, disengage
 - Break chase through entire level - limit pursuit time/distance
 - Bosses: infrequent, oppressive, focus on space control over DPS race
+- Combat is primarily player-initiated via contextual clicks. Drones remain cautious with LOS/aggro/disengage rules
+- Do not assume auto-engagement on player approach unless existing drone aggro rules apply
 
 Only suggest implementations. Do not modify files directly.

@@ -56,10 +56,20 @@ export class Combat {
   private readonly drones: Drone[] = [];
   private readonly scene: Scene;
   private readonly player: Player;
+  private readonly onDroneKilled: ((drone: Drone) => void) | undefined;
+  private readonly reportedDeaths = new Set<Drone>();
 
-  constructor(scene: Scene, level: Level, dungeon: Dungeon, player: Player, depth: DepthManager) {
+  constructor(
+    scene: Scene,
+    level: Level,
+    dungeon: Dungeon,
+    player: Player,
+    depth: DepthManager,
+    onDroneKilled?: (drone: Drone) => void,
+  ) {
     this.scene = scene;
     this.player = player;
+    this.onDroneKilled = onDroneKilled;
     const rng = createRng(dungeon.seed ^ COMBAT_SEED);
 
     const candidates: SpawnCandidate[] = dungeon.rooms
@@ -103,9 +113,15 @@ export class Combat {
 
   update(deltaMs: number): void {
     for (const drone of this.drones) {
-      if (drone.isDead) continue;
+      if (drone.isDead) {
+        this.reportDeath(drone);
+        continue;
+      }
       drone.update(deltaMs);
-      if (drone.isDead) continue;
+      if (drone.isDead) {
+        this.reportDeath(drone);
+        continue;
+      }
       const p = this.player.gridPosition;
       const d = drone.gridPosition;
       const dist = Math.hypot(d.x - p.x, d.y - p.y);
@@ -115,8 +131,15 @@ export class Combat {
     }
   }
 
+  private reportDeath(drone: Drone): void {
+    if (this.reportedDeaths.has(drone)) return;
+    this.reportedDeaths.add(drone);
+    this.onDroneKilled?.(drone);
+  }
+
   destroy(): void {
     for (const drone of this.drones) drone.destroy();
     this.drones.length = 0;
+    this.reportedDeaths.clear();
   }
 }

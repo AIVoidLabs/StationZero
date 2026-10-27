@@ -18,6 +18,8 @@ import { createRng, seedFromString } from '../utils/random';
 
 const SOURCE_SIZE = 128;
 
+export const LOOT_SPRITE_KEY = 'loot_stim';
+
 export const DESCENT_HATCH_KEY = 'descent_hatch';
 export const DESCENT_GLOW_KEY = 'descent_glow';
 export const DESCENT_SIGNAL_KEY = 'descent_signal';
@@ -563,6 +565,28 @@ function drawDescentShaft(ctx: CanvasRenderingContext2D): void {
   ctx.fillRect(centerX - 2, 0, 4, height);
 }
 
+function drawLootStim(ctx: CanvasRenderingContext2D): void {
+  const px = (color: number, x: number, y: number, width = 1, height = 1): void => {
+    ctx.fillStyle = hex(color);
+    ctx.fillRect(x, y, width, height);
+  };
+
+  px(PALETTE.shadow, 4, 14, 8, 1);
+
+  px(PALETTE.steelDark, 5, 4, 6, 10);
+  px(PALETTE.steel, 5, 4, 1, 10);
+  px(PALETTE.steelLight, 10, 4, 1, 10);
+
+  px(PALETTE.bone, 6, 2, 4, 2);
+  px(PALETTE.steelDark, 6, 3, 4, 1);
+
+  px(PALETTE.amber, 7, 6, 2, 5);
+  px(PALETTE.amberDim, 7, 10, 2, 1);
+  px(PALETTE.boneLight, 7, 6, 1, 2);
+
+  px(PALETTE.steelDark, 6, 13, 4, 1);
+}
+
 export function ensureArt(scene: Scene): void {
   for (const key of SOURCE_TEXTURES) {
     if (scene.textures.exists(key)) continue;
@@ -631,6 +655,12 @@ export function ensureArt(scene: Scene): void {
     const ctx = createCanvasContext(scene, DESCENT_SIGNAL_KEY, 32, 32);
     drawDescentSignal(ctx);
     refreshCanvasTexture(scene, DESCENT_SIGNAL_KEY);
+  }
+
+  if (!scene.textures.exists(LOOT_SPRITE_KEY)) {
+    const ctx = createCanvasContext(scene, LOOT_SPRITE_KEY, 16, 16);
+    drawLootStim(ctx);
+    refreshCanvasTexture(scene, LOOT_SPRITE_KEY);
   }
 
   if (!scene.textures.exists(DESCENT_SHAFT_KEY)) {

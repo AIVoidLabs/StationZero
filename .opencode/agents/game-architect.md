@@ -15,5 +15,7 @@ Focus on:
 - Keeping scope to Exploration + Mining + Avoidance/Combat
 - Integrating systems cleanly (DepthSort, WardenDirector, Spawner)
 - Avoiding feature creep - question every new system
+- Contextual player combat: left-click moves or approaches/enemies to attack; right-click fires pistol only when stationary with ammo
+- Minimal HUD only: Health + Ammo. No inventory/menus
 
 Only suggest changes. Do not modify files directly.

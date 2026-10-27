@@ -1,11 +1,21 @@
-import { Scene } from 'phaser';
+import { BlendModes, Scene } from 'phaser';
 import type { Player } from '../entities/Player';
 import type { Drone } from '../entities/enemies/Drone';
 import type { Level } from './Level';
 import { hasLineOfSight } from './Los';
-import { MELEE_ARC_DEGREES, MELEE_DAMAGE, MELEE_RANGE } from '../data/config';
+import {
+  DEPTH_VFX,
+  DRONE_HEIGHT,
+  MELEE_ARC_DEGREES,
+  MELEE_COOLDOWN_MS,
+  MELEE_DAMAGE,
+  MELEE_RANGE,
+  PISTOL_COOLDOWN_MS,
+  PISTOL_DAMAGE,
+  PISTOL_RANGE,
+  PLAYER_HEIGHT,
+} from '../data/config';
 import { facingToVector } from '../utils/facing';
-import type { Direction } from '../assets/manifest';
 
 function angleBetween(ax: number, ay: number, bx: number, by: number): number {
   const dot = ax * bx + ay * by;
@@ -17,60 +27,205 @@ function angleBetween(ax: number, ay: number, bx: number, by: number): number {
 }
 
 export class PlayerCombat {
+  private readonly scene: Scene;
   private readonly player: Player;
   private readonly level: Level;
   private readonly getDrones: () => readonly Drone[];
 
-  constructor(_scene: Scene, player: Player, level: Level, getDrones: () => readonly Drone[]) {
+  constructor(scene: Scene, player: Player, level: Level, getDrones: () => readonly Drone[]) {
+    this.scene = scene;
     this.player = player;
     this.level = level;
     this.getDrones = getDrones;
   }
 
-  tryAttack(timeNow: number): boolean {
+  tryAttack(timeNow: number, preferred?: Drone): boolean {
+    if (this.player.isDeadState) return false;
+    if (this.player.weapon === 'PISTOL') {
+      return this.tryPistol(timeNow, preferred);
+    }
+    return this.tryMelee(timeNow, preferred);
+  }
+
+  tryRightClickPistol(timeNow: number, preferred?: Drone): boolean {
+    if (this.player.isDeadState) return false;
+    if (!this.player.canRightClickPistol(timeNow)) return false;
+    return this.tryPistol(timeNow, preferred);
+  }
+
+  canAttackTarget(target: Drone): boolean {
+    if (this.player.isDeadState) return false;
+    if (this.player.weapon === 'PISTOL') {
+      return this.pickPistolTarget(target) === target;
+    }
+    return this.pickMeleeTarget(target) === target;
+  }
+
+  private tryPistol(timeNow: number, preferred?: Drone): boolean {
     if (!this.player.canAttack(timeNow)) return false;
+    if (this.player.ammoCount <= 0) return this.tryMelee(timeNow, preferred);
+
+    const target = this.pickPistolTarget(preferred);
+    if (!target) return false;
+    if (!this.player.consumeAmmo()) return this.tryMelee(timeNow, preferred);
+
+    target.takeDamage(PISTOL_DAMAGE);
+    this.playPistolFx(target);
+    this.player.startAttackCooldown(timeNow, PISTOL_COOLDOWN_MS);
+    return true;
+  }
+
+  private tryMelee(timeNow: number, preferred?: Drone): boolean {
+    if (!this.player.canAttack(timeNow)) return false;
+
+    const target = this.pickMeleeTarget(preferred);
+    if (!target) return false;
+
+    this.player.startAttackCooldown(timeNow, MELEE_COOLDOWN_MS);
+    target.takeDamage(MELEE_DAMAGE);
+    this.spawnImpact(target.x, target.y - DRONE_HEIGHT * 0.45);
+    return true;
+  }
+
+  private playPistolFx(drone: Drone): void {
+    const originX = this.player.x;
+    const originY = this.player.y - PLAYER_HEIGHT * 0.55;
+    const targetX = drone.x;
+    const targetY = drone.y - DRONE_HEIGHT * 0.45;
+    const dx = targetX - originX;
+    const dy = targetY - originY;
+    const length = Math.hypot(dx, dy);
+    if (length < 1e-3) return;
+
+    const angle = Math.atan2(dy, dx);
+    const muzzleX = originX + (dx / length) * 10;
+    const muzzleY = originY + (dy / length) * 10;
+
+    const flash = this.scene.add
+      .circle(muzzleX, muzzleY, 3.6, 0xfff4d2, 0.95)
+      .setDepth(DEPTH_VFX)
+      .setBlendMode(BlendModes.ADD);
+    this.scene.tweens.add({
+      targets: flash,
+      alpha: 0,
+      scaleX: 2.6,
+      scaleY: 2.6,
+      duration: 100,
+      ease: 'Quad.easeOut',
+      onComplete: () => flash.destroy(),
+    });
+
+    const tracer = this.scene.add
+      .rectangle(muzzleX, muzzleY, length, 2, 0xffcf8a, 0.7)
+      .setOrigin(0, 0.5)
+      .setRotation(angle)
+      .setDepth(DEPTH_VFX)
+      .setBlendMode(BlendModes.ADD);
+    this.scene.tweens.add({
+      targets: tracer,
+      alpha: 0,
+      duration: 140,
+      ease: 'Quad.easeOut',
+      onComplete: () => tracer.destroy(),
+    });
+
+    const bullet = this.scene.add
+      .rectangle(muzzleX, muzzleY, 7, 2.5, 0xfffbe8, 1)
+      .setRotation(angle)
+      .setDepth(DEPTH_VFX + 1)
+      .setBlendMode(BlendModes.ADD);
+    this.scene.tweens.add({
+      targets: bullet,
+      x: targetX,
+      y: targetY,
+      duration: 70,
+      ease: 'Linear',
+      onComplete: () => {
+        bullet.destroy();
+        this.spawnImpact(targetX, targetY);
+      },
+    });
+  }
+
+  private spawnImpact(x: number, y: number): void {
+    const spark = this.scene.add
+      .circle(x, y, 3, 0xffb060, 0.95)
+      .setDepth(DEPTH_VFX + 1)
+      .setBlendMode(BlendModes.ADD);
+    this.scene.tweens.add({
+      targets: spark,
+      alpha: 0,
+      scaleX: 2.2,
+      scaleY: 2.2,
+      duration: 150,
+      ease: 'Quad.easeOut',
+      onComplete: () => spark.destroy(),
+    });
+  }
+
+  private pickPistolTarget(preferred?: Drone): Drone | null {
     const grid = this.player.gridPosition;
-    const facing = (this.player.facingDirection as Direction);
-    const dir = facingToVector(facing);
-    const forwardX = dir.x;
-    const forwardY = dir.y;
+    const origin = { gridX: Math.round(grid.x), gridY: Math.round(grid.y) };
+
+    const inRange = (drone: Drone): number | null => {
+      if (drone.isDead) return null;
+      const dgrid = drone.gridPosition;
+      const distance = Math.hypot(dgrid.x - grid.x, dgrid.y - grid.y);
+      if (distance > PISTOL_RANGE) return null;
+      const cell = { gridX: Math.round(dgrid.x), gridY: Math.round(dgrid.y) };
+      if (!hasLineOfSight(this.level, origin, cell)) return null;
+      return distance;
+    };
+
+    if (preferred && inRange(preferred) !== null) {
+      return preferred;
+    }
+
+    let best: Drone | null = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (const drone of this.getDrones()) {
+      const distance = inRange(drone);
+      if (distance === null || distance >= bestDistance) continue;
+      bestDistance = distance;
+      best = drone;
+    }
+    return best;
+  }
+
+  private pickMeleeTarget(preferred?: Drone): Drone | null {
+    const grid = this.player.gridPosition;
+    const origin = { gridX: Math.round(grid.x), gridY: Math.round(grid.y) };
+    const facing = facingToVector(this.player.facingDirection);
     const halfArc = (MELEE_ARC_DEGREES * Math.PI) / 360;
 
-    const drones = this.getDrones();
-    for (const drone of drones) {
-      if (drone.isDead) continue;
+    const inRange = (drone: Drone, requireArc: boolean): number | null => {
+      if (drone.isDead) return null;
       const dgrid = drone.gridPosition;
       const dx = dgrid.x - grid.x;
       const dy = dgrid.y - grid.y;
-      const dist = Math.hypot(dx, dy);
-      if (dist > MELEE_RANGE) continue;
-      if (dist < 1.2) {
-        // very close - allow hit even if slightly off angle
-        const from = { gridX: Math.round(grid.x), gridY: Math.round(grid.y) };
-        const to = { gridX: Math.round(dgrid.x), gridY: Math.round(dgrid.y) };
-        if (!hasLineOfSight(this.level, from, to)) continue;
-        drone.takeDamage(MELEE_DAMAGE);
-        this.player.startAttackCooldown(timeNow);
-        return true;
+      const distance = Math.hypot(dx, dy);
+      if (distance > MELEE_RANGE) return null;
+      if (distance > 1e-4 && requireArc) {
+        const angle = angleBetween(facing.x, facing.y, dx / distance, dy / distance);
+        if (angle > halfArc) return null;
       }
-      if (dist < 1e-4) {
-        drone.takeDamage(MELEE_DAMAGE);
-        this.player.startAttackCooldown(timeNow);
-        return true;
-      }
-      const nx = dx / dist;
-      const ny = dy / dist;
-      const ang = angleBetween(forwardX, forwardY, nx, ny);
-      if (ang > halfArc) continue;
-      const from = { gridX: Math.round(grid.x), gridY: Math.round(grid.y) };
-      const to = { gridX: Math.round(dgrid.x), gridY: Math.round(dgrid.y) };
-      if (!hasLineOfSight(this.level, from, to)) continue;
-      drone.takeDamage(MELEE_DAMAGE);
-      this.player.startAttackCooldown(timeNow);
-      return true;
+      const cell = { gridX: Math.round(dgrid.x), gridY: Math.round(dgrid.y) };
+      if (!hasLineOfSight(this.level, origin, cell)) return null;
+      return distance;
+    };
+
+    if (preferred && inRange(preferred, false) !== null) {
+      return preferred;
     }
 
-    this.player.startAttackCooldown(timeNow);
-    return false;
+    let best: Drone | null = null;
+    let bestDistance = Number.POSITIVE_INFINITY;
+    for (const drone of this.getDrones()) {
+      const distance = inRange(drone, true);
+      if (distance === null || distance >= bestDistance) continue;
+      bestDistance = distance;
+      best = drone;
+    }
+    return best;
   }
 }

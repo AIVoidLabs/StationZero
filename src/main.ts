@@ -3,6 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from './data/config';
 import { Boot } from './scenes/Boot';
 import { Preload } from './scenes/Preload';
 import { Game } from './scenes/Game';
+import { HudScene } from './scenes/Hud';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: AUTO,
@@ -16,7 +17,7 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Scale.ScaleModes.FIT,
     autoCenter: Scale.Center.CENTER_BOTH,
   },
-  scene: [Boot, Preload, Game],
+  scene: [Boot, Preload, Game, HudScene],
 };
 
 const game = new PhaserGame(config);
