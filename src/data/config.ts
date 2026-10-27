@@ -13,11 +13,19 @@ export const PLAYER_WIDTH = 32;
 export const PLAYER_HEIGHT = 48;
 export const PLAYER_SPEED = 190;
 export const PLAYER_FOOTPRINT = 0.3;
-export const PLAYER_BOB_PX = 2;
+export const PLAYER_STRIDE_TILES = 1.8;
+export const PLAYER_SWAY_PX = 1;
 
 export const DUNGEON_WIDTH = 27;
 export const DUNGEON_HEIGHT = 27;
 export const DUNGEON_SEED = 240731;
+
+export const FLOOR_COUNT = 4;
+export const FLOOR_SEED_STRIDE = 8191;
+export const DESCENT_DWELL_MS = 900;
+export const DESCENT_FADE_MS = 420;
+export const DESCENT_ARRIVAL_PULSE_MS = 1100;
+export const DESCENT_SIGNAL_RANGE = 14;
 
 export const VISION_INNER_RADIUS = 110;
 export const VISION_OUTER_RADIUS = 430;
@@ -30,6 +38,72 @@ export const DEPTH_CURSOR = 700000;
 export const DEPTH_MARKER = DEPTH_CURSOR;
 export const DEPTH_LANTERN = 800000;
 export const DEPTH_DARKNESS = 900000;
+
+export const WARDEN_ALARM_RAMP_MS = 540000;
+export const WARDEN_PULSE_MIN_MS = 21000;
+export const WARDEN_PULSE_MAX_MS = 47000;
+export const WARDEN_SILENCE_CHANCE = 0.25;
+export const WARDEN_SILENCE_DELAY_MS = 300;
+export const LOG_REACH_TILES = 1.35;
+
+export const DRONE_WIDTH = 40;
+export const DRONE_HEIGHT = 40;
+export const DRONE_COUNT = 2;
+export const DRONE_EXTRA_FROM_FLOOR = 2;
+export const DRONE_SPEED = 105;
+export const DRONE_CHASE_SPEED = 128;
+export const DRONE_RETURN_SPEED = 140;
+export const DRONE_FOOTPRINT = 0.22;
+export const DRONE_SIGHT_RANGE = 7.5;
+export const DRONE_FOV_DEG = 120;
+export const DRONE_VIEW_COSINE = Math.cos(((DRONE_FOV_DEG / 2) * Math.PI) / 180);
+export const DRONE_PERIPHERAL_RANGE = 1.8;
+export const DRONE_LOSE_SIGHT_MS = 900;
+export const DRONE_SEARCH_MS = 2600;
+export const DRONE_CHASE_MAX_MS = 7000;
+export const DRONE_CHASE_LEASH = 11;
+export const DRONE_REPATH_MS = 220;
+export const DRONE_IDLE_MIN_MS = 1400;
+export const DRONE_IDLE_MAX_MS = 4200;
+export const DRONE_SCAN_MS = 900;
+export const DRONE_PATROL_RADIUS = 7;
+export const DRONE_CONTACT_RANGE = 1.15;
+export const DRONE_DISENGAGE_GRACE_MS = 2200;
+export const DRONE_DISENGAGE_SIGHT_SCALE = 0.55;
+export const DRONE_MIN_SPAWN_DISTANCE = 11;
+
+// Combat / Melee
+export const PLAYER_MAX_HP = 4;
+export const PLAYER_IFRAMES_MS = 600;
+
+export const MELEE_RANGE = 1.9;
+export const MELEE_ARC_DEGREES = 95;
+export const MELEE_COOLDOWN_MS = 280;
+export const MELEE_DAMAGE = 1;
+
+export const DRONE_MAX_HP = 2;
+export const DRONE_DAMAGE = 1;
+export const DRONE_CONTACT_COOLDOWN_MS = 800;
+export const DRONE_CONTACT_DAMAGE_RANGE = 1.25;
+
+export const LOOT_DROP_CHANCE = 0.18;
+export const LOOT_HEAL_AMOUNT = 1;
+
+export const DEPTH_MAX_BAND = FLOOR_COUNT - 1;
+export const DEPTH_LIGHT_MIN_SCALE = 0.65;
+export const DEPTH_LANTERN_MIN_SCALE = 0.68;
+export const DEPTH_SILENCE_CHANCE_MAX = 0.6;
+export const DEPTH_SILENCE_HOLD_MAX_SCALE = 1.8;
+export const DEPTH_PULSE_INTERVAL_MIN_SCALE = 0.55;
+export const DEPTH_AWARENESS_MAX_SCALE = 1.3;
+export const DEPTH_PITCH_PER_BAND = 0.03;
+
+export const AUDIO_MASTER_GAIN = 0.8;
+export const AUDIO_AMBIENCE_GAIN = 0.13;
+export const AUDIO_SILENCE_FADE_MS = 80;
+export const AUDIO_SILENCE_HOLD_MIN_MS = 1600;
+export const AUDIO_SILENCE_HOLD_MAX_MS = 2600;
+export const AUDIO_SILENCE_RETURN_MS = 400;
 
 export const PALETTE = {
   void: 0x050505,

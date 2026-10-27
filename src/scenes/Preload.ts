@@ -12,6 +12,11 @@ export class Preload extends Scene {
     for (const asset of ASSETS) {
       if (!asset.enabled) continue;
 
+      if (asset.kind === 'audio') {
+        this.load.audio(asset.key, asset.path);
+        continue;
+      }
+
       if (
         asset.kind === 'spritesheet' &&
         asset.frameWidth !== undefined &&

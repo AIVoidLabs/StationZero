@@ -7,12 +7,17 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "art:build": "node tools/build-art.mjs",
+    "audio:build": "node tools/build-audio.mjs",
+    "levels:bake": "node tools/bake-levels.mjs",
+    "levels:check": "node tools/check-levels.mjs"
   },
   "dependencies": {
     "phaser": "^4.2.1"
   },
   "devDependencies": {
+    "sharp": "^0.35.5",
     "typescript": "^7.0.2",
     "vite": "^8.3.5"
   }

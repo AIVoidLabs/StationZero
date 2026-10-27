@@ -6,6 +6,11 @@ export interface OcclusionFocus {
   readonly y: number;
 }
 
+export interface OccluderSpec {
+  readonly sprite: GameObjects.Image;
+  readonly baseY: number;
+}
+
 interface Occluder {
   readonly sprite: GameObjects.Image;
   readonly baseY: number;
@@ -22,11 +27,11 @@ export class Occlusion {
   private readonly scene: Scene;
   private readonly occluders: readonly Occluder[];
 
-  constructor(scene: Scene, walls: readonly GameObjects.Image[]) {
+  constructor(scene: Scene, occluders: readonly OccluderSpec[]) {
     this.scene = scene;
-    this.occluders = walls.map((sprite) => ({
+    this.occluders = occluders.map(({ sprite, baseY }) => ({
       sprite,
-      baseY: sprite.y - TILE_HEIGHT / 2,
+      baseY,
       targetAlpha: 1,
     }));
   }

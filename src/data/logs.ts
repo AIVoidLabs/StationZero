@@ -1,0 +1,14 @@
+export const SEALED_LOG = '> SECTOR 7 :: SEALED';
+
+export const CORRUPTED_LOGS: readonly string[] = [
+  SEALED_LOG,
+  '> O2 12% ... RATIONING',
+  '> WARDEN :: COMPLIANCE 100%',
+  '> DRILL 3 STALLED -- 14 UNACCOUNTED',
+  '> DRILL 3 STALLED -- 14 UNACC',
+  '> VENT 6 BLOCKED -- ORGANIC?',
+  '> FILE 0 -- PAGE 2 MISSING',
+  '> PROTOCOL [GARBLED] :: ACTIVE',
+  '> LIGHTS FAIL AT 06:00',
+  '> SHIFT 03 -- M. ROSS :: NO OUT',
+];

@@ -1,4 +1,4 @@
-import { BlendModes, type GameObjects, type Scene } from 'phaser';
+import { BlendModes, type GameObjects, type Scene, type Tweens } from 'phaser';
 import {
   DEPTH_LANTERN,
   LANTERN_OFFSET_Y,
@@ -11,6 +11,13 @@ const POOL_KEY = 'lantern_pool';
 const POOL_SIZE = 256;
 const CORE_KEY = 'lantern_core';
 const CORE_SIZE = 96;
+
+const POOL_BASE_SCALE = (LANTERN_RADIUS * 2) / POOL_SIZE;
+const CORE_BASE_SCALE = (LANTERN_RADIUS * 0.9) / CORE_SIZE;
+const POOL_ALPHA_MIN = 0.4;
+const POOL_ALPHA_MAX = 0.52;
+const CORE_ALPHA_MIN = 0.48;
+const CORE_ALPHA_MAX = 0.62;
 
 function hexChannel(color: number, shift: number): number {
   return (color >> shift) & 0xff;
@@ -51,44 +58,44 @@ function buildCore(scene: Scene): void {
 }
 
 export class Lantern {
+  private readonly scene: Scene;
   private readonly pool: GameObjects.Image;
   private readonly core: GameObjects.Image;
 
+  private poolTween: Tweens.Tween | undefined = undefined;
+  private coreTween: Tweens.Tween | undefined = undefined;
+  private intensity = 1;
+
   constructor(scene: Scene, x: number, y: number) {
+    this.scene = scene;
     buildPool(scene);
     buildCore(scene);
 
     this.pool = scene.add
       .image(x, y + LANTERN_OFFSET_Y, POOL_KEY)
       .setBlendMode(BlendModes.ADD)
-      .setScale((LANTERN_RADIUS * 2) / POOL_SIZE)
+      .setScale(POOL_BASE_SCALE)
       .setDepth(DEPTH_LANTERN)
-      .setAlpha(0.46);
+      .setAlpha(POOL_ALPHA_MIN);
 
     this.core = scene.add
       .image(x, y + LANTERN_OFFSET_Y, CORE_KEY)
       .setBlendMode(BlendModes.ADD)
-      .setScale((LANTERN_RADIUS * 0.9) / CORE_SIZE)
+      .setScale(CORE_BASE_SCALE)
       .setDepth(DEPTH_LANTERN)
-      .setAlpha(0.55);
+      .setAlpha(CORE_ALPHA_MIN);
 
-    scene.tweens.add({
-      targets: this.pool,
-      alpha: { from: 0.4, to: 0.52 },
-      duration: 1900,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
+    this.restartFlicker();
+  }
 
-    scene.tweens.add({
-      targets: this.core,
-      alpha: { from: 0.48, to: 0.62 },
-      duration: 730,
-      yoyo: true,
-      repeat: -1,
-      ease: 'Sine.easeInOut',
-    });
+  setIntensity(scale: number): void {
+    const clamped = Math.max(0.2, Math.min(1, scale));
+    if (Math.abs(clamped - this.intensity) < 0.01) return;
+
+    this.intensity = clamped;
+    this.pool.setScale(POOL_BASE_SCALE * clamped);
+    this.core.setScale(CORE_BASE_SCALE * clamped);
+    this.restartFlicker();
   }
 
   update(x: number, y: number): void {
@@ -96,8 +103,43 @@ export class Lantern {
     this.core.setPosition(x, y + LANTERN_OFFSET_Y);
   }
 
+  get intensityScale(): number {
+    return this.intensity;
+  }
+
   destroy(): void {
+    this.poolTween?.remove();
+    this.coreTween?.remove();
+    this.poolTween = undefined;
+    this.coreTween = undefined;
     this.pool.destroy();
     this.core.destroy();
+  }
+
+  private restartFlicker(): void {
+    this.poolTween?.remove();
+    this.coreTween?.remove();
+
+    const scale = this.intensity;
+    this.pool.setAlpha(POOL_ALPHA_MIN * scale);
+    this.core.setAlpha(CORE_ALPHA_MIN * scale);
+
+    this.poolTween = this.scene.tweens.add({
+      targets: this.pool,
+      alpha: { from: POOL_ALPHA_MIN * scale, to: POOL_ALPHA_MAX * scale },
+      duration: 1900,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+
+    this.coreTween = this.scene.tweens.add({
+      targets: this.core,
+      alpha: { from: CORE_ALPHA_MIN * scale, to: CORE_ALPHA_MAX * scale },
+      duration: 730,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
   }
 }

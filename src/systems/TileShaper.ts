@@ -6,15 +6,75 @@ import { createRng, seedFromString } from '../utils/random';
 type Point = readonly [number, number];
 type Polygon = readonly Point[];
 
-export const TILE_KEYS = {
-  floorA: 'iso_floor_a',
-  floorB: 'iso_floor_b',
-  grate: 'iso_grate',
-  wallA: 'iso_wall_a',
-  wallB: 'iso_wall_b',
+export const ISO_TILES_KEY = 'iso_tiles';
+
+export const TILE_FRAMES = {
+  floorA: 'floor_a',
+  floorB: 'floor_b',
+  grate: 'grate',
+  wallA: 'wall_a',
+  wallB: 'wall_b',
 } as const;
 
+export type TileFrame = (typeof TILE_FRAMES)[keyof typeof TILE_FRAMES];
+
+type TileKind = 'floor' | 'wall';
+
+interface TileSpec {
+  readonly frame: TileFrame;
+  readonly source: string;
+  readonly fallback: number;
+  readonly kind: TileKind;
+  readonly x: number;
+  readonly y: number;
+}
+
 const WALL_IMAGE_HEIGHT = TILE_HEIGHT + WALL_HEIGHT;
+const ATLAS_WIDTH = TILE_WIDTH * 3;
+const ATLAS_HEIGHT = TILE_HEIGHT + WALL_IMAGE_HEIGHT;
+
+const TILE_SPECS: readonly TileSpec[] = [
+  {
+    frame: TILE_FRAMES.floorA,
+    source: 'src_floor_a',
+    fallback: PALETTE.steel,
+    kind: 'floor',
+    x: 0,
+    y: 0,
+  },
+  {
+    frame: TILE_FRAMES.floorB,
+    source: 'src_floor_b',
+    fallback: PALETTE.steelLight,
+    kind: 'floor',
+    x: TILE_WIDTH,
+    y: 0,
+  },
+  {
+    frame: TILE_FRAMES.grate,
+    source: 'src_grate',
+    fallback: PALETTE.nearBlack,
+    kind: 'floor',
+    x: TILE_WIDTH * 2,
+    y: 0,
+  },
+  {
+    frame: TILE_FRAMES.wallA,
+    source: 'src_wall_a',
+    fallback: PALETTE.steelDark,
+    kind: 'wall',
+    x: 0,
+    y: TILE_HEIGHT,
+  },
+  {
+    frame: TILE_FRAMES.wallB,
+    source: 'src_wall_b',
+    fallback: PALETTE.shadow,
+    kind: 'wall',
+    x: TILE_WIDTH,
+    y: TILE_HEIGHT,
+  },
+];
 
 const DIAMOND: Polygon = [
   [TILE_WIDTH / 2, 0],
@@ -86,44 +146,43 @@ function drawRegion(
   ctx.drawImage(source, sx, sy, sampleWidth, sampleHeight, 0, 0, width, height);
 }
 
-function buildFloor(
+function drawFloor(
+  ctx: CanvasRenderingContext2D,
   scene: Scene,
-  sourceKey: string,
-  targetKey: string,
-  fallback: number,
+  spec: TileSpec,
 ): void {
-  if (scene.textures.exists(targetKey)) return;
+  const source = getSource(scene, spec.source);
+  const rng = createRng(seedFromString(spec.frame));
 
-  const ctx = createCanvasContext(scene, targetKey, TILE_WIDTH, TILE_HEIGHT);
-  const source = getSource(scene, sourceKey);
-  const rng = createRng(seedFromString(targetKey));
-
-  ctx.clearRect(0, 0, TILE_WIDTH, TILE_HEIGHT);
   ctx.save();
+  ctx.translate(spec.x, spec.y);
+  ctx.clearRect(0, 0, TILE_WIDTH, TILE_HEIGHT);
+  ctx.beginPath();
   tracePolygon(ctx, DIAMOND);
   ctx.clip();
 
   if (source) drawRegion(ctx, source, TILE_WIDTH, TILE_HEIGHT, rng);
-  else paintFlat(ctx, TILE_WIDTH, TILE_HEIGHT, fallback);
+  else paintFlat(ctx, TILE_WIDTH, TILE_HEIGHT, spec.fallback);
 
   ctx.fillStyle = 'rgba(5, 5, 5, 0.14)';
   ctx.fillRect(0, 0, TILE_WIDTH, TILE_HEIGHT);
   ctx.restore();
-
-  refreshCanvasTexture(scene, targetKey);
 }
 
-function buildWall(scene: Scene, sourceKey: string, targetKey: string, fallback: number): void {
-  if (scene.textures.exists(targetKey)) return;
+function drawWall(
+  ctx: CanvasRenderingContext2D,
+  scene: Scene,
+  spec: TileSpec,
+): void {
+  const source = getSource(scene, spec.source);
+  const rng = createRng(seedFromString(spec.frame));
 
-  const ctx = createCanvasContext(scene, targetKey, TILE_WIDTH, WALL_IMAGE_HEIGHT);
-  const source = getSource(scene, sourceKey);
-  const rng = createRng(seedFromString(targetKey));
-
+  ctx.save();
+  ctx.translate(spec.x, spec.y);
   ctx.clearRect(0, 0, TILE_WIDTH, WALL_IMAGE_HEIGHT);
 
   if (source) drawRegion(ctx, source, TILE_WIDTH, WALL_IMAGE_HEIGHT, rng);
-  else paintFlat(ctx, TILE_WIDTH, WALL_IMAGE_HEIGHT, fallback);
+  else paintFlat(ctx, TILE_WIDTH, WALL_IMAGE_HEIGHT, spec.fallback);
 
   const shade = (polygon: Polygon, alpha: number): void => {
     ctx.save();
@@ -138,11 +197,15 @@ function buildWall(scene: Scene, sourceKey: string, targetKey: string, fallback:
   shade(LEFT_FACE, 0.52);
   shade(RIGHT_FACE, 0.28);
 
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, TILE_WIDTH, WALL_IMAGE_HEIGHT);
+  ctx.clip();
   ctx.globalCompositeOperation = 'destination-in';
   tracePolygon(ctx, SILHOUETTE);
   ctx.fillStyle = '#ffffff';
   ctx.fill();
-  ctx.globalCompositeOperation = 'source-over';
+  ctx.restore();
 
   ctx.save();
   tracePolygon(ctx, DIAMOND);
@@ -150,14 +213,24 @@ function buildWall(scene: Scene, sourceKey: string, targetKey: string, fallback:
   ctx.lineWidth = 1;
   ctx.stroke();
   ctx.restore();
-
-  refreshCanvasTexture(scene, targetKey);
+  ctx.restore();
 }
 
 export function buildIsoTiles(scene: Scene): void {
-  buildFloor(scene, 'src_floor_a', TILE_KEYS.floorA, PALETTE.steel);
-  buildFloor(scene, 'src_floor_b', TILE_KEYS.floorB, PALETTE.steelLight);
-  buildFloor(scene, 'src_grate', TILE_KEYS.grate, PALETTE.nearBlack);
-  buildWall(scene, 'src_wall_a', TILE_KEYS.wallA, PALETTE.steelDark);
-  buildWall(scene, 'src_wall_b', TILE_KEYS.wallB, PALETTE.shadow);
+  if (scene.textures.exists(ISO_TILES_KEY)) return;
+
+  const ctx = createCanvasContext(scene, ISO_TILES_KEY, ATLAS_WIDTH, ATLAS_HEIGHT);
+
+  for (const spec of TILE_SPECS) {
+    if (spec.kind === 'floor') drawFloor(ctx, scene, spec);
+    else drawWall(ctx, scene, spec);
+  }
+
+  const texture = scene.textures.get(ISO_TILES_KEY);
+  for (const spec of TILE_SPECS) {
+    const height = spec.kind === 'floor' ? TILE_HEIGHT : WALL_IMAGE_HEIGHT;
+    texture.add(spec.frame, 0, spec.x, spec.y, TILE_WIDTH, height);
+  }
+
+  refreshCanvasTexture(scene, ISO_TILES_KEY);
 }

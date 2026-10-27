@@ -52,14 +52,62 @@ npm run build
 npm run preview
 ```
 
+### Art Pipeline
+
+Source atlases live in `art-source/` and are never loaded at runtime. `npm run art:build` slices, trims, downscales and packs them into `assets/art/runtime/`, which is what the game loads. It also writes numbered mapping previews to `art-preview/` (gitignored).
+
+```bash
+# Rebuild runtime spritesheets + textures and mapping previews
+npm run art:build
+```
+
+- `player.png` — 8 idle frames, one per direction (`N, NE, E, SE, S, SW, W, NW`)
+- `player_walk.png` — 32 walk frames, 4 per direction, same order and 32×48 cells. The source is a single 8-column × 4-row sheet in the standard direction order (`N, NE, E, SE, S, SW, W, NW`): each column is one direction and each row is one pose of the `contact → passing → contact → passing` cycle, so every direction plays four authored poses with no mirroring.
+- `props.png` — 4 blocking props (`0 barrel, 1 crate, 2 terminal, 3 pipe`)
+- `decals.png` — 2 non-blocking floor decals
+- `textures/*.png` — 5 seamless material sources (`floor_a, floor_b, grate, wall_a, wall_b`) used by the `iso_tiles` atlas
+
+Art is generated externally (ChatGPT); this repository only stores the raw atlases and the build script that produces runtime assets. Do not add generated files directly to `assets/`.
+
+### Audio Pipeline
+
+The ambience bed is baked, not synthesized at runtime. `tools/build-audio.mjs` generates a 24 s loop (ventilation-dominant filtered noise, a faint 50 Hz mains hum, a soft air band around 1.6 kHz, one distant rumble), normalizes it, equal-power crossfades the tail over the head, then lowpasses the mix at 3.2 kHz and encodes 32 kHz mono OGG Vorbis (`-q:a 6`) through `ffmpeg`, reporting loop seam and decoder padding. The bandwidth cap, the quiet hum and the higher quality setting exist to keep codec hiss out of a very quiet bed.
+
+```bash
+# Rebuild the ambience bed (requires ffmpeg on PATH)
+npm run audio:build
+```
+
+`assets/audio/ambience.ogg` is the committed runtime asset. `art-preview/audio-ambience.png` is a throwaway spectrogram for tuning and is gitignored. The game plays it as one looping `AudioBufferSourceNode` through a master gain; `M` mutes.
+
 ### Controls
 
 - **WASD / Arrow keys** — Move (8 directions, screen-relative)
-- **Hover** — Preview the tile under the pointer; walls blocking that tile fade out
+- **Hover** — Preview the tile under the pointer; walls and props blocking that tile fade out
 - **Left click** — Walk to a reachable tile (A* pathfinding)
+- **M** — Mute / unmute the ambience
 - Any movement key cancels a click path.
 
-The game currently boots into a seeded room-and-corridor level. Append `?debug` to the URL to expose `window.__sz` (`level`, `player`, `dungeon`) for inspection.
+The game currently boots into a four-floor descent. Terminals along the rooms show a short corrupted log line when you stand next to them, and a continuous ventilation ambience runs underneath. Floors are authored as JSON in `src/data/levels/` and loaded at boot: floors 0–2 hold a descent hatch in a far room. A faint amber light shaft always marks the hatch and brightens as you approach. Stand on the hatch for about 0.9 s to descend; stepping off resets the dwell. The screen fades out, input freezes, and the next floor fades in. On arrival on floors 1–3, WARDEN forces a light dip and silence once the fade completes. Floor 3 is sealed: no hatch, no further descent, and its lone terminal repeats the seal notice.
+
+Pressure is fixed per floor rather than by walking distance. Every floor down closes the vision gradient (1 → 0.65) and lantern (1 → 0.68), raises silence chance (0.25 → 0.6) and hold time (×1.8), shortens light-dip intervals (×0.55), extends drone sight (+30%), and lowers the ambience pitch (×0.97 per floor). Floors also get smaller, more damaged, and more cluttered: room counts run 7 / 7 / 6 / 6, halls shrink, grate and corrosion take over, decals multiply, and terminals become scarce. Append `?floor=0`, `1`, `2` or `3` to boot directly on that floor for comparison (`?depth` is kept as an alias); floor 3 should feel markedly darker, quieter, and more cramped than floor 0.
+
+Two rogue maintenance drones patrol distant rooms, with a third joining from floor 2. They only notice you inside a 120° cone with clear line of sight, chase briefly, then search and return home. Drones use placeholder sprites until the drone sheet arrives. The hatch is never blocked by a prop, decal, or drone spawn, but drone homes land in the farthest rooms, which on floors 0–2 is usually the hatch room.
+
+Append `?debug` to the URL to expose `window.__sz` (`level`, `player`, `dungeon`, `decor`, `logFeed`, `warden`, `ambience`, `combat`, `depth`, `darkness`, `lantern`, `floor`, `exit`, `gate`, `debugMap`, `scene`) for inspection, and to show a minimap in the top-right corner above the darkness: amber player, orange hatch, drones coloured by state (bone idle/patrol, amber search, red chase).
+
+### Level data
+
+Each floor is authored in `src/data/levels/floor-0.json` … `floor-3.json` and loaded by `src/systems/LevelLoader.ts`; the game does not generate dungeons at runtime. `rows` is the tile grid and `rooms` marks floor-style regions (`0` plain, `1` grate-heavy, `2` damaged).
+
+| Glyph | Meaning |
+| :-- | :-- |
+| `#` | wall |
+| `.` | floor |
+| `@` | spawn (exactly one per floor) |
+| `X` | descent hatch (floors 0–2 only; floor 3 is sealed) |
+
+Validation runs on load: rectangular rows, supported glyphs, exactly one spawn, exit rules per floor, room bounds, and full connectivity from the spawn. `npm run levels:bake` regenerates all four files from `DungeonGen`; `npm run levels:check` validates the current files and prints their summaries. `DungeonGen` remains the authoring/draft and stress-test generator.
 
 ## Project Structure
 
@@ -73,6 +121,8 @@ src/
 └── utils/         # Utilities (iso.ts, grid.ts, helpers)
 
 assets/            # Raw art/audio (keep minimal and low-res)
+art-source/        # Original generated atlases (not loaded at runtime)
+art-preview/       # Generated asset-mapping previews (gitignored)
 .opencode/         # Agent harness (agents, skills, commands)
 AGENTS.md          # AI agent rules, conventions, and project context
 ```

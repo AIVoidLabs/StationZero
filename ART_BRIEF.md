@@ -1,8 +1,8 @@
 # Station Zero — Art Brief
 
 Bu dosya, oyunun görsel varlıklarını harici bir araçla (ChatGPT görsel üretimi) üretmek için hazır prompt setidir.
-Kod tarafı şimdilik prosedürel placeholder art kullanıyor; üretilen PNG'ler `assets/art/` altına bırakıldığında
-`src/assets/manifest.ts` içindeki ilgili satır `enabled: true` yapılarak devreye alınır.
+Üretilen kaynak PNG'ler `art-source/` altına bırakılır; `npm run art:build` bunları kırpıp küçültüp
+`assets/art/runtime/` altına paketler. Oyun yalnızca runtime çıktısını yükler, kaynak atlasları yüklemez.
 
 ## Kurallar (her prompt için geçerli)
 
@@ -71,6 +71,52 @@ back, back-right three-quarter, right profile, front-right three-quarter, front,
 three-quarter, left profile, back-left three-quarter. Identical proportions and palette, flat neutral
 #101010 background, no shadow, no text, no labels, pixel art, 32x48 character scale.
 ```
+
+### 1b. Oyuncu yürüyüş döngüsü — tek görsel, 8 sütun × 4 satır
+
+Dosya: `art-source/entities/walk/Hooded Wanderer Walking Sprite Sheet.png`
+Hedef: **8 sütun × 4 satır**. Genişlik 1536 px; satır yüksekliği serbest (768 veya 1024 ikisi de
+çalışır, kesici hücreleri `genişlik/8` ve `yükseklik/4` olarak hesaplar). Düz `#0a0a09` zemin.
+
+**Tek görsel.** Yönleri ayrı ayrı üretme; 32 karenin tamamı tek sheet'te olsun.
+
+Sütun eşlemesi (kodla aynı): **1 N, 2 NE, 3 E, 4 SE, 5 S, 6 SW, 7 W, 8 NW.** Standart sıra; her yönün
+kendi sütunu var, aynalama yok.
+
+#### Prompt
+
+```text
+8-direction walking sprite sheet, pixel art, 8 columns and 4 rows, 32 equal cells, flat #0a0a09 background.
+
+Character: a hooded prisoner in a worn dark coat, coat open at the front, both boots visible.
+Same character, same size and same colors in every cell.
+
+Columns left to right: north, north-east, east, south-east, south, south-west, west, north-west.
+Rows top to bottom: the four frames of the walking animation.
+
+No text, no numbers, no grid lines, no shadow, no border.
+```
+
+#### Kritik noktalar
+
+- İlk kelime `walking`. Modele yürüyüşü tarif etmek gerekmiyor; "walking sprite sheet" standart kalıbı
+  tetikliyor. Kareleri tek tek anlatmak promptu uzatıp modeli şaşırtıyor.
+- `coat open at the front, both boots visible` karakter tarifi olarak kalıyor. Uzun pelerin ön ve 3/4
+  görünümlerde bacakları yutuyor; N ve E'nin düzgün olmasının sebebi bacakların görünmesi.
+- Satırları `contact / passing / contact / passing` diye açıklama. Sadece "dört kare, walking" yeter.
+- Model yine aynı pozu tekrarlarsa tek satır ekle: `natural walking cycle, feet alternate, arms swing`.
+  Başka açıklama ekleme.
+- Mümkünse mevcut idle sprite'ı referans görsel olarak ekle; karakter, palet ve oranlar tutarlı kalsın.
+
+#### Kontrol
+
+- Sheet tam 8 sütun × 4 satır; her hücre dolu, boşluk veya kayma yok.
+- Sütunlar yukarıdaki sırayla. 3. sütun gerçek profil (E), 7. sütun onun tersi (W); ikisi aynı çizim
+  olmamalı.
+- Her sütunda 4 satır gerçekten farklı; 1. ve 3. satırda öndeki bacak zıt.
+- Bacaklar her görünümde görünüyor (pelerin altında kaybolmuyor).
+- Aynı sütundaki 4 karede boy, pozisyon ve taban çizgisi sabit.
+- `npm run art:build` sonrası `player_walk.png` 32 kare olmalı.
 
 ## 2. Zemin ve duvar dokuları — 5 adet
 

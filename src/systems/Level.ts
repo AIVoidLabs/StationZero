@@ -2,7 +2,7 @@ import type { GameObjects, Scene } from 'phaser';
 import { DEPTH_FLOOR, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import { cartesianToIso } from '../utils/iso';
 import type { Dungeon, FloorStyle } from './DungeonGen';
-import { TILE_KEYS } from './TileShaper';
+import { ISO_TILES_KEY, TILE_FRAMES, type TileFrame } from './TileShaper';
 
 export type CellKind = 'floor' | 'wall';
 
@@ -18,10 +18,12 @@ export class Level {
   readonly height: number;
   readonly spawnX: number;
   readonly spawnY: number;
+  readonly floor: number;
   readonly walls: GameObjects.Image[] = [];
 
   private readonly cells: CellKind[][];
   private readonly styles: FloorStyle[][];
+  private readonly blockers = new Set<string>();
 
   constructor(dungeon: Dungeon) {
     const rows = dungeon.rows;
@@ -30,6 +32,7 @@ export class Level {
     this.height = rows.length;
     this.spawnX = dungeon.spawnX;
     this.spawnY = dungeon.spawnY;
+    this.floor = dungeon.floor;
 
     this.cells = rows.map((row) => {
       const cells: CellKind[] = [];
@@ -61,7 +64,11 @@ export class Level {
   }
 
   isWalkable(gridX: number, gridY: number): boolean {
-    return this.cellAt(gridX, gridY) === 'floor';
+    return this.cellAt(gridX, gridY) === 'floor' && !this.blockers.has(`${gridX},${gridY}`);
+  }
+
+  blockCell(gridX: number, gridY: number): void {
+    this.blockers.add(`${gridX},${gridY}`);
   }
 
   get cameraBounds(): CameraBounds {
@@ -80,9 +87,9 @@ export class Level {
 
         if (this.cellAt(gridX, gridY) === 'wall') {
           if (!this.touchesFloor(gridX, gridY)) continue;
-          const key = this.hash(gridX, gridY) % 6 === 0 ? TILE_KEYS.wallB : TILE_KEYS.wallA;
+          const frame = this.hash(gridX, gridY) % 6 === 0 ? TILE_FRAMES.wallB : TILE_FRAMES.wallA;
           const wall = scene.add
-            .image(iso.isoX, iso.isoY + TILE_HEIGHT / 2, key)
+            .image(iso.isoX, iso.isoY + TILE_HEIGHT / 2, ISO_TILES_KEY, frame)
             .setOrigin(0.5, 1)
             .setDepth(iso.isoY);
           this.walls.push(wall);
@@ -90,31 +97,32 @@ export class Level {
         }
 
         scene.add
-          .image(iso.isoX, iso.isoY, this.floorKey(gridX, gridY))
+          .image(iso.isoX, iso.isoY, ISO_TILES_KEY, this.floorKey(gridX, gridY))
           .setDepth(DEPTH_FLOOR);
       }
     }
   }
 
-  private floorKey(gridX: number, gridY: number): string {
+  private floorKey(gridX: number, gridY: number): TileFrame {
     const style = this.styles[gridY]?.[gridX] ?? 0;
     const variant = this.hash(gridX, gridY) % 100;
+    const wear = this.floor * 4;
 
     if (style === 1) {
-      if (variant < 8) return TILE_KEYS.grate;
-      if (variant < 74) return TILE_KEYS.floorB;
-      return TILE_KEYS.floorA;
+      if (variant < 8 + wear * 2) return TILE_FRAMES.grate;
+      if (variant < 74) return TILE_FRAMES.floorB;
+      return TILE_FRAMES.floorA;
     }
 
     if (style === 2) {
-      if (variant < 42) return TILE_KEYS.grate;
-      if (variant < 62) return TILE_KEYS.floorB;
-      return TILE_KEYS.floorA;
+      if (variant < 42 + wear) return TILE_FRAMES.grate;
+      if (variant < 62) return TILE_FRAMES.floorB;
+      return TILE_FRAMES.floorA;
     }
 
-    if (variant < 6) return TILE_KEYS.grate;
-    if (variant < 28) return TILE_KEYS.floorB;
-    return TILE_KEYS.floorA;
+    if (variant < 6 + wear) return TILE_FRAMES.grate;
+    if (variant < 28 + wear) return TILE_FRAMES.floorB;
+    return TILE_FRAMES.floorA;
   }
 
   private touchesFloor(gridX: number, gridY: number): boolean {

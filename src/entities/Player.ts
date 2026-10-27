@@ -1,36 +1,36 @@
 import type { GameObjects, Scene } from 'phaser';
-import type { Direction } from '../assets/manifest';
+import {
+  PLAYER_FRAME,
+  PLAYER_SPRITE_KEY,
+  PLAYER_WALK_FRAME,
+  PLAYER_WALK_FRAMES,
+  PLAYER_WALK_SPRITE_KEY,
+  type Direction,
+} from '../assets/manifest';
 import {
   DEPTH_MARKER,
-  PLAYER_BOB_PX,
+  MELEE_COOLDOWN_MS,
   PLAYER_FOOTPRINT,
+  PLAYER_IFRAMES_MS,
+  PLAYER_MAX_HP,
   PLAYER_SPEED,
+  PLAYER_STRIDE_TILES,
+  PLAYER_SWAY_PX,
   TILE_HEIGHT,
   TILE_WIDTH,
 } from '../data/config';
 import type { Level } from '../systems/Level';
 import { findPath, type GridPoint } from '../systems/Pathfinding';
+import { facingForGridStep } from '../utils/facing';
 import { gridVectorToWorld, worldVectorToGrid } from '../utils/iso';
 import { Entity } from './Entity';
 
 const WAYPOINT_EPSILON = 0.08;
-const CARDINAL_RATIO = 2.2;
-const BOB_RATE = 12;
 const MAX_STEP_SECONDS = 0.05;
 
 export interface MoveInput {
   readonly x: number;
   readonly y: number;
-}
-
-function facingForGridStep(stepX: number, stepY: number): Direction {
-  const absX = Math.abs(stepX);
-  const absY = Math.abs(stepY);
-
-  if (absX > absY * CARDINAL_RATIO) return stepX > 0 ? 'SE' : 'NW';
-  if (absY > absX * CARDINAL_RATIO) return stepY > 0 ? 'SW' : 'NE';
-  if (stepX > 0) return stepY > 0 ? 'S' : 'E';
-  return stepY > 0 ? 'W' : 'N';
 }
 
 export class Player extends Entity {
@@ -43,10 +43,52 @@ export class Player extends Entity {
   private path: GridPoint[] = [];
   private gridPosX: number;
   private gridPosY: number;
-  private bobPhase = 0;
+  private walkPhase = 0;
+  private walkStep = 0;
+  private visualKey = '';
+  private visualFrame = -1;
   private moving = false;
   private leadX = 0;
   private leadY = 0;
+
+  private hp: number;
+  private maxHp: number;
+  private dead = false;
+  private lastHitAt = -1000000;
+  private attackCooldownUntil = 0;
+
+  getHealth(): { hp: number; maxHp: number } {
+    return { hp: this.hp, maxHp: this.maxHp };
+  }
+
+  get isDeadState(): boolean {
+    return this.dead;
+  }
+
+  canAttack(timeNow: number): boolean {
+    return !this.dead && timeNow >= this.attackCooldownUntil;
+  }
+
+  startAttackCooldown(timeNow: number): void {
+    this.attackCooldownUntil = timeNow + MELEE_COOLDOWN_MS;
+  }
+
+  takeDamage(amount: number, timeNow: number): boolean {
+    if (this.dead) return false;
+    if (timeNow < this.lastHitAt + PLAYER_IFRAMES_MS) return false;
+    this.lastHitAt = timeNow;
+    this.hp -= amount;
+    if (this.hp <= 0) {
+      this.hp = 0;
+      this.dead = true;
+    }
+    return true;
+  }
+
+  heal(amount: number): void {
+    if (this.dead) return;
+    this.hp = Math.min(this.maxHp, this.hp + amount);
+  }
 
   constructor(scene: Scene, level: Level, gridX: number, gridY: number) {
     const iso = gridVectorToWorld(gridX, gridY, TILE_WIDTH, TILE_HEIGHT);
@@ -56,9 +98,17 @@ export class Player extends Entity {
     this.level = level;
     this.gridPosX = gridX;
     this.gridPosY = gridY;
+    this.maxHp = PLAYER_MAX_HP;
+    this.hp = PLAYER_MAX_HP;
 
     this.shadow = scene.add.image(0, 0, 'shadow').setOrigin(0.5, 0.5);
-    this.sprite = scene.add.image(0, 0, `player_${this.facing}`).setOrigin(0.5, 1);
+    const hasIdleAtlas = scene.textures.exists(PLAYER_SPRITE_KEY);
+    this.sprite = hasIdleAtlas
+      ? scene.add.image(0, 0, PLAYER_SPRITE_KEY, PLAYER_FRAME[this.facing])
+      : scene.add.image(0, 0, `player_${this.facing}`);
+    this.visualKey = hasIdleAtlas ? PLAYER_SPRITE_KEY : `player_${this.facing}`;
+    this.visualFrame = hasIdleAtlas ? PLAYER_FRAME[this.facing] : -1;
+    this.sprite.setOrigin(0.5, 1);
     this.add([this.shadow, this.sprite]);
 
     this.marker = scene.add
@@ -93,6 +143,8 @@ export class Player extends Entity {
   update(deltaMs: number, input: MoveInput | null): void {
     const dt = Math.min(deltaMs, MAX_STEP_SECONDS * 1000) / 1000;
     const hasInput = input !== null && (input.x !== 0 || input.y !== 0);
+    const fromX = this.gridPosX;
+    const fromY = this.gridPosY;
     this.moving = false;
 
     if (hasInput && input) {
@@ -108,7 +160,8 @@ export class Player extends Entity {
       this.leadY = 0;
     }
 
-    this.updateBob(dt);
+    const travelled = Math.hypot(this.gridPosX - fromX, this.gridPosY - fromY);
+    this.updateVisual(dt, travelled);
   }
 
   setDestination(gridX: number, gridY: number): void {
@@ -249,18 +302,43 @@ export class Player extends Entity {
     const next = facingForGridStep(stepX, stepY);
     if (next === this.facing) return;
     this.facing = next;
-    this.sprite.setTexture(`player_${next}`);
   }
 
-  private updateBob(dt: number): void {
+  private updateVisual(dt: number, travelled: number): void {
     if (this.moving) {
-      this.bobPhase += dt * BOB_RATE;
-      this.sprite.y = -Math.abs(Math.sin(this.bobPhase)) * PLAYER_BOB_PX;
+      this.walkPhase = (this.walkPhase + travelled / PLAYER_STRIDE_TILES) % 1;
+      this.walkStep = Math.floor(this.walkPhase * PLAYER_WALK_FRAMES) % PLAYER_WALK_FRAMES;
+      const sway = this.walkStep < PLAYER_WALK_FRAMES / 2 ? -1 : 1;
+      this.sprite.x = sway * PLAYER_SWAY_PX;
+    } else {
+      this.walkPhase = 0;
+      this.walkStep = 0;
+      this.sprite.x += (0 - this.sprite.x) * Math.min(1, dt * 14);
+    }
+
+    this.sprite.y = 0;
+    this.applyVisualFrame();
+  }
+
+  private applyVisualFrame(): void {
+    const walking = this.moving && this.scene.textures.exists(PLAYER_WALK_SPRITE_KEY);
+    const key = walking ? PLAYER_WALK_SPRITE_KEY : PLAYER_SPRITE_KEY;
+    const frame = walking
+      ? PLAYER_WALK_FRAME[this.facing] + this.walkStep
+      : PLAYER_FRAME[this.facing];
+    const resolvedKey = this.scene.textures.exists(key) ? key : `player_${this.facing}`;
+    const resolvedFrame = resolvedKey === key ? frame : -1;
+
+    if (this.visualKey === resolvedKey && this.visualFrame === resolvedFrame) return;
+    this.visualKey = resolvedKey;
+    this.visualFrame = resolvedFrame;
+
+    if (resolvedFrame >= 0) {
+      this.sprite.setTexture(resolvedKey, resolvedFrame);
       return;
     }
 
-    this.bobPhase = 0;
-    this.sprite.y += (0 - this.sprite.y) * Math.min(1, dt * 14);
+    this.sprite.setTexture(resolvedKey);
   }
 
   private showMarker(gridX: number, gridY: number, reachable: boolean): void {

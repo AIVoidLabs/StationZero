@@ -1,4 +1,4 @@
-import { DUNGEON_HEIGHT, DUNGEON_SEED, DUNGEON_WIDTH } from '../data/config';
+import { DUNGEON_HEIGHT, DUNGEON_SEED, DUNGEON_WIDTH, FLOOR_COUNT } from '../data/config';
 import { createRng } from '../utils/random';
 
 export type FloorStyle = 0 | 1 | 2;
@@ -11,6 +11,11 @@ export interface Room {
   readonly style: FloorStyle;
 }
 
+export interface DungeonExit {
+  readonly x: number;
+  readonly y: number;
+}
+
 export interface Dungeon {
   readonly width: number;
   readonly height: number;
@@ -19,6 +24,8 @@ export interface Dungeon {
   readonly spawnY: number;
   readonly rooms: readonly Room[];
   readonly seed: number;
+  readonly floor: number;
+  readonly exit: DungeonExit | null;
 }
 
 interface Point {
@@ -26,16 +33,67 @@ interface Point {
   readonly y: number;
 }
 
-const ROOM_COUNT = 7;
-const HALL_SIZE = 7;
-const MIN_ROOM_WIDTH = 3;
-const MAX_ROOM_WIDTH = 7;
-const MIN_ROOM_HEIGHT = 3;
-const MAX_ROOM_HEIGHT = 6;
+interface FloorProfile {
+  readonly roomCount: number;
+  readonly hallSize: number;
+  readonly minRoomWidth: number;
+  readonly maxRoomWidth: number;
+  readonly minRoomHeight: number;
+  readonly maxRoomHeight: number;
+  readonly damagedChance: number;
+  readonly extraLinks: number;
+}
+
+const DEFAULT_PROFILE: FloorProfile = {
+  roomCount: 7,
+  hallSize: 7,
+  minRoomWidth: 3,
+  maxRoomWidth: 7,
+  minRoomHeight: 3,
+  maxRoomHeight: 6,
+  damagedChance: 0.3,
+  extraLinks: 3,
+};
+
+const FLOOR_PROFILES: readonly FloorProfile[] = [
+  DEFAULT_PROFILE,
+  {
+    roomCount: 7,
+    hallSize: 6,
+    minRoomWidth: 3,
+    maxRoomWidth: 6,
+    minRoomHeight: 3,
+    maxRoomHeight: 5,
+    damagedChance: 0.5,
+    extraLinks: 3,
+  },
+  {
+    roomCount: 6,
+    hallSize: 6,
+    minRoomWidth: 3,
+    maxRoomWidth: 6,
+    minRoomHeight: 3,
+    maxRoomHeight: 5,
+    damagedChance: 0.68,
+    extraLinks: 2,
+  },
+  {
+    roomCount: 6,
+    hallSize: 5,
+    minRoomWidth: 3,
+    maxRoomWidth: 5,
+    minRoomHeight: 3,
+    maxRoomHeight: 4,
+    damagedChance: 0.85,
+    extraLinks: 2,
+  },
+];
+
 const ROOM_PLACEMENT_ATTEMPTS = 40;
+const ROOM_ATTEMPT_LIMIT = 500;
 const MAX_SEED_ATTEMPTS = 24;
-const MAX_EXTRA_LINKS = 3;
 const EXTRA_LINK_DISTANCE = 14;
+const EXIT_MIN_DISTANCE = 10;
 const WALL = '#';
 const FLOOR = '.';
 const SPAWN = '@';
@@ -46,6 +104,15 @@ const DIRECTIONS: readonly (readonly [number, number])[] = [
   [0, 1],
   [0, -1],
 ];
+
+function clampFloor(floor: number): number {
+  return Math.max(0, Math.min(FLOOR_COUNT - 1, Math.round(floor)));
+}
+
+function profileFor(floor: number): FloorProfile {
+  const index = Math.max(0, Math.min(FLOOR_PROFILES.length - 1, floor));
+  return FLOOR_PROFILES[index] ?? DEFAULT_PROFILE;
+}
 
 function randInt(rng: () => number, min: number, max: number): number {
   return min + Math.floor(rng() * (max - min + 1));
@@ -134,7 +201,12 @@ function placeRoom(
   return null;
 }
 
-function connectRooms(cells: string[][], rng: () => number, rooms: readonly Room[]): void {
+function connectRooms(
+  cells: string[][],
+  rng: () => number,
+  rooms: readonly Room[],
+  maxExtraLinks: number,
+): void {
   const centers = rooms.map(roomCenter);
   const inTree: number[] = [0];
   const linked = new Set<string>();
@@ -171,8 +243,8 @@ function connectRooms(cells: string[][], rng: () => number, rooms: readonly Room
   }
 
   let extraLinks = 0;
-  for (let i = 0; i < rooms.length && extraLinks < MAX_EXTRA_LINKS; i += 1) {
-    for (let j = i + 1; j < rooms.length && extraLinks < MAX_EXTRA_LINKS; j += 1) {
+  for (let i = 0; i < rooms.length && extraLinks < maxExtraLinks; i += 1) {
+    for (let j = i + 1; j < rooms.length && extraLinks < maxExtraLinks; j += 1) {
       if (linked.has(`${i}:${j}`)) continue;
       const a = centers[i];
       const b = centers[j];
@@ -186,7 +258,7 @@ function connectRooms(cells: string[][], rng: () => number, rooms: readonly Room
 }
 
 function addPillars(cells: string[][], room: Room): void {
-  const inset = 2;
+  const inset = room.width >= 6 && room.height >= 6 ? 2 : 1;
   const positions: readonly Point[] = [
     { x: room.x + inset, y: room.y + inset },
     { x: room.x + room.width - inset - 1, y: room.y + inset },
@@ -231,45 +303,94 @@ function countReachable(cells: readonly (readonly string[])[], start: Point): nu
   return seen.size;
 }
 
-function attemptDungeon(seed: number): Dungeon | null {
+function chooseExit(
+  cells: readonly (readonly string[])[],
+  rooms: readonly Room[],
+  spawnRoom: Room,
+  spawn: Point,
+  floor: number,
+): DungeonExit | null {
+  if (floor >= FLOOR_COUNT - 1) return null;
+
+  let farthest: Room | null = null;
+  let farthestDistance = -1;
+
+  for (const room of rooms) {
+    if (room === spawnRoom) continue;
+    const center = roomCenter(room);
+    const distance = Math.abs(center.x - spawn.x) + Math.abs(center.y - spawn.y);
+    if (distance > farthestDistance) {
+      farthestDistance = distance;
+      farthest = room;
+    }
+  }
+
+  if (!farthest || farthestDistance < EXIT_MIN_DISTANCE) return null;
+
+  const center = roomCenter(farthest);
+  let best: DungeonExit | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+
+  for (let y = farthest.y; y < farthest.y + farthest.height; y += 1) {
+    for (let x = farthest.x; x < farthest.x + farthest.width; x += 1) {
+      if (cells[y]?.[x] !== FLOOR) continue;
+      const distance = (x - center.x) ** 2 + (y - center.y) ** 2;
+      if (distance >= bestDistance) continue;
+      bestDistance = distance;
+      best = { x, y };
+    }
+  }
+
+  return best && Math.hypot(best.x - spawn.x, best.y - spawn.y) >= EXIT_MIN_DISTANCE
+    ? best
+    : null;
+}
+
+function attemptDungeon(seed: number, floor: number): Dungeon | null {
   const rng = createRng(seed);
+  const profile = profileFor(floor);
   const cells = createCells();
   const rooms: Room[] = [];
 
-  const hall = placeRoom(rng, rooms, HALL_SIZE, HALL_SIZE, 1);
+  const hall = placeRoom(rng, rooms, profile.hallSize, profile.hallSize, 1);
   if (!hall) return null;
   rooms.push(hall);
 
-  let styleCursor = 0;
   let placements = 0;
-  while (rooms.length < ROOM_COUNT && placements < 400) {
+  while (rooms.length < profile.roomCount && placements < ROOM_ATTEMPT_LIMIT) {
     placements += 1;
-    const width = randInt(rng, MIN_ROOM_WIDTH, MAX_ROOM_WIDTH);
-    const height = randInt(rng, MIN_ROOM_HEIGHT, MAX_ROOM_HEIGHT);
-    const style: FloorStyle = styleCursor % 3 === 0 ? 2 : 0;
-    styleCursor += 1;
+    const width = randInt(rng, profile.minRoomWidth, profile.maxRoomWidth);
+    const height = randInt(rng, profile.minRoomHeight, profile.maxRoomHeight);
+    const style: FloorStyle = rng() < profile.damagedChance ? 2 : 0;
     const room = placeRoom(rng, rooms, width, height, style);
     if (!room) continue;
     rooms.push(room);
   }
-  if (rooms.length < ROOM_COUNT) return null;
+  if (rooms.length < profile.roomCount) return null;
 
   for (const room of rooms) {
     carveRoom(cells, room);
   }
 
-  connectRooms(cells, rng, rooms);
+  connectRooms(cells, rng, rooms, profile.extraLinks);
   addPillars(cells, hall);
 
   const spawnRoom = rooms
     .filter((room) => room !== hall)
-    .reduce<Room | null>((smallest, room) => (smallest === null || roomArea(room) < roomArea(smallest) ? room : smallest), null);
+    .reduce<Room | null>(
+      (smallest, room) =>
+        smallest === null || roomArea(room) < roomArea(smallest) ? room : smallest,
+      null,
+    );
   if (!spawnRoom) return null;
   const spawn = roomCenter(spawnRoom);
 
   const spawnRow = cells[spawn.y];
   if (!spawnRow) return null;
   spawnRow[spawn.x] = SPAWN;
+
+  const exit = chooseExit(cells, rooms, spawnRoom, spawn, floor);
+  if (floor < FLOOR_COUNT - 1 && exit === null) return null;
 
   const floors = countFloors(cells);
   const reachable = countReachable(cells, spawn);
@@ -283,13 +404,18 @@ function attemptDungeon(seed: number): Dungeon | null {
     spawnY: spawn.y,
     rooms,
     seed,
+    floor,
+    exit,
   };
 }
 
-export function generateDungeon(seed: number = DUNGEON_SEED): Dungeon {
+export function generateDungeon(seed: number = DUNGEON_SEED, floor = 0): Dungeon {
+  const safeFloor = clampFloor(floor);
+
   for (let attempt = 0; attempt < MAX_SEED_ATTEMPTS; attempt += 1) {
-    const dungeon = attemptDungeon(seed + attempt);
+    const dungeon = attemptDungeon(seed + attempt, safeFloor);
     if (dungeon) return dungeon;
   }
+
   throw new Error('Could not generate a connected dungeon');
 }

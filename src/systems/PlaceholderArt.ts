@@ -1,10 +1,27 @@
 import type { Scene } from 'phaser';
-import { PALETTE, PLAYER_HEIGHT, PLAYER_WIDTH } from '../data/config';
-import { PLAYER_DIRECTIONS, SOURCE_TEXTURES, type Direction } from '../assets/manifest';
+import {
+  DRONE_HEIGHT,
+  DRONE_WIDTH,
+  PALETTE,
+  PLAYER_HEIGHT,
+  PLAYER_WIDTH,
+} from '../data/config';
+import {
+  DRONE_SPRITE_KEY,
+  PLAYER_DIRECTIONS,
+  PLAYER_SPRITE_KEY,
+  SOURCE_TEXTURES,
+  type Direction,
+} from '../assets/manifest';
 import { createCanvasContext, refreshCanvasTexture } from '../utils/canvas';
 import { createRng, seedFromString } from '../utils/random';
 
 const SOURCE_SIZE = 128;
+
+export const DESCENT_HATCH_KEY = 'descent_hatch';
+export const DESCENT_GLOW_KEY = 'descent_glow';
+export const DESCENT_SIGNAL_KEY = 'descent_signal';
+export const DESCENT_SHAFT_KEY = 'descent_shaft';
 
 function hex(color: number): string {
   return `#${color.toString(16).padStart(6, '0')}`;
@@ -273,6 +290,76 @@ function drawPlayer(ctx: CanvasRenderingContext2D, direction: Direction): void {
   ctx.restore();
 }
 
+function drawDrone(ctx: CanvasRenderingContext2D, direction: Direction): void {
+  const pose = POSES[direction];
+
+  ctx.save();
+  if (pose.mirror) {
+    ctx.translate(DRONE_WIDTH, 0);
+    ctx.scale(-1, 1);
+  }
+
+  const rect = (color: number, x: number, y: number, w: number, h: number): void => {
+    ctx.fillStyle = hex(color);
+    ctx.fillRect(x, y, w, h);
+  };
+
+  const lean = Math.round(pose.turn * 2);
+  const side = pose.view === 'side';
+
+  rect(PALETTE.shadow, 5, 31, 30, 2);
+
+  if (side) {
+    rect(PALETTE.steelDark, 30, 19, 5, 8);
+    rect(PALETTE.steel, 30, 19, 1, 8);
+    rect(PALETTE.steelDark, 6, 16, 7, 4);
+    rect(PALETTE.steelLight, 6, 16, 7, 1);
+    rect(PALETTE.steel, 9, 22, 3, 2);
+  } else {
+    rect(PALETTE.steelDark, 3, 19, 7, 8);
+    rect(PALETTE.steel, 4, 19, 1, 8);
+    rect(PALETTE.rust, 5, 24, 2, 3);
+    rect(PALETTE.steelDark, 30, 19, 7, 8);
+    rect(PALETTE.steelLight, 30, 19, 7, 1);
+    rect(PALETTE.steel, 10, 22, 3, 2);
+    rect(PALETTE.steel, 27, 22, 3, 2);
+  }
+
+  const bodyX = 11 + lean;
+  const bodyWidth = side ? 17 : 18;
+  rect(PALETTE.steelDark, bodyX, 18, bodyWidth, 12);
+  rect(PALETTE.steel, bodyX + 1, 18, bodyWidth - 2, 3);
+  rect(PALETTE.steelLight, bodyX + 1, 18, bodyWidth - 2, 1);
+  rect(PALETTE.shadow, bodyX + 1, 27, bodyWidth - 2, 3);
+  rect(PALETTE.steel, bodyX + 3, 22, 1, 4);
+  rect(PALETTE.rust, bodyX + 2, 25, 3, 2);
+
+  rect(PALETTE.steel, side ? bodyX + 5 : 19, 11, 1, 7);
+  rect(PALETTE.signal, side ? bodyX + 5 : 19, 10, 1, 1);
+
+  if (pose.view === 'front') {
+    rect(PALETTE.shadow, bodyX + 4, 22, 10, 7);
+    rect(PALETTE.cyan, bodyX + 5, 23, 8, 5);
+    rect(PALETTE.boneLight, bodyX + 7, 24, 1, 1);
+    rect(PALETTE.boneLight, bodyX + 11, 24, 1, 1);
+    rect(PALETTE.cyan, bodyX + 5, 26, 8, 1);
+  } else if (pose.view === 'back') {
+    rect(PALETTE.shadow, bodyX + 4, 23, 10, 5);
+    rect(PALETTE.steel, bodyX + 5, 23, 8, 1);
+    rect(PALETTE.cyan, bodyX + 5, 27, 3, 1);
+    rect(PALETTE.cyan, bodyX + 11, 27, 3, 1);
+  } else {
+    rect(PALETTE.shadow, bodyX + bodyWidth - 6, 21, 6, 7);
+    rect(PALETTE.cyan, bodyX + bodyWidth - 5, 22, 4, 4);
+    rect(PALETTE.boneLight, bodyX + bodyWidth - 4, 23, 1, 1);
+  }
+
+  rect(PALETTE.nearBlack, bodyX + 3, 30, 11, 1);
+  rect(PALETTE.steelDark, bodyX + 4, 29, 9, 1);
+
+  ctx.restore();
+}
+
 const DIAMOND: readonly (readonly [number, number])[] = [
   [32, 2],
   [62, 16],
@@ -359,6 +446,123 @@ function drawShadow(ctx: CanvasRenderingContext2D): void {
   ctx.fillRect(0, 0, 32, 12);
 }
 
+function traceGateDiamond(
+  ctx: CanvasRenderingContext2D,
+  centerX: number,
+  centerY: number,
+  halfWidth: number,
+  halfHeight: number,
+): void {
+  ctx.beginPath();
+  ctx.moveTo(centerX, centerY - halfHeight);
+  ctx.lineTo(centerX + halfWidth, centerY);
+  ctx.lineTo(centerX, centerY + halfHeight);
+  ctx.lineTo(centerX - halfWidth, centerY);
+  ctx.closePath();
+}
+
+function drawDescentHatch(ctx: CanvasRenderingContext2D): void {
+  const centerX = 32;
+  const centerY = 16;
+
+  ctx.clearRect(0, 0, 64, 32);
+
+  traceGateDiamond(ctx, centerX, centerY, 31, 15);
+  ctx.fillStyle = hex(PALETTE.steelDark);
+  ctx.fill();
+
+  traceGateDiamond(ctx, centerX, centerY, 28, 13);
+  ctx.fillStyle = hex(PALETTE.steel);
+  ctx.fill();
+
+  traceGateDiamond(ctx, centerX, centerY, 23, 10);
+  ctx.fillStyle = hex(PALETTE.void);
+  ctx.fill();
+
+  ctx.save();
+  traceGateDiamond(ctx, centerX, centerY, 23, 10);
+  ctx.clip();
+
+  for (let y = 8; y < 26; y += 4) {
+    const offset = Math.abs(y - centerY) / 10;
+    const halfWidth = 23 * (1 - offset);
+    ctx.strokeStyle = hex(PALETTE.steelDark);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(centerX - halfWidth, y);
+    ctx.lineTo(centerX + halfWidth, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.strokeStyle = hex(PALETTE.rust);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(8, 10);
+  ctx.lineTo(12, 13);
+  ctx.moveTo(56, 10);
+  ctx.lineTo(52, 13);
+  ctx.stroke();
+
+  traceGateDiamond(ctx, centerX, centerY, 28, 13);
+  ctx.strokeStyle = 'rgba(201, 196, 180, 0.28)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+function drawDescentGlow(ctx: CanvasRenderingContext2D): void {
+  const half = 48;
+  const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
+  const r = (PALETTE.amber >> 16) & 0xff;
+  const g = (PALETTE.amber >> 8) & 0xff;
+  const b = PALETTE.amber & 0xff;
+
+  gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.5)`);
+  gradient.addColorStop(0.35, `rgba(${r}, ${g}, ${b}, 0.2)`);
+  gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 96, 96);
+}
+
+function drawDescentSignal(ctx: CanvasRenderingContext2D): void {
+  const half = 16;
+  const gradient = ctx.createRadialGradient(half, half, 0, half, half, half);
+  gradient.addColorStop(0, 'rgba(255, 214, 150, 0.95)');
+  gradient.addColorStop(0.25, 'rgba(217, 164, 65, 0.55)');
+  gradient.addColorStop(1, 'rgba(217, 164, 65, 0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 32, 32);
+}
+
+function drawDescentShaft(ctx: CanvasRenderingContext2D): void {
+  const width = 32;
+  const height = 120;
+  const r = (PALETTE.amber >> 16) & 0xff;
+  const g = (PALETTE.amber >> 8) & 0xff;
+  const b = PALETTE.amber & 0xff;
+  const centerX = width / 2;
+
+  const beam = ctx.createLinearGradient(0, height, 0, 0);
+  beam.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.6)`);
+  beam.addColorStop(0.35, `rgba(${r}, ${g}, ${b}, 0.22)`);
+  beam.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+  ctx.fillStyle = beam;
+  ctx.beginPath();
+  ctx.moveTo(centerX - 9, height);
+  ctx.lineTo(centerX - 2, 0);
+  ctx.lineTo(centerX + 2, 0);
+  ctx.lineTo(centerX + 9, height);
+  ctx.closePath();
+  ctx.fill();
+
+  const core = ctx.createLinearGradient(0, height, 0, 0);
+  core.addColorStop(0, 'rgba(255, 226, 170, 0.7)');
+  core.addColorStop(0.5, 'rgba(255, 214, 150, 0.18)');
+  core.addColorStop(1, 'rgba(255, 214, 150, 0)');
+  ctx.fillStyle = core;
+  ctx.fillRect(centerX - 2, 0, 4, height);
+}
+
 export function ensureArt(scene: Scene): void {
   for (const key of SOURCE_TEXTURES) {
     if (scene.textures.exists(key)) continue;
@@ -367,12 +571,24 @@ export function ensureArt(scene: Scene): void {
     refreshCanvasTexture(scene, key);
   }
 
-  for (const direction of PLAYER_DIRECTIONS) {
-    const key = `player_${direction}`;
-    if (scene.textures.exists(key)) continue;
-    const ctx = createCanvasContext(scene, key, PLAYER_WIDTH, PLAYER_HEIGHT);
-    drawPlayer(ctx, direction);
-    refreshCanvasTexture(scene, key);
+  if (!scene.textures.exists(PLAYER_SPRITE_KEY)) {
+    for (const direction of PLAYER_DIRECTIONS) {
+      const key = `player_${direction}`;
+      if (scene.textures.exists(key)) continue;
+      const ctx = createCanvasContext(scene, key, PLAYER_WIDTH, PLAYER_HEIGHT);
+      drawPlayer(ctx, direction);
+      refreshCanvasTexture(scene, key);
+    }
+  }
+
+  if (!scene.textures.exists(DRONE_SPRITE_KEY)) {
+    for (const direction of PLAYER_DIRECTIONS) {
+      const key = `drone_${direction}`;
+      if (scene.textures.exists(key)) continue;
+      const ctx = createCanvasContext(scene, key, DRONE_WIDTH, DRONE_HEIGHT);
+      drawDrone(ctx, direction);
+      refreshCanvasTexture(scene, key);
+    }
   }
 
   for (const reachable of [true, false]) {
@@ -397,5 +613,29 @@ export function ensureArt(scene: Scene): void {
     const ctx = createCanvasContext(scene, 'shadow', 32, 12);
     drawShadow(ctx);
     refreshCanvasTexture(scene, 'shadow');
+  }
+
+  if (!scene.textures.exists(DESCENT_HATCH_KEY)) {
+    const ctx = createCanvasContext(scene, DESCENT_HATCH_KEY, 64, 32);
+    drawDescentHatch(ctx);
+    refreshCanvasTexture(scene, DESCENT_HATCH_KEY);
+  }
+
+  if (!scene.textures.exists(DESCENT_GLOW_KEY)) {
+    const ctx = createCanvasContext(scene, DESCENT_GLOW_KEY, 96, 96);
+    drawDescentGlow(ctx);
+    refreshCanvasTexture(scene, DESCENT_GLOW_KEY);
+  }
+
+  if (!scene.textures.exists(DESCENT_SIGNAL_KEY)) {
+    const ctx = createCanvasContext(scene, DESCENT_SIGNAL_KEY, 32, 32);
+    drawDescentSignal(ctx);
+    refreshCanvasTexture(scene, DESCENT_SIGNAL_KEY);
+  }
+
+  if (!scene.textures.exists(DESCENT_SHAFT_KEY)) {
+    const ctx = createCanvasContext(scene, DESCENT_SHAFT_KEY, 32, 120);
+    drawDescentShaft(ctx);
+    refreshCanvasTexture(scene, DESCENT_SHAFT_KEY);
   }
 }
