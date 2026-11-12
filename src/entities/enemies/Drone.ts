@@ -1,5 +1,12 @@
 import type { GameObjects, Scene } from 'phaser';
-import { DRONE_FRAME, DRONE_SPRITE_KEY, type Direction } from '../../assets/manifest';
+import {
+  DRONE_DEAD_V2_KEY,
+  DRONE_FRAME,
+  DRONE_SPRITE_KEY,
+  DRONE_V2_SPRITE_KEY,
+  selectWorldArt,
+  type Direction,
+} from '../../assets/manifest';
 import {
   DRONE_CHASE_LEASH,
   DRONE_CHASE_MAX_MS,
@@ -28,14 +35,43 @@ import type { Level } from '../../systems/Level';
 import type { DepthManager } from '../../systems/DepthManager';
 import { hasLineOfSight, type GridCell } from '../../systems/Los';
 import { findPath, type GridPoint } from '../../systems/Pathfinding';
-import { DRONE_MAX_HP } from '../../data/config';
+import {
+  DEPTH_VFX,
+  DRONE_DODGE_CHANCE,
+  DRONE_DODGE_COOLDOWN_MS,
+  DRONE_DODGE_MS,
+  DRONE_DODGE_RETRY_MS,
+  DRONE_DODGE_SENSE_TILES,
+  DRONE_DODGE_SPEED,
+  DRONE_FIRE_COOLDOWN_MIN_SCALE,
+  DRONE_FIRE_COOLDOWN_MS,
+  DRONE_FIRE_RANGE,
+  DRONE_FIRE_RECOVER_MS,
+  DRONE_FIRE_WINDUP_MS,
+  DRONE_MAX_HP,
+} from '../../data/config';
+import type { Projectiles } from '../../systems/Projectiles';
+import { distanceGain, sfx } from '../../systems/Sfx';
 import { DIRECTION_VECTOR, DIRECTIONS, facingForGridStep } from '../../utils/facing';
 import { gridVectorToWorld, worldVectorToGrid } from '../../utils/iso';
+import { BlendModes } from 'phaser';
 import type { Player } from '../Player';
 import { Entity } from '../Entity';
 import { createRng } from '../../utils/random';
 
 export type DroneState = 'IDLE' | 'PATROL' | 'CHASE' | 'SEARCH' | 'DISENGAGE';
+
+export type DroneLightKind = 'idle' | 'search' | 'chase' | 'aim' | 'wreck';
+
+export interface DroneLightState {
+  readonly kind: DroneLightKind;
+  readonly facing: Direction;
+  readonly deathAgeMs: number;
+}
+
+type FireState = 'NONE' | 'WINDUP' | 'RECOVER';
+
+const WRECK_DEPTH_OFFSET = 12;
 
 const WAYPOINT_EPSILON = 0.08;
 const MAX_STEP_SECONDS = 0.05;
@@ -55,6 +91,9 @@ export class Drone extends Entity {
   private readonly homeX: number;
   private readonly homeY: number;
   private readonly bobPhase: number;
+  private readonly spriteKey: string;
+  private readonly projectiles: Projectiles | null;
+  private readonly wreckKey: string | null;
 
   private posX: number;
   private posY: number;
@@ -75,6 +114,14 @@ export class Drone extends Entity {
   private maxHp: number;
   private dead = false;
   private lastDamageAt = -1000000;
+  private fireState: FireState = 'NONE';
+  private fireMs = 0;
+  private fireCooldownMs = 0;
+  private dodgeMs = 0;
+  private dodgeDirX = 0;
+  private dodgeDirY = 0;
+  private dodgeCooldownMs = 0;
+  private diedAt = 0;
 
   constructor(
     scene: Scene,
@@ -84,6 +131,7 @@ export class Drone extends Entity {
     homeX: number,
     homeY: number,
     seed: number,
+    projectiles: Projectiles | null = null,
   ) {
     const iso = gridVectorToWorld(homeX, homeY, TILE_WIDTH, TILE_HEIGHT);
     super(scene, iso.x, iso.y, { gridX: homeX, gridY: homeY, isoX: iso.x, isoY: iso.y });
@@ -91,7 +139,11 @@ export class Drone extends Entity {
     this.level = level;
     this.player = player;
     this.depthManager = depth;
+    this.projectiles = projectiles;
     this.rng = createRng(seed);
+    this.wreckKey =
+      selectWorldArt().drone && scene.textures.exists(DRONE_DEAD_V2_KEY) ? DRONE_DEAD_V2_KEY : null;
+    this.fireCooldownMs = 800 + createRng(seed ^ 0x51)() * 1400;
     this.homeX = homeX;
     this.homeY = homeY;
     this.lastKnownX = homeX;
@@ -107,11 +159,13 @@ export class Drone extends Entity {
 
     this.shadow = scene.add.image(0, 0, 'shadow').setOrigin(0.5, 0.5).setScale(0.8).setAlpha(0.65);
 
-    const hasAtlas = scene.textures.exists(DRONE_SPRITE_KEY);
+    const spriteKey = selectWorldArt().drone ? DRONE_V2_SPRITE_KEY : DRONE_SPRITE_KEY;
+    const hasAtlas = scene.textures.exists(spriteKey);
+    this.spriteKey = spriteKey;
     this.sprite = hasAtlas
-      ? scene.add.image(0, 0, DRONE_SPRITE_KEY, DRONE_FRAME[this.facing])
+      ? scene.add.image(0, 0, spriteKey, DRONE_FRAME[this.facing])
       : scene.add.image(0, 0, `drone_${this.facing}`);
-    this.visualKey = hasAtlas ? DRONE_SPRITE_KEY : `drone_${this.facing}`;
+    this.visualKey = hasAtlas ? spriteKey : `drone_${this.facing}`;
     this.visualFrame = hasAtlas ? DRONE_FRAME[this.facing] : -1;
     this.sprite.setOrigin(0.5, 1);
     this.healthBarBack = scene.add
@@ -153,7 +207,10 @@ export class Drone extends Entity {
       this.hp = 0;
       this.dead = true;
       this.setHealthBarVisible(false);
+      sfx.play('droneDeath', this.audioGain());
+      this.onDeath();
     } else {
+      sfx.play('droneHit', this.audioGain());
       this.updateHealthBar();
     }
     return true;
@@ -168,12 +225,19 @@ export class Drone extends Entity {
 
   update(deltaMs: number): void {
     if (this.dead) {
-      this.sprite.setVisible(false);
+      if (this.wreckKey === null) this.sprite.setVisible(false);
       this.shadow.setVisible(false);
       this.setHealthBarVisible(false);
       return;
     }
     const dt = Math.min(deltaMs, MAX_STEP_SECONDS * 1000) / 1000;
+    this.fireCooldownMs -= deltaMs;
+    this.dodgeCooldownMs -= deltaMs;
+    if (this.updateDodge(deltaMs, dt)) {
+      this.syncTransform();
+      this.updateVisual();
+      return;
+    }
     this.modeMs += deltaMs;
     this.repathMs -= deltaMs;
     this.scanMs -= deltaMs;
@@ -260,6 +324,8 @@ export class Drone extends Entity {
     }
 
     const distanceToPlayer = Math.hypot(target.gridX - this.posX, target.gridY - this.posY);
+    if (this.updateFire(deltaMs, sees, distanceToPlayer)) return;
+
     if (distanceToPlayer <= DRONE_CONTACT_RANGE) {
       this.path = [];
       this.faceToward(target.gridX - this.posX, target.gridY - this.posY);
@@ -490,6 +556,164 @@ export class Drone extends Entity {
     return false;
   }
 
+  private audioGain(): number {
+    const at = this.player.gridPosition;
+    return distanceGain(this.posX, this.posY, at.x, at.y);
+  }
+
+  get isAiming(): boolean {
+    return this.fireState === 'WINDUP';
+  }
+
+  get lightState(): DroneLightState {
+    let kind: DroneLightKind = 'idle';
+    if (this.dead) kind = 'wreck';
+    else if (this.fireState === 'WINDUP') kind = 'aim';
+    else if (this.mode === 'CHASE') kind = 'chase';
+    else if (this.mode === 'SEARCH') kind = 'search';
+    const deathAgeMs = this.dead ? this.scene.time.now - this.diedAt : 0;
+    return { kind, facing: this.facing, deathAgeMs };
+  }
+
+  private updateFire(deltaMs: number, sees: boolean, distanceToPlayer: number): boolean {
+    if (this.projectiles === null) return false;
+
+    if (this.fireState === 'WINDUP') {
+      const target = this.playerCell();
+      this.path = [];
+      this.faceToward(target.gridX - this.posX, target.gridY - this.posY);
+      if (!sees) {
+        this.fireState = 'NONE';
+        this.fireCooldownMs = 600;
+        return false;
+      }
+      this.fireMs += deltaMs;
+      if (this.fireMs >= DRONE_FIRE_WINDUP_MS) {
+        const at = this.player.gridPosition;
+        this.projectiles.spawn('drone', this.posX, this.posY, at.x - this.posX, at.y - this.posY);
+        sfx.play('droneShot', this.audioGain());
+        this.fireState = 'RECOVER';
+        this.fireMs = 0;
+      }
+      return true;
+    }
+
+    if (this.fireState === 'RECOVER') {
+      this.fireMs += deltaMs;
+      if (this.fireMs >= DRONE_FIRE_RECOVER_MS) {
+        this.fireState = 'NONE';
+        const pressure = this.depthManager.pressure;
+        const scale = 1 - (1 - DRONE_FIRE_COOLDOWN_MIN_SCALE) * pressure.t;
+        this.fireCooldownMs = DRONE_FIRE_COOLDOWN_MS * scale;
+      }
+      return true;
+    }
+
+    const inRange = distanceToPlayer > DRONE_CONTACT_RANGE + 0.4 && distanceToPlayer <= DRONE_FIRE_RANGE;
+    if (sees && inRange && this.fireCooldownMs <= 0) {
+      this.fireState = 'WINDUP';
+      this.fireMs = 0;
+      this.path = [];
+      return true;
+    }
+    return false;
+  }
+
+  private updateDodge(deltaMs: number, dt: number): boolean {
+    if (this.dodgeMs > 0) {
+      this.dodgeMs -= deltaMs;
+      this.moveBy(this.dodgeDirX * DRONE_DODGE_SPEED * dt, this.dodgeDirY * DRONE_DODGE_SPEED * dt);
+      return true;
+    }
+
+    if (this.projectiles === null || this.dodgeCooldownMs > 0) return false;
+    if (this.mode !== 'CHASE' && this.mode !== 'SEARCH') return false;
+
+    for (const bullet of this.projectiles.active) {
+      if (bullet.owner !== 'player') continue;
+      const relX = this.posX - bullet.x;
+      const relY = this.posY - bullet.y;
+      const along = relX * bullet.dirX + relY * bullet.dirY;
+      if (along <= 0 || along > DRONE_DODGE_SENSE_TILES) continue;
+      const side = relX * -bullet.dirY + relY * bullet.dirX;
+      if (Math.abs(side) > 0.7) continue;
+
+      if (this.rng() >= DRONE_DODGE_CHANCE) {
+        this.dodgeCooldownMs = DRONE_DODGE_RETRY_MS;
+        return false;
+      }
+
+      const sign = this.rng() < 0.5 ? 1 : -1;
+      for (const attempt of [sign, -sign]) {
+        const dirX = -bullet.dirY * attempt;
+        const dirY = bullet.dirX * attempt;
+        if (this.isBlocked(this.posX + dirX * 0.9, this.posY + dirY * 0.9)) continue;
+        this.dodgeDirX = dirX;
+        this.dodgeDirY = dirY;
+        this.dodgeMs = DRONE_DODGE_MS;
+        this.dodgeCooldownMs = DRONE_DODGE_COOLDOWN_MS;
+        this.fireState = 'NONE';
+        this.path = [];
+        return true;
+      }
+      this.dodgeCooldownMs = DRONE_DODGE_RETRY_MS;
+      return false;
+    }
+    return false;
+  }
+
+  private onDeath(): void {
+    this.diedAt = this.scene.time.now;
+    this.fireState = 'NONE';
+    this.shadow.setVisible(false);
+    if (this.wreckKey === null) return;
+
+    this.sprite.clearTint();
+    this.sprite.setTexture(this.wreckKey);
+    this.sprite.setOrigin(0.5, 1);
+    this.sprite.y = 0;
+    this.sprite.setFlipX(this.rng() < 0.5);
+    this.setDepth(this.isoY - WRECK_DEPTH_OFFSET);
+    this.spawnDeathFx();
+  }
+
+  private spawnDeathFx(): void {
+    const colors = [0xff5a2a, 0xffb060, 0xff3a22, 0xfff4d2];
+    for (let index = 0; index < 9; index += 1) {
+      const angle = this.rng() * Math.PI * 2;
+      const distance = 10 + this.rng() * 18;
+      const color = colors[index % colors.length] ?? 0xff5a2a;
+      const spark = this.scene.add
+        .circle(this.x, this.y - 14, 1.6 + this.rng() * 1.2, color, 1)
+        .setDepth(DEPTH_VFX)
+        .setBlendMode(BlendModes.ADD);
+      this.scene.tweens.add({
+        targets: spark,
+        x: this.x + Math.cos(angle) * distance,
+        y: this.y - 14 + Math.sin(angle) * distance * 0.6 - 6,
+        alpha: 0,
+        duration: 380 + this.rng() * 260,
+        ease: 'Quad.easeOut',
+        onComplete: () => spark.destroy(),
+      });
+    }
+    for (let index = 0; index < 3; index += 1) {
+      const smoke = this.scene.add
+        .circle(this.x + (this.rng() - 0.5) * 10, this.y - 10, 4 + this.rng() * 3, 0x2a2e2e, 0.55)
+        .setDepth(DEPTH_VFX - 1);
+      this.scene.tweens.add({
+        targets: smoke,
+        y: smoke.y - 22 - this.rng() * 12,
+        scaleX: 2.2,
+        scaleY: 2.2,
+        alpha: 0,
+        duration: 1100 + this.rng() * 500,
+        ease: 'Sine.easeOut',
+        onComplete: () => smoke.destroy(),
+      });
+    }
+  }
+
   private faceToward(stepX: number, stepY: number): void {
     if (Math.abs(stepX) < 0.00001 && Math.abs(stepY) < 0.00001) return;
     this.facing = facingForGridStep(stepX, stepY);
@@ -520,7 +744,9 @@ export class Drone extends Entity {
     this.sprite.y = -2 + bob;
     this.shadow.setScale(0.8 - bob * 0.02, 0.8);
 
-    if (this.mode === 'CHASE') this.sprite.setTint(0xff7a5a);
+    if (this.fireState === 'WINDUP') {
+      this.sprite.setTint(Math.floor(this.scene.time.now / 70) % 2 === 0 ? 0xff2a1a : 0xffb0a0);
+    } else if (this.mode === 'CHASE') this.sprite.setTint(0xff7a5a);
     else if (this.mode === 'SEARCH') this.sprite.setTint(0xd9a441);
     else this.sprite.clearTint();
 
@@ -528,8 +754,8 @@ export class Drone extends Entity {
   }
 
   private applyFacingFrame(): void {
-    const hasAtlas = this.scene.textures.exists(DRONE_SPRITE_KEY);
-    const key = hasAtlas ? DRONE_SPRITE_KEY : `drone_${this.facing}`;
+    const hasAtlas = this.scene.textures.exists(this.spriteKey);
+    const key = hasAtlas ? this.spriteKey : `drone_${this.facing}`;
     const frame = hasAtlas ? DRONE_FRAME[this.facing] : -1;
 
     if (this.visualKey === key && this.visualFrame === frame) return;

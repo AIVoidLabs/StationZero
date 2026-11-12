@@ -13,7 +13,13 @@ const OVERLAY_KEY = 'vision_overlay';
 const OVERLAY_MARGIN = 1.5;
 const MIN_VISION_SCALE = 0.6;
 
-export class Darkness {
+export interface DarknessLayer {
+  update(x: number, y: number): void;
+  setVisionScale(scale: number): void;
+  destroy(): void;
+}
+
+export class Darkness implements DarknessLayer {
   private readonly scene: Scene;
   private readonly width = Math.ceil(GAME_WIDTH * OVERLAY_MARGIN);
   private readonly height = Math.ceil(GAME_HEIGHT * OVERLAY_MARGIN);

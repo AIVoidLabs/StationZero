@@ -1,4 +1,5 @@
 import type { Scene } from 'phaser';
+import { TILES_V2_KEY } from '../assets/manifest';
 import { PALETTE, TILE_HEIGHT, TILE_WIDTH, WALL_HEIGHT } from '../data/config';
 import { createCanvasContext, refreshCanvasTexture } from '../utils/canvas';
 import { createRng, seedFromString } from '../utils/random';
@@ -12,9 +13,29 @@ export const TILE_FRAMES = {
   floorA: 'floor_a',
   floorB: 'floor_b',
   grate: 'grate',
-  wallA: 'wall_a',
-  wallB: 'wall_b',
+  wall0: 'wall_0',
+  wall1: 'wall_1',
+  wall2: 'wall_2',
+  wall3: 'wall_3',
+  wall4: 'wall_4',
+  wall5: 'wall_5',
+  wall6: 'wall_6',
+  wall7: 'wall_7',
 } as const;
+
+export const PLAIN_WALL_FRAMES: readonly TileFrame[] = [
+  TILE_FRAMES.wall0,
+  TILE_FRAMES.wall1,
+  TILE_FRAMES.wall2,
+  TILE_FRAMES.wall3,
+];
+
+export const DETAIL_WALL_FRAMES: readonly TileFrame[] = [
+  TILE_FRAMES.wall4,
+  TILE_FRAMES.wall5,
+  TILE_FRAMES.wall6,
+  TILE_FRAMES.wall7,
+];
 
 export type TileFrame = (typeof TILE_FRAMES)[keyof typeof TILE_FRAMES];
 
@@ -27,11 +48,29 @@ interface TileSpec {
   readonly kind: TileKind;
   readonly x: number;
   readonly y: number;
+  readonly cropX?: number;
+  readonly cropY?: number;
 }
 
+const WALL_COLUMNS = 4;
 const WALL_IMAGE_HEIGHT = TILE_HEIGHT + WALL_HEIGHT;
-const ATLAS_WIDTH = TILE_WIDTH * 3;
-const ATLAS_HEIGHT = TILE_HEIGHT + WALL_IMAGE_HEIGHT;
+const ATLAS_WIDTH = TILE_WIDTH * WALL_COLUMNS;
+const ATLAS_HEIGHT = TILE_HEIGHT + WALL_IMAGE_HEIGHT * 2;
+
+function wallSpecs(
+  entries: readonly (readonly [TileFrame, string, number, number])[],
+): TileSpec[] {
+  return entries.map(([frame, source, cropX, cropY], index) => ({
+    frame,
+    source,
+    fallback: PALETTE.steelDark,
+    kind: 'wall',
+    x: (index % WALL_COLUMNS) * TILE_WIDTH,
+    y: TILE_HEIGHT + Math.floor(index / WALL_COLUMNS) * WALL_IMAGE_HEIGHT,
+    cropX,
+    cropY,
+  }));
+}
 
 const TILE_SPECS: readonly TileSpec[] = [
   {
@@ -58,23 +97,27 @@ const TILE_SPECS: readonly TileSpec[] = [
     x: TILE_WIDTH * 2,
     y: 0,
   },
-  {
-    frame: TILE_FRAMES.wallA,
-    source: 'src_wall_a',
-    fallback: PALETTE.steelDark,
-    kind: 'wall',
-    x: 0,
-    y: TILE_HEIGHT,
-  },
-  {
-    frame: TILE_FRAMES.wallB,
-    source: 'src_wall_b',
-    fallback: PALETTE.shadow,
-    kind: 'wall',
-    x: TILE_WIDTH,
-    y: TILE_HEIGHT,
-  },
+  ...wallSpecs([
+    [TILE_FRAMES.wall0, 'src_wall_b', 64, 90],
+    [TILE_FRAMES.wall1, 'src_wall_a', 128, 0],
+    [TILE_FRAMES.wall2, 'src_wall_b', 190, 100],
+    [TILE_FRAMES.wall3, 'src_wall_a', 100, 170],
+    [TILE_FRAMES.wall4, 'src_wall_b', 0, 0],
+    [TILE_FRAMES.wall5, 'src_wall_b', 128, 0],
+    [TILE_FRAMES.wall6, 'src_wall_b', 0, 170],
+    [TILE_FRAMES.wall7, 'src_wall_a', 64, 90],
+  ]),
 ];
+
+export function registerTilesV2(scene: Scene): void {
+  if (!scene.textures.exists(TILES_V2_KEY)) return;
+  const texture = scene.textures.get(TILES_V2_KEY);
+  for (const spec of TILE_SPECS) {
+    if (texture.has(spec.frame)) continue;
+    const height = spec.kind === 'floor' ? TILE_HEIGHT : WALL_IMAGE_HEIGHT;
+    texture.add(spec.frame, 0, spec.x, spec.y, TILE_WIDTH, height);
+  }
+}
 
 const DIAMOND: Polygon = [
   [TILE_WIDTH / 2, 0],
@@ -136,13 +179,14 @@ function drawRegion(
   width: number,
   height: number,
   rng: () => number,
+  crop?: { readonly x: number; readonly y: number },
 ): void {
   const sampleWidth = Math.min(width, source.width);
   const sampleHeight = Math.min(height, source.height);
   const maxX = Math.max(0, source.width - sampleWidth);
   const maxY = Math.max(0, source.height - sampleHeight);
-  const sx = Math.floor(rng() * (maxX + 1));
-  const sy = Math.floor(rng() * (maxY + 1));
+  const sx = crop ? Math.min(maxX, crop.x) : Math.floor(rng() * (maxX + 1));
+  const sy = crop ? Math.min(maxY, crop.y) : Math.floor(rng() * (maxY + 1));
   ctx.drawImage(source, sx, sy, sampleWidth, sampleHeight, 0, 0, width, height);
 }
 
@@ -164,9 +208,24 @@ function drawFloor(
   if (source) drawRegion(ctx, source, TILE_WIDTH, TILE_HEIGHT, rng);
   else paintFlat(ctx, TILE_WIDTH, TILE_HEIGHT, spec.fallback);
 
-  ctx.fillStyle = 'rgba(5, 5, 5, 0.14)';
-  ctx.fillRect(0, 0, TILE_WIDTH, TILE_HEIGHT);
+  calm(ctx, TILE_WIDTH, TILE_HEIGHT, 0.6, 'rgba(18, 21, 21, 0.4)');
   ctx.restore();
+}
+
+function calm(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  desaturate: number,
+  flatten: string,
+): void {
+  ctx.save();
+  ctx.globalCompositeOperation = 'saturation';
+  ctx.fillStyle = `rgba(128, 128, 128, ${desaturate})`;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+  ctx.fillStyle = flatten;
+  ctx.fillRect(0, 0, width, height);
 }
 
 function drawWall(
@@ -181,7 +240,10 @@ function drawWall(
   ctx.translate(spec.x, spec.y);
   ctx.clearRect(0, 0, TILE_WIDTH, WALL_IMAGE_HEIGHT);
 
-  if (source) drawRegion(ctx, source, TILE_WIDTH, WALL_IMAGE_HEIGHT, rng);
+  if (source) {
+    const crop = spec.cropX !== undefined && spec.cropY !== undefined ? { x: spec.cropX, y: spec.cropY } : undefined;
+    drawRegion(ctx, source, TILE_WIDTH, WALL_IMAGE_HEIGHT, rng, crop);
+  }
   else paintFlat(ctx, TILE_WIDTH, WALL_IMAGE_HEIGHT, spec.fallback);
 
   const shade = (polygon: Polygon, alpha: number): void => {
@@ -193,9 +255,15 @@ function drawWall(
     ctx.restore();
   };
 
-  shade(DIAMOND, 0.1);
-  shade(LEFT_FACE, 0.52);
-  shade(RIGHT_FACE, 0.28);
+  ctx.save();
+  tracePolygon(ctx, SILHOUETTE);
+  ctx.clip();
+  calm(ctx, TILE_WIDTH, WALL_IMAGE_HEIGHT, 0.35, 'rgba(10, 14, 14, 0.08)');
+  ctx.restore();
+
+  shade(DIAMOND, 0);
+  shade(LEFT_FACE, 0.5);
+  shade(RIGHT_FACE, 0.3);
 
   ctx.save();
   ctx.beginPath();
@@ -208,9 +276,22 @@ function drawWall(
   ctx.restore();
 
   ctx.save();
-  tracePolygon(ctx, DIAMOND);
-  ctx.strokeStyle = 'rgba(201, 196, 180, 0.18)';
+  ctx.beginPath();
+  ctx.moveTo(0, TILE_HEIGHT / 2 + 0.5);
+  ctx.lineTo(TILE_WIDTH / 2, 0.5);
+  ctx.lineTo(TILE_WIDTH, TILE_HEIGHT / 2 + 0.5);
+  ctx.strokeStyle = 'rgba(201, 196, 180, 0.4)';
   ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(0, TILE_HEIGHT / 2 + WALL_HEIGHT - 0.5);
+  ctx.lineTo(TILE_WIDTH / 2, TILE_HEIGHT + WALL_HEIGHT - 0.5);
+  ctx.lineTo(TILE_WIDTH, TILE_HEIGHT / 2 + WALL_HEIGHT - 0.5);
+  ctx.strokeStyle = 'rgba(5, 5, 5, 0.85)';
+  ctx.lineWidth = 2;
   ctx.stroke();
   ctx.restore();
   ctx.restore();

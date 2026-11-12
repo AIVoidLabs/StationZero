@@ -4,6 +4,12 @@ import { Boot } from './scenes/Boot';
 import { Preload } from './scenes/Preload';
 import { Game } from './scenes/Game';
 import { HudScene } from './scenes/Hud';
+import { Menu } from './scenes/Menu';
+import { Pause } from './scenes/Pause';
+import { End } from './scenes/End';
+import { Intro } from './scenes/Intro';
+import { DialogueScene } from './scenes/Dialogue';
+import { Cutscene } from './scenes/Cutscene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: AUTO,
@@ -17,7 +23,7 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Scale.ScaleModes.FIT,
     autoCenter: Scale.Center.CENTER_BOTH,
   },
-  scene: [Boot, Preload, Game, HudScene],
+  scene: [Boot, Preload, Menu, Cutscene, Intro, Game, HudScene, Pause, DialogueScene, End],
 };
 
 const game = new PhaserGame(config);

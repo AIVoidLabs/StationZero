@@ -1,4 +1,5 @@
 import type { GameObjects, Scene } from 'phaser';
+import { selectWorldArt, TILES_V2_KEY } from '../assets/manifest';
 import { DEPTH_FLOOR, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import { cartesianToIso } from '../utils/iso';
 import type { Dungeon, FloorStyle } from './DungeonGen';
@@ -6,12 +7,29 @@ import { ISO_TILES_KEY, TILE_FRAMES, type TileFrame } from './TileShaper';
 
 export type CellKind = 'floor' | 'wall';
 
+export type FloorMaterial = 'steel' | 'concrete' | 'grate';
+
 export interface CameraBounds {
   readonly x: number;
   readonly y: number;
   readonly width: number;
   readonly height: number;
 }
+
+const WALL_RHYTHM: readonly TileFrame[] = [
+  TILE_FRAMES.wall0,
+  TILE_FRAMES.wall2,
+  TILE_FRAMES.wall1,
+  TILE_FRAMES.wall0,
+  TILE_FRAMES.wall3,
+  TILE_FRAMES.wall1,
+  TILE_FRAMES.wall0,
+  TILE_FRAMES.wall2,
+  TILE_FRAMES.wall4,
+  TILE_FRAMES.wall0,
+  TILE_FRAMES.wall1,
+  TILE_FRAMES.wall3,
+];
 
 export class Level {
   readonly width: number;
@@ -71,6 +89,10 @@ export class Level {
     this.blockers.add(`${gridX},${gridY}`);
   }
 
+  unblockCell(gridX: number, gridY: number): void {
+    this.blockers.delete(`${gridX},${gridY}`);
+  }
+
   get cameraBounds(): CameraBounds {
     const pad = TILE_WIDTH * 3;
     const minX = -(this.height - 1) * (TILE_WIDTH / 2) - pad;
@@ -81,15 +103,18 @@ export class Level {
   }
 
   render(scene: Scene): void {
+    const art = selectWorldArt();
+    const floorAtlas = art.floor ? TILES_V2_KEY : ISO_TILES_KEY;
+    const wallAtlas = art.wall ? TILES_V2_KEY : ISO_TILES_KEY;
     for (let gridY = 0; gridY < this.height; gridY += 1) {
       for (let gridX = 0; gridX < this.width; gridX += 1) {
         const iso = cartesianToIso(gridX, gridY, TILE_WIDTH, TILE_HEIGHT);
 
         if (this.cellAt(gridX, gridY) === 'wall') {
           if (!this.touchesFloor(gridX, gridY)) continue;
-          const frame = this.hash(gridX, gridY) % 6 === 0 ? TILE_FRAMES.wallB : TILE_FRAMES.wallA;
+          const frame = this.wallFrame(gridX, gridY);
           const wall = scene.add
-            .image(iso.isoX, iso.isoY + TILE_HEIGHT / 2, ISO_TILES_KEY, frame)
+            .image(iso.isoX, iso.isoY + TILE_HEIGHT / 2, wallAtlas, frame)
             .setOrigin(0.5, 1)
             .setDepth(iso.isoY);
           this.walls.push(wall);
@@ -97,10 +122,37 @@ export class Level {
         }
 
         scene.add
-          .image(iso.isoX, iso.isoY, ISO_TILES_KEY, this.floorKey(gridX, gridY))
+          .image(iso.isoX, iso.isoY, floorAtlas, this.floorKey(gridX, gridY))
           .setDepth(DEPTH_FLOOR);
       }
     }
+  }
+
+  private wallFrame(gridX: number, gridY: number): TileFrame {
+    const north = this.isWalkable(gridX, gridY - 1);
+    const south = this.isWalkable(gridX, gridY + 1);
+    const west = this.isWalkable(gridX - 1, gridY);
+    const east = this.isWalkable(gridX + 1, gridY);
+    const vertical = north || south;
+    const horizontal = west || east;
+
+    if (vertical && horizontal) return TILE_FRAMES.wall5;
+
+    const alongX = vertical;
+    const index = alongX ? gridX : gridY;
+    const before = alongX ? this.isWalkable(gridX - 1, gridY - 1) || this.isWalkable(gridX - 1, gridY + 1) : this.isWalkable(gridX - 1, gridY - 1) || this.isWalkable(gridX + 1, gridY - 1);
+    const after = alongX ? this.isWalkable(gridX + 1, gridY - 1) || this.isWalkable(gridX + 1, gridY + 1) : this.isWalkable(gridX - 1, gridY + 1) || this.isWalkable(gridX + 1, gridY + 1);
+    if (before !== after) return TILE_FRAMES.wall7;
+
+    const slot = ((index % WALL_RHYTHM.length) + WALL_RHYTHM.length) % WALL_RHYTHM.length;
+    return WALL_RHYTHM[slot] ?? TILE_FRAMES.wall0;
+  }
+
+  materialAt(gridX: number, gridY: number): FloorMaterial {
+    const frame = this.floorKey(gridX, gridY);
+    if (frame === TILE_FRAMES.grate) return 'grate';
+    if (frame === TILE_FRAMES.floorB) return 'concrete';
+    return 'steel';
   }
 
   private floorKey(gridX: number, gridY: number): TileFrame {
@@ -109,18 +161,18 @@ export class Level {
     const wear = this.floor * 4;
 
     if (style === 1) {
-      if (variant < 8 + wear * 2) return TILE_FRAMES.grate;
+      if (variant < 3 + wear) return TILE_FRAMES.grate;
       if (variant < 74) return TILE_FRAMES.floorB;
       return TILE_FRAMES.floorA;
     }
 
     if (style === 2) {
-      if (variant < 42 + wear) return TILE_FRAMES.grate;
+      if (variant < 24 + wear) return TILE_FRAMES.grate;
       if (variant < 62) return TILE_FRAMES.floorB;
       return TILE_FRAMES.floorA;
     }
 
-    if (variant < 6 + wear) return TILE_FRAMES.grate;
+    if (variant < 3 + wear) return TILE_FRAMES.grate;
     if (variant < 28 + wear) return TILE_FRAMES.floorB;
     return TILE_FRAMES.floorA;
   }

@@ -1,7 +1,11 @@
 import { Scene } from 'phaser';
 import { ASSETS } from '../assets/manifest';
 import { ensureArt } from '../systems/PlaceholderArt';
-import { buildIsoTiles } from '../systems/TileShaper';
+import { buildIsoTiles, registerTilesV2 } from '../systems/TileShaper';
+import { VOICE_KEYS, voiceAudioKey, voicePath } from '../data/voicelist';
+import { settings } from '../systems/Settings';
+import { voice } from '../systems/Voice';
+import { isDevStart } from '../utils/devstart';
 
 export class Preload extends Scene {
   constructor() {
@@ -9,6 +13,10 @@ export class Preload extends Scene {
   }
 
   preload(): void {
+    const lang = settings.data.language;
+    for (const key of VOICE_KEYS) this.load.audio(voiceAudioKey(lang, key), voicePath(lang, key));
+    voice.markLoaded(lang);
+
     for (const asset of ASSETS) {
       if (!asset.enabled) continue;
 
@@ -35,6 +43,7 @@ export class Preload extends Scene {
   create(): void {
     ensureArt(this);
     buildIsoTiles(this);
-    this.scene.start('Game');
+    registerTilesV2(this);
+    this.scene.start(isDevStart() ? 'Game' : 'Menu');
   }
 }

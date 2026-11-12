@@ -2,6 +2,8 @@ import { BlendModes, Scene } from 'phaser';
 import type { Player } from '../entities/Player';
 import type { Drone } from '../entities/enemies/Drone';
 import type { Level } from './Level';
+import type { Projectiles } from './Projectiles';
+import { sfx } from './Sfx';
 import { hasLineOfSight } from './Los';
 import {
   DEPTH_VFX,
@@ -11,7 +13,6 @@ import {
   MELEE_DAMAGE,
   MELEE_RANGE,
   PISTOL_COOLDOWN_MS,
-  PISTOL_DAMAGE,
   PISTOL_RANGE,
   PLAYER_HEIGHT,
 } from '../data/config';
@@ -31,12 +32,20 @@ export class PlayerCombat {
   private readonly player: Player;
   private readonly level: Level;
   private readonly getDrones: () => readonly Drone[];
+  private readonly projectiles: Projectiles;
 
-  constructor(scene: Scene, player: Player, level: Level, getDrones: () => readonly Drone[]) {
+  constructor(
+    scene: Scene,
+    player: Player,
+    level: Level,
+    getDrones: () => readonly Drone[],
+    projectiles: Projectiles,
+  ) {
     this.scene = scene;
     this.player = player;
     this.level = level;
     this.getDrones = getDrones;
+    this.projectiles = projectiles;
   }
 
   tryAttack(timeNow: number, preferred?: Drone): boolean {
@@ -69,7 +78,11 @@ export class PlayerCombat {
     if (!target) return false;
     if (!this.player.consumeAmmo()) return this.tryMelee(timeNow, preferred);
 
-    target.takeDamage(PISTOL_DAMAGE);
+    this.aimAt(target, true);
+    const from = this.player.gridPosition;
+    const to = target.gridPosition;
+    this.projectiles.spawn('player', from.x, from.y, to.x - from.x, to.y - from.y);
+    sfx.play('pistol');
     this.playPistolFx(target);
     this.player.startAttackCooldown(timeNow, PISTOL_COOLDOWN_MS);
     return true;
@@ -81,10 +94,18 @@ export class PlayerCombat {
     const target = this.pickMeleeTarget(preferred);
     if (!target) return false;
 
+    this.aimAt(target);
+    sfx.play('melee');
     this.player.startAttackCooldown(timeNow, MELEE_COOLDOWN_MS);
     target.takeDamage(MELEE_DAMAGE);
     this.spawnImpact(target.x, target.y - DRONE_HEIGHT * 0.45);
     return true;
+  }
+
+  private aimAt(target: Drone, fired = false): void {
+    const from = this.player.gridPosition;
+    const to = target.gridPosition;
+    this.player.aimToward(to.x - from.x, to.y - from.y, fired);
   }
 
   private playPistolFx(drone: Drone): void {
@@ -97,7 +118,6 @@ export class PlayerCombat {
     const length = Math.hypot(dx, dy);
     if (length < 1e-3) return;
 
-    const angle = Math.atan2(dy, dx);
     const muzzleX = originX + (dx / length) * 10;
     const muzzleY = originY + (dy / length) * 10;
 
@@ -113,37 +133,6 @@ export class PlayerCombat {
       duration: 100,
       ease: 'Quad.easeOut',
       onComplete: () => flash.destroy(),
-    });
-
-    const tracer = this.scene.add
-      .rectangle(muzzleX, muzzleY, length, 2, 0xffcf8a, 0.7)
-      .setOrigin(0, 0.5)
-      .setRotation(angle)
-      .setDepth(DEPTH_VFX)
-      .setBlendMode(BlendModes.ADD);
-    this.scene.tweens.add({
-      targets: tracer,
-      alpha: 0,
-      duration: 140,
-      ease: 'Quad.easeOut',
-      onComplete: () => tracer.destroy(),
-    });
-
-    const bullet = this.scene.add
-      .rectangle(muzzleX, muzzleY, 7, 2.5, 0xfffbe8, 1)
-      .setRotation(angle)
-      .setDepth(DEPTH_VFX + 1)
-      .setBlendMode(BlendModes.ADD);
-    this.scene.tweens.add({
-      targets: bullet,
-      x: targetX,
-      y: targetY,
-      duration: 70,
-      ease: 'Linear',
-      onComplete: () => {
-        bullet.destroy();
-        this.spawnImpact(targetX, targetY);
-      },
     });
   }
 

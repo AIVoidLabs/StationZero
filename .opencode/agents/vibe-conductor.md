@@ -1,15 +1,13 @@
 ---
+name: vibe-conductor
 description: Vibe-coding orchestrator. Translates user ideas into minimal slice-aligned tasks, enforces scope, and routes to the right subagents.
 mode: subagent
 temperature: 0.2
-tools:
-  read: true
-  glob: true
-  grep: true
 permission:
   edit: deny
   write: deny
   bash: deny
+disallowedTools: Edit, Write, Bash
 ---
 # Vibe Conductor
 

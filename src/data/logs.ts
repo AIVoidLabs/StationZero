@@ -1,14 +1,15 @@
-export const SEALED_LOG = '> SECTOR 7 :: SEALED';
+import { t } from '../i18n';
 
-export const CORRUPTED_LOGS: readonly string[] = [
-  SEALED_LOG,
-  '> O2 12% ... RATIONING',
-  '> WARDEN :: COMPLIANCE 100%',
-  '> DRILL 3 STALLED -- 14 UNACCOUNTED',
-  '> DRILL 3 STALLED -- 14 UNACC',
-  '> VENT 6 BLOCKED -- ORGANIC?',
-  '> FILE 0 -- PAGE 2 MISSING',
-  '> PROTOCOL [GARBLED] :: ACTIVE',
-  '> LIGHTS FAIL AT 06:00',
-  '> SHIFT 03 -- M. ROSS :: NO OUT',
-];
+export function floorLogs(floor: number): string[] {
+  const index = Math.max(0, Math.min(3, floor)) + 1;
+  switch (index) {
+    case 1:
+      return [t('log.b1.1'), t('log.b1.2'), t('log.b1.3'), t('log.b1.4')];
+    case 2:
+      return [t('log.b2.1'), t('log.b2.2'), t('log.b2.3'), t('log.b2.4')];
+    case 3:
+      return [t('log.b3.1'), t('log.b3.2'), t('log.b3.3'), t('log.b3.4')];
+    default:
+      return [t('log.b4.1'), t('log.b4.2'), t('log.b4.3'), t('log.b4.4')];
+  }
+}

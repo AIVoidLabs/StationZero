@@ -5,7 +5,6 @@ export interface GridVector {
   readonly y: number;
 }
 
-const CARDINAL_RATIO = 2.2;
 const DIAGONAL = Math.SQRT1_2;
 
 export const DIRECTIONS: readonly Direction[] = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
@@ -21,27 +20,25 @@ export const DIRECTION_VECTOR: Record<Direction, GridVector> = {
   NW: { x: -1, y: 0 },
 };
 
-export const DIRECTION_VECTOR_GRID: Record<Direction, GridVector> = {
-  N: { x: 0, y: -1 },
-  NE: { x: 1, y: -1 },
-  E: { x: 1, y: 0 },
-  SE: { x: 1, y: 1 },
-  S: { x: 0, y: 1 },
-  SW: { x: -1, y: 1 },
-  W: { x: -1, y: 0 },
-  NW: { x: -1, y: -1 },
-};
-
 export function facingToVector(direction: Direction): GridVector {
-  return DIRECTION_VECTOR_GRID[direction] ?? { x: 0, y: 1 };
+  return DIRECTION_VECTOR[direction] ?? { x: DIAGONAL, y: DIAGONAL };
+}
+
+const SCREEN_SECTORS: readonly Direction[] = ['E', 'SE', 'S', 'SW', 'W', 'NW', 'N', 'NE'];
+
+// Sprite directions are screen-relative. A grid step (x, y) projects to screen (x - y, (x + y) / 2),
+// so the y axis is doubled here to keep the grid axes at the centre of the 45 degree sectors.
+export function facingForScreenVector(screenX: number, screenY: number): Direction {
+  const angle = Math.atan2(screenY, screenX);
+  const sector = Math.round(angle / (Math.PI / 4));
+  return SCREEN_SECTORS[((sector % 8) + 8) % 8] ?? 'S';
 }
 
 export function facingForGridStep(stepX: number, stepY: number): Direction {
-  const absX = Math.abs(stepX);
-  const absY = Math.abs(stepY);
+  return facingForScreenVector(stepX - stepY, stepX + stepY);
+}
 
-  if (absX > absY * CARDINAL_RATIO) return stepX > 0 ? 'SE' : 'NW';
-  if (absY > absX * CARDINAL_RATIO) return stepY > 0 ? 'W' : 'N';
-  if (stepY > 0) return stepX > 0 ? 'S' : 'E';
-  return stepX > 0 ? 'NE' : 'SW';
+export function facingScreenAngle(direction: Direction): number {
+  const index = SCREEN_SECTORS.indexOf(direction);
+  return (Math.max(0, index) * Math.PI) / 4;
 }

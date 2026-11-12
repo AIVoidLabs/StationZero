@@ -14,6 +14,7 @@ export const PLAYER_HEIGHT = 48;
 export const PLAYER_SPEED = 190;
 export const PLAYER_FOOTPRINT = 0.3;
 export const PLAYER_STRIDE_TILES = 1.8;
+export const FOOTSTEP_DISTANCE = 0.9;
 export const PLAYER_SWAY_PX = 1;
 
 export const DUNGEON_WIDTH = 27;
@@ -26,11 +27,20 @@ export const DESCENT_DWELL_MS = 900;
 export const DESCENT_FADE_MS = 420;
 export const DESCENT_ARRIVAL_PULSE_MS = 1100;
 export const DESCENT_SIGNAL_RANGE = 14;
+export const DESCENT_SPIN_MS = 1100;
+export const DESCENT_SPIN_SNAP_MS = 150;
+export const DOOR_OPEN_MS = 700;
+
+export const PLAYER_KNOCKBACK_TILES = 0.9;
+export const PLAYER_KNOCKBACK_MS = 180;
+export const PLAYER_KNOCKBACK_SHAKE_MS = 80;
 
 export const VISION_INNER_RADIUS = 110;
 export const VISION_OUTER_RADIUS = 430;
 
 export const LANTERN_RADIUS = 185;
+export const PLAYER_LIGHT_RADIUS = 150;
+export const DRONE_DEATH_FLARE_MS = 900;
 export const LANTERN_OFFSET_Y = -4;
 
 export const DEPTH_FLOOR = -10000;
@@ -90,13 +100,42 @@ export const MELEE_ARC_DEGREES = 95;
 export const MELEE_COOLDOWN_MS = 280;
 export const MELEE_DAMAGE = 1;
 
+export const PLAYER_BULLET_SPEED = 15;
+export const PLAYER_BULLET_LENGTH = 26;
+export const PLAYER_BULLET_RANGE = PISTOL_RANGE + 1.5;
+export const PLAYER_BULLET_HIT_RADIUS = 0.5;
+
+export const DRONE_BULLET_SPEED = 7;
+export const DRONE_BULLET_LENGTH = 20;
+export const DRONE_BULLET_RANGE = 9;
+export const DRONE_BULLET_DAMAGE = 1;
+export const DRONE_BULLET_HIT_RADIUS = 0.4;
+
+export const DRONE_FIRE_RANGE = 6;
+export const DRONE_FIRE_WINDUP_MS = 450;
+export const DRONE_FIRE_RECOVER_MS = 500;
+export const DRONE_FIRE_COOLDOWN_MS = 2400;
+export const DRONE_FIRE_COOLDOWN_MIN_SCALE = 0.6;
+
+export const DRONE_DODGE_COOLDOWN_MS = 1400;
+export const DRONE_DODGE_RETRY_MS = 350;
+export const DRONE_DODGE_MS = 300;
+export const DRONE_DODGE_SPEED = 4.5;
+export const DRONE_DODGE_CHANCE = 0.5;
+export const DRONE_DODGE_SENSE_TILES = 3.5;
+
+export const BULLET_HEIGHT_PX = 22;
+
 export const DRONE_MAX_HP = 2;
 export const DRONE_DAMAGE = 1;
 export const DRONE_CONTACT_COOLDOWN_MS = 800;
 export const DRONE_CONTACT_DAMAGE_RANGE = 1.25;
 
 export const LOOT_PICKUP_RANGE = 0.62;
-export const LOOT_DROP_CHANCE = 0.18;
+export const LOOT_DROP_CHANCE = 0.55;
+export const LOOT_AMMO_AMOUNT = 4;
+export const FLOOR_LOOT_BASE = 5;
+export const FLOOR_LOOT_MIN = 2;
 export const LOOT_HEAL_AMOUNT = 1;
 
 export const DEPTH_MAX_BAND = FLOOR_COUNT - 1;

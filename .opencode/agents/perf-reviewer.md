@@ -1,11 +1,12 @@
 ---
+name: perf-reviewer
 description: Code review focused on strict TS, isometric correctness, perf. Mostly read-only.
 mode: subagent
-model: anthropic/claude-sonnet-4-5
 temperature: 0.05
 permission:
   edit: deny
   bash: deny
+disallowedTools: Edit, Write, Bash
 ---
 You are the perf/QA reviewer for Station Zero.
 

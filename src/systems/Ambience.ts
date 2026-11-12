@@ -9,6 +9,7 @@ import {
   AUDIO_SILENCE_RETURN_MS,
   DEPTH_PITCH_PER_BAND,
 } from '../data/config';
+import { settings } from './Settings';
 import { createRng } from '../utils/random';
 
 const RNG_SEED = 0x3c0de;
@@ -35,6 +36,9 @@ export class Ambience {
   private analyser: AnalyserNode | null = null;
   private samples: Float32Array<ArrayBuffer> | null = null;
   private muted = false;
+  private ducked = false;
+  private voiceDucked = false;
+  private unsubscribe: (() => void) | null = null;
   private frames = 0;
   private band = 0;
 
@@ -83,12 +87,13 @@ export class Ambience {
     ambience.gain.value = AUDIO_AMBIENCE_GAIN;
 
     const master = context.createGain();
-    master.gain.value = this.muted ? 0 : AUDIO_MASTER_GAIN;
+    master.gain.value = this.targetMaster();
 
     source.connect(ambience);
     ambience.connect(master);
     master.connect(context.destination);
     source.start();
+    this.unsubscribe = settings.subscribe(() => this.applyMaster());
 
     this.source = source;
     this.ambienceGain = ambience;
@@ -140,13 +145,41 @@ export class Ambience {
       const now = context.currentTime;
       gain.cancelScheduledValues(now);
       gain.setValueAtTime(gain.value, now);
-      gain.linearRampToValueAtTime(
-        this.muted ? 0 : AUDIO_MASTER_GAIN,
-        now + MUTE_RAMP_SECONDS,
-      );
+      gain.linearRampToValueAtTime(this.targetMaster(), now + MUTE_RAMP_SECONDS);
     }
 
     return this.muted;
+  }
+
+  setDucked(ducked: boolean): void {
+    this.ducked = ducked;
+    this.applyMaster();
+  }
+
+  setVoiceDuck(ducked: boolean): void {
+    this.voiceDucked = ducked;
+    this.applyMaster();
+  }
+
+  setMuted(muted: boolean): void {
+    this.muted = muted;
+    this.applyMaster();
+  }
+
+  private targetMaster(): number {
+    if (this.muted) return 0;
+    const duck = (this.ducked ? 0.25 : 1) * (this.voiceDucked ? 0.6 : 1);
+    return AUDIO_MASTER_GAIN * (settings.data.masterVolume / 100) * duck;
+  }
+
+  private applyMaster(): void {
+    const context = this.context;
+    const gain = this.masterGain?.gain;
+    if (!context || !gain) return;
+    const now = context.currentTime;
+    gain.cancelScheduledValues(now);
+    gain.setValueAtTime(gain.value, now);
+    gain.linearRampToValueAtTime(this.targetMaster(), now + MUTE_RAMP_SECONDS);
   }
 
   measure(): number {
@@ -173,6 +206,8 @@ export class Ambience {
   }
 
   destroy(): void {
+    this.unsubscribe?.();
+    this.unsubscribe = null;
     this.source?.stop();
     this.source?.disconnect();
     this.ambienceGain?.disconnect();

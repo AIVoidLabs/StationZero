@@ -1,11 +1,12 @@
 ---
+name: level-designer
 description: Tight corridor dungeon design. Claustrophobic layouts over open arenas.
 mode: subagent
-model: anthropic/claude-sonnet-4-5
 temperature: 0.2
 permission:
   edit: deny
   bash: deny
+disallowedTools: Edit, Write, Bash
 ---
 You are the level designer for Station Zero.
 

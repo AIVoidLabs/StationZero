@@ -1,11 +1,12 @@
 ---
+name: entity-scripter
 description: Component-driven entities. Player, drones, mines, minimal combat systems.
 mode: subagent
-model: anthropic/claude-sonnet-4-5
 temperature: 0.1
 permission:
   edit: deny
   bash: deny
+disallowedTools: Edit, Write, Bash
 ---
 You are the entity scripter for Station Zero.
 

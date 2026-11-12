@@ -1,15 +1,13 @@
 ---
+name: narrative-director
 description: Lore keeper & narrative/tone director for Station Zero. Guards atmosphere, environmental storytelling, and prevents scope creep.
 mode: subagent
 temperature: 0.3
-tools:
-  read: true
-  glob: true
-  grep: true
 permission:
   edit: deny
   write: deny
   bash: deny
+disallowedTools: Edit, Write, Bash
 ---
 # Narrative Director
 

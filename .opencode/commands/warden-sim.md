@@ -1,7 +1,10 @@
 ---
 description: WARDEN spawn suggestions based on depth
 agent: warden-director
+argument-hint: "[arguments]"
 ---
+Delegate this to the `warden-director` subagent (Agent tool) and relay its answer.
+
 Suggest WARDEN director spawn plan for given depth.
 
 Parameters: $ARGUMENTS (e.g., "depth:5")

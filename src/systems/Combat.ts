@@ -11,6 +11,8 @@ import { createRng } from '../utils/random';
 import type { DepthManager } from './DepthManager';
 import type { Dungeon, DungeonExit, Room } from './DungeonGen';
 import type { Level } from './Level';
+import { Projectiles } from './Projectiles';
+import { runStats } from './RunStats';
 
 const COMBAT_SEED = 0x0d20e;
 
@@ -58,6 +60,7 @@ export class Combat {
   private readonly player: Player;
   private readonly onDroneKilled: ((drone: Drone) => void) | undefined;
   private readonly reportedDeaths = new Set<Drone>();
+  private readonly projectiles: Projectiles;
 
   constructor(
     scene: Scene,
@@ -70,6 +73,7 @@ export class Combat {
     this.scene = scene;
     this.player = player;
     this.onDroneKilled = onDroneKilled;
+    this.projectiles = new Projectiles(scene, level, player, () => this.drones);
     const rng = createRng(dungeon.seed ^ COMBAT_SEED);
 
     const candidates: SpawnCandidate[] = dungeon.rooms
@@ -102,7 +106,16 @@ export class Combat {
       if (!spawn) continue;
 
       this.drones.push(
-        new Drone(scene, level, player, depth, spawn.x, spawn.y, Math.floor(rng() * 0xffffff)),
+        new Drone(
+          scene,
+          level,
+          player,
+          depth,
+          spawn.x,
+          spawn.y,
+          Math.floor(rng() * 0xffffff),
+          this.projectiles,
+        ),
       );
     }
   }
@@ -111,7 +124,12 @@ export class Combat {
     return this.drones;
   }
 
+  get projectileSystem(): Projectiles {
+    return this.projectiles;
+  }
+
   update(deltaMs: number): void {
+    this.projectiles.update(deltaMs, this.scene.time.now);
     for (const drone of this.drones) {
       if (drone.isDead) {
         this.reportDeath(drone);
@@ -126,7 +144,7 @@ export class Combat {
       const d = drone.gridPosition;
       const dist = Math.hypot(d.x - p.x, d.y - p.y);
       if (dist <= 1.25 && drone.canDealContactDamage(this.scene.time.now)) {
-        this.player.takeDamage(DRONE_DAMAGE, this.scene.time.now);
+        this.player.takeDamage(DRONE_DAMAGE, this.scene.time.now, { x: p.x - d.x, y: p.y - d.y });
       }
     }
   }
@@ -134,10 +152,12 @@ export class Combat {
   private reportDeath(drone: Drone): void {
     if (this.reportedDeaths.has(drone)) return;
     this.reportedDeaths.add(drone);
+    runStats.kills += 1;
     this.onDroneKilled?.(drone);
   }
 
   destroy(): void {
+    this.projectiles.destroy();
     for (const drone of this.drones) drone.destroy();
     this.drones.length = 0;
     this.reportedDeaths.clear();

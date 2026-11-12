@@ -1,7 +1,10 @@
 ---
 description: Suggest tight corridor dungeon layout ideas
 agent: level-designer
+argument-hint: "[arguments]"
 ---
+Delegate this to the `level-designer` subagent (Agent tool) and relay its answer.
+
 Suggest a claustrophobic dungeon layout for Station Zero.
 
 Parameters: $ARGUMENTS (e.g., "size:20x20 depth:3")

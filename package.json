@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "art:build": "node tools/build-art.mjs",
-    "audio:build": "node tools/build-audio.mjs",
+    "audio:build": "node tools/build-audio.mjs && node tools/build-music.mjs && node tools/build-voice.mjs",
+    "art:v2": "node tools/gen-player-sprites.mjs && node tools/gen-world-v2.mjs && node tools/gen-menu-art.mjs && node tools/gen-cutscene-art.mjs",
     "levels:bake": "node tools/bake-levels.mjs",
     "levels:check": "node tools/check-levels.mjs"
   },

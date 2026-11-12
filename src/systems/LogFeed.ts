@@ -1,6 +1,7 @@
 import type { GameObjects, Scene } from 'phaser';
 import { LOG_REACH_TILES, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
-import { CORRUPTED_LOGS, SEALED_LOG } from '../data/logs';
+import { floorLogs } from '../data/logs';
+import { t, type StringKey } from '../i18n';
 import { gridVectorToWorld } from '../utils/iso';
 
 export interface TerminalCell {
@@ -11,10 +12,15 @@ export interface TerminalCell {
 const LABEL_OFFSET_Y = 56;
 const FADE_PER_SECOND = 3.2;
 
-function logFor(cell: TerminalCell, sealed: boolean): string {
-  if (sealed) return SEALED_LOG;
+export function logKeyFor(cell: TerminalCell, floor: number): StringKey {
   const hash = ((cell.x * 73856093) ^ (cell.y * 19349663)) >>> 0;
-  return CORRUPTED_LOGS[hash % CORRUPTED_LOGS.length] ?? CORRUPTED_LOGS[0] ?? '';
+  const index = (hash % 4) + 1;
+  return `log.b${Math.max(1, Math.min(4, floor + 1))}.${index}` as StringKey;
+}
+
+function logFor(cell: TerminalCell, floor: number): string {
+  void floorLogs;
+  return t(logKeyFor(cell, floor));
 }
 
 function step(current: number, target: number, delta: number): number {
@@ -27,13 +33,13 @@ function step(current: number, target: number, delta: number): number {
 export class LogFeed {
   private readonly label: GameObjects.Text;
   private readonly terminals: readonly TerminalCell[];
-  private readonly sealed: boolean;
+  private readonly floor: number;
   private active = -1;
   private alpha = 0;
 
-  constructor(scene: Scene, terminals: readonly TerminalCell[], sealed = false) {
+  constructor(scene: Scene, terminals: readonly TerminalCell[], floor = 0) {
     this.terminals = terminals;
-    this.sealed = sealed;
+    this.floor = floor;
     this.label = scene.add
       .text(0, 0, '', {
         fontFamily: 'monospace',
@@ -73,7 +79,7 @@ export class LogFeed {
 
     const iso = gridVectorToWorld(cell.x, cell.y, TILE_WIDTH, TILE_HEIGHT);
     this.label
-      .setText(logFor(cell, this.sealed))
+      .setText(logFor(cell, this.floor))
       .setPosition(iso.x, iso.y - LABEL_OFFSET_Y)
       .setDepth(iso.y);
   }

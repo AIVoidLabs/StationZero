@@ -12,9 +12,9 @@ const DECAL_SEED = 0xdecaf;
 const TERMINAL_SEED = 0x7e34a;
 const MAX_PROPS = 10;
 const MIN_TERMINALS = 3;
-const MAX_DECALS = 22;
+const MAX_DECALS = 12;
 const PROPS_PER_FLOOR = 2;
-const DECALS_PER_FLOOR = 4;
+const DECALS_PER_FLOOR = 2;
 const PROP_FRAMES = {
   barrel: 0,
   crate: 1,
@@ -60,7 +60,7 @@ export class Decor {
       MIN_TERMINALS + 5 + dungeon.floor * PROPS_PER_FLOOR,
     );
     this.propBudget = Math.max(1, propTarget - this.terminalTarget);
-    this.decalTarget = Math.min(MAX_DECALS, 10 + dungeon.floor * DECALS_PER_FLOOR);
+    this.decalTarget = Math.min(MAX_DECALS, 5 + dungeon.floor * DECALS_PER_FLOOR);
 
     this.placeProps(dungeon);
     this.placeTerminals(dungeon);
@@ -212,7 +212,7 @@ export class Decor {
         .image(iso.x, iso.y, 'decals', frame)
         .setOrigin(0.5, 0.5)
         .setDepth(DEPTH_FLOOR + 1)
-        .setAlpha(0.55 + rng() * 0.3)
+        .setAlpha(0.35 + rng() * 0.2)
         .setFlipX(rng() < 0.5)
         .setFlipY(rng() < 0.5);
       this.images.push(image);

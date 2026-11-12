@@ -1,7 +1,10 @@
 ---
 description: Suggest minimal drone AI with LOS for testing
 agent: combat-ai
+argument-hint: "[arguments]"
 ---
+Delegate this to the `combat-ai` subagent (Agent tool) and relay its answer.
+
 Suggest a minimal drone AI implementation for testing.
 
 Parameters: $ARGUMENTS

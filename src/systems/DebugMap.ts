@@ -95,8 +95,8 @@ export class DebugMap {
 
     this.container.setScale(scale);
     this.container.setPosition(
-      view.right - MARGIN * scale - this.width * scale,
-      view.top + MARGIN * scale,
+      view.left + MARGIN * scale,
+      view.bottom - MARGIN * scale - this.height * scale,
     );
   }
 }
