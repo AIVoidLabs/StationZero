@@ -16,7 +16,7 @@ const LINES: readonly CreditLine[] = [
   { text: 'AIVoidLabs' },
   '',
   'credits.source',
-  { text: 'github.com/AIVoidLabs/MoatWanted' },
+  { text: 'github.com/AIVoidLabs/StationZero' },
   '',
   'credits.engine',
   { text: 'Phaser 4' },
