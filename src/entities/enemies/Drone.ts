@@ -2,9 +2,7 @@ import type { GameObjects, Scene } from 'phaser';
 import {
   DRONE_DEAD_V2_KEY,
   DRONE_FRAME,
-  DRONE_SPRITE_KEY,
   DRONE_V2_SPRITE_KEY,
-  selectWorldArt,
   type Direction,
 } from '../../assets/manifest';
 import {
@@ -91,9 +89,7 @@ export class Drone extends Entity {
   private readonly homeX: number;
   private readonly homeY: number;
   private readonly bobPhase: number;
-  private readonly spriteKey: string;
   private readonly projectiles: Projectiles | null;
-  private readonly wreckKey: string | null;
 
   private posX: number;
   private posY: number;
@@ -107,7 +103,6 @@ export class Drone extends Entity {
   private lostSightMs = 0;
   private lastKnownX: number;
   private lastKnownY: number;
-  private visualKey = '';
   private visualFrame = -1;
 
   private hp: number;
@@ -141,8 +136,6 @@ export class Drone extends Entity {
     this.depthManager = depth;
     this.projectiles = projectiles;
     this.rng = createRng(seed);
-    this.wreckKey =
-      selectWorldArt().drone && scene.textures.exists(DRONE_DEAD_V2_KEY) ? DRONE_DEAD_V2_KEY : null;
     this.fireCooldownMs = 800 + createRng(seed ^ 0x51)() * 1400;
     this.homeX = homeX;
     this.homeY = homeY;
@@ -159,14 +152,8 @@ export class Drone extends Entity {
 
     this.shadow = scene.add.image(0, 0, 'shadow').setOrigin(0.5, 0.5).setScale(0.8).setAlpha(0.65);
 
-    const spriteKey = selectWorldArt().drone ? DRONE_V2_SPRITE_KEY : DRONE_SPRITE_KEY;
-    const hasAtlas = scene.textures.exists(spriteKey);
-    this.spriteKey = spriteKey;
-    this.sprite = hasAtlas
-      ? scene.add.image(0, 0, spriteKey, DRONE_FRAME[this.facing])
-      : scene.add.image(0, 0, `drone_${this.facing}`);
-    this.visualKey = hasAtlas ? spriteKey : `drone_${this.facing}`;
-    this.visualFrame = hasAtlas ? DRONE_FRAME[this.facing] : -1;
+    this.sprite = scene.add.image(0, 0, DRONE_V2_SPRITE_KEY, DRONE_FRAME[this.facing]);
+    this.visualFrame = DRONE_FRAME[this.facing];
     this.sprite.setOrigin(0.5, 1);
     this.healthBarBack = scene.add
       .rectangle(0, HEALTH_BAR_Y, HEALTH_BAR_WIDTH + 2, HEALTH_BAR_HEIGHT + 2, 0x0a0a0a, 0.9)
@@ -225,7 +212,6 @@ export class Drone extends Entity {
 
   update(deltaMs: number): void {
     if (this.dead) {
-      if (this.wreckKey === null) this.sprite.setVisible(false);
       this.shadow.setVisible(false);
       this.setHealthBarVisible(false);
       return;
@@ -666,10 +652,8 @@ export class Drone extends Entity {
     this.diedAt = this.scene.time.now;
     this.fireState = 'NONE';
     this.shadow.setVisible(false);
-    if (this.wreckKey === null) return;
-
     this.sprite.clearTint();
-    this.sprite.setTexture(this.wreckKey);
+    this.sprite.setTexture(DRONE_DEAD_V2_KEY);
     this.sprite.setOrigin(0.5, 1);
     this.sprite.y = 0;
     this.sprite.setFlipX(this.rng() < 0.5);
@@ -754,20 +738,10 @@ export class Drone extends Entity {
   }
 
   private applyFacingFrame(): void {
-    const hasAtlas = this.scene.textures.exists(this.spriteKey);
-    const key = hasAtlas ? this.spriteKey : `drone_${this.facing}`;
-    const frame = hasAtlas ? DRONE_FRAME[this.facing] : -1;
-
-    if (this.visualKey === key && this.visualFrame === frame) return;
-    this.visualKey = key;
+    const frame = DRONE_FRAME[this.facing];
+    if (this.visualFrame === frame) return;
     this.visualFrame = frame;
-
-    if (frame >= 0) {
-      this.sprite.setTexture(key, frame);
-      return;
-    }
-
-    this.sprite.setTexture(key);
+    this.sprite.setTexture(DRONE_V2_SPRITE_KEY, frame);
   }
 
   destroy(fromScene?: boolean): void {

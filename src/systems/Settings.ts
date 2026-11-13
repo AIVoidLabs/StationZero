@@ -1,7 +1,5 @@
 import { readJson, writeJson } from '../utils/storage';
 
-export type ArtStyle = 'v2' | 'classic';
-
 export type Language = 'en' | 'tr';
 
 export type KeyAction = 'up' | 'down' | 'left' | 'right' | 'attack' | 'interact' | 'mute' | 'pause';
@@ -19,7 +17,6 @@ export interface SettingsData {
   cutscenes: boolean;
   voice: boolean;
   seenHints: string[];
-  artStyle: ArtStyle;
   language: Language;
   keys: Record<KeyAction, number>;
 }
@@ -77,7 +74,6 @@ function defaults(): SettingsData {
     cutscenes: true,
     voice: true,
     seenHints: [],
-    artStyle: 'v2',
     language: detectLanguage(),
     keys: { ...DEFAULT_KEYS },
   };
@@ -108,7 +104,6 @@ class SettingsStore {
     if (typeof stored.voice === 'boolean') this.data.voice = stored.voice;
     if (Array.isArray(stored.seenHints)) this.data.seenHints = stored.seenHints.filter((id) => typeof id === 'string');
     if (stored.language === 'en' || stored.language === 'tr') this.data.language = stored.language;
-    if (stored.artStyle === 'v2' || stored.artStyle === 'classic') this.data.artStyle = stored.artStyle;
     if (stored.keys) {
       for (const action of KEY_ACTIONS) {
         const code = stored.keys[action];

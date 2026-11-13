@@ -10,6 +10,7 @@ import { End } from './scenes/End';
 import { Intro } from './scenes/Intro';
 import { DialogueScene } from './scenes/Dialogue';
 import { Cutscene } from './scenes/Cutscene';
+import { isDebugMode } from './utils/devflags';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: AUTO,
@@ -28,6 +29,6 @@ const config: Phaser.Types.Core.GameConfig = {
 
 const game = new PhaserGame(config);
 
-if (window.location.search.includes('debug')) {
+if (isDebugMode()) {
   (window as unknown as { __game?: PhaserGame }).__game = game;
 }

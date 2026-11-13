@@ -1,10 +1,12 @@
 import type { GameObjects, Scene } from 'phaser';
 import {
   PLAYER_AIM_FRAMES,
+  PLAYER_AIM_KEY,
   PLAYER_FRAME,
-  selectPlayerArt,
+  PLAYER_IDLE_KEY,
+  PLAYER_WALK_FRAMES,
+  PLAYER_WALK_KEY,
   type Direction,
-  type PlayerArt,
 } from '../assets/manifest';
 import {
   DEPTH_MARKER,
@@ -22,7 +24,6 @@ import {
   PLAYER_MAX_HP,
   PLAYER_SPEED,
   PLAYER_STRIDE_TILES,
-  PLAYER_SWAY_PX,
   TILE_HEIGHT,
   TILE_WIDTH,
 } from '../data/config';
@@ -82,7 +83,6 @@ export class Player extends Entity {
   private gridPosY: number;
   private walkPhase = 0;
   private walkStep = 0;
-  private readonly art: PlayerArt = selectPlayerArt();
   private aimUntil = 0;
   private fireUntil = 0;
   private spin: SpinState | null = null;
@@ -262,12 +262,9 @@ export class Player extends Entity {
     this.combatState = 'IDLE';
 
     this.shadow = scene.add.image(0, 0, 'shadow').setOrigin(0.5, 0.5);
-    const hasIdleAtlas = scene.textures.exists(this.art.idleKey);
-    this.sprite = hasIdleAtlas
-      ? scene.add.image(0, 0, this.art.idleKey, PLAYER_FRAME[this.facing])
-      : scene.add.image(0, 0, `player_${this.facing}`);
-    this.visualKey = hasIdleAtlas ? this.art.idleKey : `player_${this.facing}`;
-    this.visualFrame = hasIdleAtlas ? PLAYER_FRAME[this.facing] : -1;
+    this.sprite = scene.add.image(0, 0, PLAYER_IDLE_KEY, PLAYER_FRAME[this.facing]);
+    this.visualKey = PLAYER_IDLE_KEY;
+    this.visualFrame = PLAYER_FRAME[this.facing];
     this.sprite.setOrigin(0.5, 1);
     this.add([this.shadow, this.sprite]);
 
@@ -305,15 +302,15 @@ export class Player extends Entity {
     if (this.dead) {
       this.path = [];
       this.moving = false;
-      this.updateVisual(dt, 0);
+      this.updateVisual(0);
       return;
     }
     if (this.spin) {
-      this.updateSpin(deltaMs, dt);
+      this.updateSpin(deltaMs);
       return;
     }
     if (this.stunMs > 0) {
-      this.updateKnockback(deltaMs, dt);
+      this.updateKnockback(deltaMs);
       return;
     }
     const hasInput = input !== null && (input.x !== 0 || input.y !== 0);
@@ -336,7 +333,7 @@ export class Player extends Entity {
 
     const travelled = Math.hypot(this.gridPosX - fromX, this.gridPosY - fromY);
     this.trackFootsteps(travelled);
-    this.updateVisual(dt, travelled);
+    this.updateVisual(travelled);
   }
 
   private trackFootsteps(travelled: number): void {
@@ -351,7 +348,7 @@ export class Player extends Entity {
     sfx.play(name, 0.55, pitch);
   }
 
-  private updateSpin(deltaMs: number, dt: number): void {
+  private updateSpin(deltaMs: number): void {
     const spin = this.spin;
     if (!spin) return;
     spin.t = Math.min(spin.duration, spin.t + deltaMs);
@@ -367,10 +364,10 @@ export class Player extends Entity {
 
     const turn = Math.min(0.999, spin.t / spin.duration);
     this.facing = SPIN_ORDER[Math.floor(turn * SPIN_ORDER.length)] ?? 'S';
-    this.updateVisual(dt, 0);
+    this.updateVisual(0);
   }
 
-  private updateKnockback(deltaMs: number, dt: number): void {
+  private updateKnockback(deltaMs: number): void {
     const before = this.stunMs;
     const after = Math.max(0, before - deltaMs);
     const ease = (remaining: number): number => {
@@ -381,7 +378,7 @@ export class Player extends Entity {
     if (this.moveBy(this.knockX * distance, this.knockY * distance)) this.syncTransform();
     this.stunMs = after;
     this.moving = false;
-    this.updateVisual(dt, 0);
+    this.updateVisual(0);
   }
 
   setDestination(gridX: number, gridY: number): boolean {
@@ -533,18 +530,16 @@ export class Player extends Entity {
     this.facing = next;
   }
 
-  private updateVisual(dt: number, travelled: number): void {
+  private updateVisual(travelled: number): void {
     if (this.moving) {
       this.walkPhase = (this.walkPhase + travelled / PLAYER_STRIDE_TILES) % 1;
-      this.walkStep = Math.floor(this.walkPhase * this.art.walkFrames) % this.art.walkFrames;
-      const sway = this.art.aimKey !== null ? 0 : this.walkStep < this.art.walkFrames / 2 ? -1 : 1;
-      this.sprite.x = sway * PLAYER_SWAY_PX;
+      this.walkStep = Math.floor(this.walkPhase * PLAYER_WALK_FRAMES) % PLAYER_WALK_FRAMES;
     } else {
       this.walkPhase = 0;
       this.walkStep = 0;
-      this.sprite.x += (0 - this.sprite.x) * Math.min(1, dt * 14);
     }
 
+    this.sprite.x = 0;
     this.sprite.y = 0;
     if (!this.dead) {
       if (this.stunMs > 0) {
@@ -558,35 +553,26 @@ export class Player extends Entity {
 
   private applyVisualFrame(): void {
     const now = this.scene.time.now;
-    const aiming = this.art.aimKey !== null && !this.moving && now < this.aimUntil;
-    const walking = this.moving && this.scene.textures.exists(this.art.walkKey);
+    const aiming = !this.moving && now < this.aimUntil;
     const directionIndex = PLAYER_FRAME[this.facing];
 
-    let key = this.art.idleKey;
+    let key = PLAYER_IDLE_KEY;
     let frame = directionIndex;
-    if (aiming && this.art.aimKey !== null) {
-      key = this.art.aimKey;
+    if (aiming) {
+      key = PLAYER_AIM_KEY;
       let phase = 0;
       if (now < this.fireUntil) phase = 1;
       else if (this.aimUntil - now < AIM_LOWER_MS) phase = 2;
       frame = directionIndex * PLAYER_AIM_FRAMES + phase;
-    } else if (walking) {
-      key = this.art.walkKey;
-      frame = directionIndex * this.art.walkFrames + this.walkStep;
-    }
-    const resolvedKey = this.scene.textures.exists(key) ? key : `player_${this.facing}`;
-    const resolvedFrame = resolvedKey === key ? frame : -1;
-
-    if (this.visualKey === resolvedKey && this.visualFrame === resolvedFrame) return;
-    this.visualKey = resolvedKey;
-    this.visualFrame = resolvedFrame;
-
-    if (resolvedFrame >= 0) {
-      this.sprite.setTexture(resolvedKey, resolvedFrame);
-      return;
+    } else if (this.moving) {
+      key = PLAYER_WALK_KEY;
+      frame = directionIndex * PLAYER_WALK_FRAMES + this.walkStep;
     }
 
-    this.sprite.setTexture(resolvedKey);
+    if (this.visualKey === key && this.visualFrame === frame) return;
+    this.visualKey = key;
+    this.visualFrame = frame;
+    this.sprite.setTexture(key, frame);
   }
 
   private showMarker(gridX: number, gridY: number, reachable: boolean): void {

@@ -2,7 +2,6 @@ import { BlendModes, type GameObjects, type Scene } from 'phaser';
 import {
   DOOR_CLOSED_V2_KEY,
   DOOR_OPEN_V2_KEY,
-  selectWorldArt,
 } from '../assets/manifest';
 import {
   DEPTH_DARKNESS,
@@ -17,7 +16,6 @@ import { gridVectorToWorld } from '../utils/iso';
 import type { DungeonExit } from './DungeonGen';
 import {
   DESCENT_GLOW_KEY,
-  DESCENT_HATCH_KEY,
   DESCENT_SHAFT_KEY,
   DESCENT_SIGNAL_KEY,
 } from './PlaceholderArt';
@@ -26,7 +24,6 @@ export type DoorState = 'LOCKED' | 'OPENING' | 'OPEN';
 
 const CELL_RADIUS = 0.55;
 const SIGNAL_NEAR_TILES = 3;
-const LOCKED_TINT = 0x7a5a5a;
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
@@ -38,9 +35,6 @@ export class DescentGate {
   private readonly glow: GameObjects.Image;
   private readonly signal: GameObjects.Image;
   private readonly shaft: GameObjects.Image;
-  private readonly lamp: GameObjects.Arc;
-  private readonly closedKey: string | null;
-  private readonly openKey: string | null;
 
   private doorState: DoorState = 'LOCKED';
   private openMs = 0;
@@ -50,18 +44,11 @@ export class DescentGate {
   constructor(scene: Scene, exit: DungeonExit) {
     this.exit = exit;
     const iso = gridVectorToWorld(exit.x, exit.y, TILE_WIDTH, TILE_HEIGHT);
-    const useV2 =
-      selectWorldArt().door &&
-      scene.textures.exists(DOOR_CLOSED_V2_KEY) &&
-      scene.textures.exists(DOOR_OPEN_V2_KEY);
-    this.closedKey = useV2 ? DOOR_CLOSED_V2_KEY : null;
-    this.openKey = useV2 ? DOOR_OPEN_V2_KEY : null;
 
     this.hatch = scene.add
-      .image(iso.x, iso.y, this.closedKey ?? DESCENT_HATCH_KEY)
+      .image(iso.x, iso.y, DOOR_CLOSED_V2_KEY)
       .setOrigin(0.5, 0.5)
       .setDepth(DEPTH_FLOOR + 2);
-    if (!useV2) this.hatch.setTint(LOCKED_TINT);
 
     this.glow = scene.add
       .image(iso.x, iso.y, DESCENT_GLOW_KEY)
@@ -84,12 +71,6 @@ export class DescentGate {
       .setDepth(DEPTH_DARKNESS + 1)
       .setBlendMode(BlendModes.ADD)
       .setAlpha(0);
-
-    this.lamp = scene.add
-      .circle(iso.x, iso.y - 2, 2.2, 0xff3a22, 1)
-      .setDepth(DEPTH_FLOOR + 4)
-      .setBlendMode(BlendModes.ADD);
-    if (useV2) this.lamp.setVisible(false);
   }
 
   get state(): DoorState {
@@ -114,9 +95,7 @@ export class DescentGate {
     if (this.doorState !== 'LOCKED') return;
     this.doorState = 'OPENING';
     this.openMs = 0;
-    if (this.openKey !== null) this.hatch.setTexture(this.openKey);
-    else this.hatch.clearTint();
-    this.lamp.setVisible(false);
+    this.hatch.setTexture(DOOR_OPEN_V2_KEY);
   }
 
   update(deltaMs: number, player: Player): boolean {
@@ -136,9 +115,7 @@ export class DescentGate {
       1 - (distance - SIGNAL_NEAR_TILES) / (DESCENT_SIGNAL_RANGE - SIGNAL_NEAR_TILES),
     );
 
-    if (this.doorState === 'LOCKED') {
-      this.lamp.setAlpha(0.45 + pulse * 0.55);
-    } else {
+    if (this.doorState !== 'LOCKED') {
       this.glow.setScale(0.9 + openness * 0.2).setAlpha((0.36 + pulse * 0.1) * openness);
       this.signal.setAlpha(
         proximity <= 0 ? 0 : (0.18 + proximity * 0.42) * (0.8 + pulse * 0.2) * openness,
@@ -169,6 +146,5 @@ export class DescentGate {
     this.glow.destroy();
     this.signal.destroy();
     this.shaft.destroy();
-    this.lamp.destroy();
   }
 }

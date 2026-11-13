@@ -2,7 +2,7 @@ import type { GameObjects, Scene } from 'phaser';
 import { GAME_HEIGHT, GAME_WIDTH } from '../data/config';
 import { sfx } from './Sfx';
 import { t } from '../i18n';
-import { KEY_ACTIONS, keyName, settings, type ArtStyle, type KeyAction, type Language } from './Settings';
+import { KEY_ACTIONS, keyName, settings, type KeyAction, type Language } from './Settings';
 
 export interface MenuItem {
   readonly label: () => string;
@@ -37,7 +37,6 @@ function text(value: string | (() => string) | undefined): string {
 }
 
 const FONT = 'monospace';
-const NO_MOUSE = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('nomouse');
 const ITEM_HEIGHT = 26;
 const BODY_LINE_HEIGHT = 16;
 const PANEL_PADDING = 22;
@@ -358,26 +357,25 @@ export class MenuController {
         .rectangle(this.centerX, rowY + (ITEM_HEIGHT - 2) / 2, buttonWidth, ITEM_HEIGHT - 4, BUTTON_FILL, 0)
         .setStrokeStyle(1, 0x3a3022, 0.7)
         .setDepth(10.5);
-      if (!NO_MOUSE) {
-        button.setInteractive({ useHandCursor: true });
-        button.on('pointerover', () => {
-          const item = page.items[index];
-          if (!item || !this.isEnabled(item) || this.capture) return;
-          this.selected = index;
-          sfx.play('uiMove');
-          this.refresh();
-        });
-        button.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-          const item = page.items[index];
-          if (!item || !this.isEnabled(item) || this.capture) return;
-          this.selected = index;
-          if (item.onAdjust && !item.onSelect && pointer.x < this.centerX - buttonWidth / 6) {
-            this.adjust(-1);
-            return;
-          }
-          this.activate();
-        });
-      }
+      button.setInteractive({ useHandCursor: true });
+      button.on('pointerover', () => {
+        const item = page.items[index];
+        if (!item || !this.isEnabled(item) || this.capture) return;
+        this.selected = index;
+        sfx.play('uiMove');
+        this.refresh();
+      });
+      button.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        const item = page.items[index];
+        if (!item || !this.isEnabled(item) || this.capture) return;
+        this.selected = index;
+        if (item.onAdjust && !item.onSelect && pointer.x < this.centerX - buttonWidth / 6) {
+          this.adjust(-1);
+          return;
+        }
+        this.activate();
+      });
+    
       this.itemButtons.push(button);
 
       const text = this.scene.add
@@ -535,14 +533,6 @@ export function buildSettingsPage(controller: MenuController): MenuPage {
       {
         label: () => t('settings.resetHints'),
         onSelect: () => settings.resetHints(),
-      },
-      {
-        label: () =>
-          row(t('settings.artStyle'), settings.data.artStyle === 'v2' ? t('settings.artNew') : t('settings.artClassic')),
-        onAdjust: () => {
-          const next: ArtStyle = settings.data.artStyle === 'v2' ? 'classic' : 'v2';
-          settings.update({ artStyle: next });
-        },
       },
       {
         label: () => row(t('settings.language'), t('settings.languageName')),

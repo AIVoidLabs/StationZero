@@ -1,217 +1,170 @@
 # Station Zero
 
-A 2D isometric retro-futuristic dungeon crawler focused on pure survival. Trapped in the sealed penal-mining colony `Penal Colony-Null`, you are a forgotten Exile with fragmented memories. The central control unit `WARDEN` still enforces its expired Cease Protocol. There is no guaranteed escape — survival is the objective.
+![Station Zero main menu](docs/screenshots/menu.png)
 
-## Game Design Pillars
+> *"Colony-Null was sealed. Everyone was forgotten. WARDEN still enforces the protocol."*
 
-- **Survival-first** — No scripted rescue. Survive one more step.
-- **Environmental storytelling** — Tell the story through broken panels, terminals, faded labels, and corrupted logs.
-- **Claustrophobic action** — Tight corridors, tight corners, and oppressive spaces over wide-open arenas.
-- **Minimal scope** — Focus on `Exploration + Mining + Avoidance/Combat`. Avoid feature creep.
-- **Dark & unsettling** — Lean into tension and oppressive atmosphere over jump scares.
+**Station Zero** is a 2D isometric, retro-futuristic survival dungeon crawler for the browser. You are the *Exile*, a forgotten prisoner dropped into **Penal Colony-Null**, a sealed subterranean mining colony. Its control AI, **WARDEN**, still enforces an expired protocol with rogue maintenance drones. There is no rescue. The goal is to survive one more floor.
 
-## Tech Stack
+Built with TypeScript (strict), Phaser 4 and Vite. All art is drawn in code and all audio is synthesised by the build tools, so the repository contains no third-party assets.
 
-- **Language:** [TypeScript](https://www.typescriptlang.org/) (Strict mode)
-- **Engine:** [Phaser v4](https://phaser.io/) (HTML5 Canvas / WebGL)
-- **Build Tool:** [Vite](https://vitejs.dev/)
-- **Perspective:** 2D Isometric (Dimetric 2:1 ratio)
-- **Architecture:** Modular, component-driven Phaser Scenes and Entities
+## Screenshots
 
-## Getting Started
+| | |
+| --- | --- |
+| ![Exploring B2 with the lantern](docs/screenshots/gameplay.png)<br>**Explore** a dark, claustrophobic floor with a lantern | ![A drone firing a red bullet](docs/screenshots/combat.png)<br>**Avoid or fight** drones: slow red bullets, limited ammo |
+| ![Terminal dialogue](docs/screenshots/dialogue.png)<br>**Read** branching terminals; your choices decide the ending | ![Fog-of-war minimap](docs/screenshots/map.png)<br>**Map** fills in as you explore (B3, 95 % explored) |
+| ![Intro cutscene](docs/screenshots/cutscene-intro.png)<br>**Cutscenes** between floors | ![WARDEN Core descent cutscene](docs/screenshots/cutscene-warden.png)<br>**WARDEN** grows more aggressive with depth |
+| ![Settings](docs/screenshots/settings.png)<br>**Settings**, key rebinding, English / Turkish | ![End screen](docs/screenshots/end.png)<br>**Run report** and local records |
 
-### Prerequisites
+## Features
 
-- [Node.js](https://nodejs.org/) (LTS recommended)
-- [npm](https://www.npmjs.com/)
+- Isometric dimetric 2:1 projection with mandatory depth sorting, grid-based collision and click-to-walk (A\*)
+- Four hand-baked 27×27 floors (**B1 Intake → B4 WARDEN Core**) with rising pressure: less light, sharper drones, longer silences
+- Light-map darkness: a lantern, a character light, muzzle/death flares and a fog-of-war minimap with *% explored*
+- Rogue drones with line-of-sight, aggro/search/disengage, red wind-up warnings and dodgeable slow bullets
+- WARDEN as a *director*: light dips, ambience silences, arrival/clear announcements
+- Pistol + melee, stims and ammo, knockback, HUD feedback
+- Branching terminal dialogue with hidden effects and two endings (compliant / defiant) plus death
+- Illustrated cutscenes, synthetic character voices, ambience, music, SFX and per-material footsteps
+- Main / pause / end menus, save & continue, local records, key rebinding
+- English and Turkish localisation (typed string tables)
 
-### Installation
+Design details: [Game Design Document](docs/GDD.md). Story, terminals and endings (spoilers): [Scenario](docs/SCENARIO.md).
+
+## How to play
+
+**Objective:** destroy every hostile on a floor to unseal the hatch, then step onto it to descend. Reach the end of B4 and clear it to finish the run.
+
+| Action | Default input |
+| --- | --- |
+| Move | `W` `A` `S` `D` or arrow keys (screen-relative, 8 directions), or click the floor to walk there |
+| Attack / aim | Left-click a drone or press `Space` |
+| Fire pistol | Right-click |
+| Use terminal | `E` |
+| Mute | `M` |
+| Pause | `Esc` |
+
+All keys can be rebound in *Settings → Controls*. Tips: drones flash red before they fire; bullets are slower than you; break line of sight; green pickups heal, amber pickups give ammo; many fights are better avoided.
+
+## Requirements
+
+| What | Needed for | Version |
+| --- | --- | --- |
+| [Node.js](https://nodejs.org/) + npm | everything | Node 20.19+ or 22.12+ (developed on Node 24) |
+| A browser with WebGL and Web Audio | playing | any current Chrome, Firefox, Edge or Safari |
+| [ffmpeg](https://ffmpeg.org/) (with the `flite` filter) | `npm run audio:build` only | optional |
+| [espeak-ng](https://github.com/espeak-ng/espeak-ng) + Python 3 | Turkish voices in `npm run audio:build` only | optional |
+
+Generated assets are committed to the repository, so ffmpeg/espeak-ng are **not** needed to run, develop or build the game.
+
+### Dependencies
+
+| Package | Role | Version |
+| --- | --- | --- |
+| `phaser` | game engine (runtime) | ^4.2.1 |
+| `typescript` | strict type checking / compile | ^7.0.2 |
+| `vite` | dev server and bundler | ^8.3.5 |
+| `sharp` | image generation in the art tools | ^0.35.5 |
+
+## Getting started
 
 ```bash
-# Clone the repository
-git clone <repo-url>
+git clone https://github.com/AIVoidLabs/StationZero.git
 cd StationZero
-
-# Install dependencies
 npm install
-```
-
-### Development
-
-```bash
-# Start Vite dev server
 npm run dev
-
-# Type check without emitting files
-npm run typecheck
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
 ```
 
-### Art Pipeline
+Open <http://localhost:5173>.
 
-Source atlases live in `art-source/` and are never loaded at runtime. `npm run art:build` slices, trims, downscales and packs them into `assets/art/runtime/`, which is what the game loads. It also writes numbered mapping previews to `art-preview/` (gitignored).
+### Scripts
 
-```bash
-# Rebuild runtime spritesheets + textures and mapping previews
-npm run art:build
-```
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Vite dev server with hot reload |
+| `npm run typecheck` | `tsc --noEmit` (run this after every change) |
+| `npm run build` | `tsc` + production bundle in `dist/` (static files, host anywhere) |
+| `npm run preview` | Serve the production bundle locally |
+| `npm run levels:check` | Validate the baked level JSON files |
+| `npm run levels:bake` | Regenerate the level JSON from `DungeonGen` (overwrites the files) |
+| `npm run art:v2` | Regenerate player, world, menu and cutscene art into `assets/art/v2` |
+| `npm run art:build` | Rebuild `props.png` and `decals.png` from the gitignored `art-source/` sheets |
+| `npm run audio:build` | Rebuild ambience, music and voices into `assets/audio` (needs ffmpeg, espeak-ng) |
 
-- `player.png` — 8 idle frames, one per direction (`N, NE, E, SE, S, SW, W, NW`)
-- `player_walk.png` — 32 walk frames, 4 per direction, same order and 32×48 cells. The source is a single 8-column × 4-row sheet in the standard direction order (`N, NE, E, SE, S, SW, W, NW`): each column is one direction and each row is one pose of the `contact → passing → contact → passing` cycle, so every direction plays four authored poses with no mirroring.
-- `props.png` — 4 blocking props (`0 barrel, 1 crate, 2 terminal, 3 pipe`)
-- `decals.png` — 2 non-blocking floor decals
-- `textures/*.png` — 5 seamless material sources (`floor_a, floor_b, grate, wall_a, wall_b`) used by the `iso_tiles` atlas
+### Developer flags (dev server only)
 
-Art is generated externally (ChatGPT); this repository only stores the raw atlases and the build script that produces runtime assets. Do not add generated files directly to `assets/`.
+Production builds ignore these on purpose.
 
-### Audio Pipeline
+| URL | Effect |
+| --- | --- |
+| `?debug` | Exposes `window.__game` (Phaser game) and `window.__sz` (level, player, combat, …) for inspection |
+| `?depth=N` | Start on floor `N` (0 = B1 … 3 = B4), skip the menu, no autosave. Example: `/?debug&depth=2` |
 
-The ambience bed is baked, not synthesized at runtime. `tools/build-audio.mjs` generates a 24 s loop (ventilation-dominant filtered noise, a faint 50 Hz mains hum, a soft air band around 1.6 kHz, one distant rumble), normalizes it, equal-power crossfades the tail over the head, then lowpasses the mix at 3.2 kHz and encodes 32 kHz mono OGG Vorbis (`-q:a 6`) through `ffmpeg`, reporting loop seam and decoder padding. The bandwidth cap, the quiet hum and the higher quality setting exist to keep codec hiss out of a very quiet bed.
-
-```bash
-# Rebuild the ambience bed (requires ffmpeg on PATH)
-npm run audio:build
-```
-
-`assets/audio/ambience.ogg` is the committed runtime asset. `art-preview/audio-ambience.png` is a throwaway spectrogram for tuning and is gitignored. The game plays it as one looping `AudioBufferSourceNode` through a master gain; `M` mutes.
-
-### Controls
-
-- **WASD / Arrow keys** — Move (8 directions, screen-relative)
-- **Hover** — Preview the tile under the pointer; walls and props blocking that tile fade out
-- **Left click** — Walk to a reachable tile (A* pathfinding)
-- **M** — Mute / unmute the ambience
-- Any movement key cancels a click path.
-
-The game currently boots into a four-floor descent. Terminals along the rooms show a short corrupted log line when you stand next to them, and a continuous ventilation ambience runs underneath. Floors are authored as JSON in `src/data/levels/` and loaded at boot: floors 0–2 hold a descent hatch in a far room. A faint amber light shaft always marks the hatch and brightens as you approach. Stand on the hatch for about 0.9 s to descend; stepping off resets the dwell. The screen fades out, input freezes, and the next floor fades in. On arrival on floors 1–3, WARDEN forces a light dip and silence once the fade completes. Floor 3 is sealed: no hatch, no further descent, and its lone terminal repeats the seal notice.
-
-Pressure is fixed per floor rather than by walking distance. Every floor down closes the vision gradient (1 → 0.65) and lantern (1 → 0.68), raises silence chance (0.25 → 0.6) and hold time (×1.8), shortens light-dip intervals (×0.55), extends drone sight (+30%), and lowers the ambience pitch (×0.97 per floor). Floors also get smaller, more damaged, and more cluttered: room counts run 7 / 7 / 6 / 6, halls shrink, grate and corrosion take over, decals multiply, and terminals become scarce. Append `?floor=0`, `1`, `2` or `3` to boot directly on that floor for comparison (`?depth` is kept as an alias); floor 3 should feel markedly darker, quieter, and more cramped than floor 0.
-
-Two rogue maintenance drones patrol distant rooms, with a third joining from floor 2. They only notice you inside a 120° cone with clear line of sight, chase briefly, then search and return home. Drones use placeholder sprites until the drone sheet arrives. The hatch is never blocked by a prop, decal, or drone spawn, but drone homes land in the farthest rooms, which on floors 0–2 is usually the hatch room.
-
-Append `?debug` to the URL to expose `window.__sz` (`level`, `player`, `dungeon`, `decor`, `logFeed`, `warden`, `ambience`, `combat`, `depth`, `darkness`, `lantern`, `floor`, `exit`, `gate`, `debugMap`, `scene`) for inspection, and to show a minimap in the top-right corner above the darkness: amber player, orange hatch, drones coloured by state (bone idle/patrol, amber search, red chase).
-
-### Level data
-
-Each floor is authored in `src/data/levels/floor-0.json` … `floor-3.json` and loaded by `src/systems/LevelLoader.ts`; the game does not generate dungeons at runtime. `rows` is the tile grid and `rooms` marks floor-style regions (`0` plain, `1` grate-heavy, `2` damaged).
-
-| Glyph | Meaning |
-| :-- | :-- |
-| `#` | wall |
-| `.` | floor |
-| `@` | spawn (exactly one per floor) |
-| `X` | descent hatch (floors 0–2 only; floor 3 is sealed) |
-
-Validation runs on load: rectangular rows, supported glyphs, exactly one spawn, exit rules per floor, room bounds, and full connectivity from the spawn. `npm run levels:bake` regenerates all four files from `DungeonGen`; `npm run levels:check` validates the current files and prints their summaries. `DungeonGen` remains the authoring/draft and stress-test generator.
-
-## Project Structure
+## Project structure
 
 ```text
 src/
-├── assets/        # Asset loading references and manifest
-├── data/          # Static data (configs, spawn tables, weights)
-├── entities/      # Entity classes and component logic
-├── scenes/        # Phaser Scenes (Boot, Preload, Game, UI)
-├── systems/       # Global systems (DepthSort, WardenDirector, Spawner)
-└── utils/         # Utilities (iso.ts, grid.ts, helpers)
-
-assets/            # Raw art/audio (keep minimal and low-res)
-art-source/        # Original generated atlases (not loaded at runtime)
-art-preview/       # Generated asset-mapping previews (gitignored)
-.opencode/         # Agent harness (agents, skills, commands)
-AGENTS.md          # AI agent rules, conventions, and project context
+├── assets/     # Asset manifest and keys (v2 art, audio)
+├── data/       # Config, floors, story, dialogue, cutscenes, credits, baked levels (data/levels/*.json)
+├── entities/   # Player, drones, props (loot, ...)
+├── i18n/       # Typed string tables: en.ts, tr.ts
+├── scenes/     # Boot, Preload, Menu, Cutscene, Intro, Game, Hud, Pause, Dialogue, End
+├── systems/    # Light map, depth sort, combat, pathfinding, minimap, WARDEN, save/records, audio, menus ...
+└── utils/      # iso.ts, grid helpers, storage, dev flags
+assets/         # Generated runtime art (art/v2, art/runtime) and audio
+tools/          # Art, audio, voice and level generators (Node/Python)
+docs/           # GDD, scenario, screenshots
+AGENTS.md       # Rules and context for AI coding agents
 ```
 
-## Adding New Features
+## Architecture notes
 
-Follow these rules to keep the project consistent with `AGENTS.md`:
+- **Isometric math** lives in `src/utils/iso.ts`: `cartesianToIso` / `isoToCartesian` with `TILE_WIDTH=64`, `TILE_HEIGHT=32`. Everything that is drawn is depth-sorted by iso Y; the floor sits at a fixed back depth.
+- **Collision** is grid-first (`Level.isWalkable`), with props and the sealed hatch blocking cells; no physics engine.
+- **Scenes:** `Boot → Preload → Menu → (Cutscene → Intro →) Game + HudScene`; `Pause`, `Dialogue` and `End` are launched on top or after. Scenes clean up listeners on shutdown.
+- **State:** singletons with `localStorage` persistence under `station-zero:settings`, `:save`, `:records`; per-run state in `RunStats` and `RunFlags` (alert, stance, lore).
+- **Localisation:** add a key to both `src/i18n/en.ts` and `src/i18n/tr.ts` (the types enforce parity) and call `t('key', { params })`.
+- **Strict TypeScript:** no `any`, `exactOptionalPropertyTypes`, relative imports, one major class per file.
 
-- **Respect scope** — Only add features that serve `Exploration + Mining + Avoidance/Combat`. If it doesn't, reconsider.
-- **Follow isometric rules** — Use `cartesianToIso` / `isoToCartesian` from `src/utils/iso.ts`. Always enforce depth sorting via `systems/DepthSort.ts` by sorting renderables by `isoY` every frame/update.
-- **Use composition** — Favor component-driven entities over deep inheritance. Keep classes small and focused.
-- **Stay strictly typed** — No `any`. Use explicit types/interfaces and strict null checks.
-- **Respect Phaser lifecycle** — Use `init`, `preload`, `create`, `update` correctly. Clean up listeners on scene shutdown.
-- **Grid-first thinking** — Prefer grid-based collision for tight corridors. Only use physics when strictly necessary.
-- **Small iterations** — Make the smallest testable change and run `npm run typecheck` before moving on.
+### Level data
 
-### Isometric Math (Reference)
+Floors are authored as JSON (`src/data/levels/floor-0.json` … `floor-3.json`) and loaded by `src/systems/LevelLoader.ts`.
 
-Use these formulas exactly as defined in `AGENTS.md`:
+| Glyph | Meaning |
+| --- | --- |
+| `#` | wall |
+| `.` | floor |
+| `@` | spawn (exactly one per floor) |
+| `X` | descent hatch (floors 1–3; floor 4 is sealed) |
 
-```typescript
-// Cartesian (gridX, gridY) to Screen (isoX, isoY)
-export function cartesianToIso(gridX: number, gridY: number, tileWidth: number, tileHeight: number) {
-  const isoX = (gridX - gridY) * (tileWidth / 2);
-  const isoY = (gridX + gridY) * (tileHeight / 2);
-  return { isoX, isoY };
-}
+`rooms` marks floor-style regions (`0` plain, `1` grate-heavy, `2` damaged). Validation checks rectangular rows, glyphs, one spawn, exit rules, room bounds and full connectivity from the spawn (`npm run levels:check`).
 
-// Screen (isoX, isoY) to Cartesian (gridX, gridY)
-export function isoToCartesian(isoX: number, isoY: number, tileWidth: number, tileHeight: number) {
-  const gridX = (isoX / (tileWidth / 2) + isoY / (tileHeight / 2)) / 2;
-  const gridY = (isoY / (tileHeight / 2) - isoX / (tileWidth / 2)) / 2;
-  return { gridX: Math.floor(gridX), gridY: Math.floor(gridY) };
-}
-```
+### Asset pipelines
 
-## OpenCode Commands
+The art is **code-drawn and deterministic**: `tools/gen-*.mjs` build SVG rigs, pixelate them with `sharp` and pack sprite sheets into `assets/art/v2` (player 8-direction idle/walk/aim, drone and wreck, tiles, door, loot, HUD, menu and cutscene stills). `props.png` and `decals.png` in `assets/art/runtime` are cut from external source sheets in the (gitignored) `art-source/` folder by `tools/build-art.mjs`. Audio is baked by `tools/build-audio.mjs` (ambience loop), `build-music.mjs` (menu/end music) and `build-voice.mjs` (flite for English, espeak-ng via `tools/espeak_render.py` for Turkish). Do not hand-edit generated files; change the generator and re-run it.
 
-These commands live in `.opencode/commands/` and can be run via OpenCode. They route to specialized agents by default.
+## Documentation
 
-| Command | Agent | Purpose | Usage |
-| --- | --- | --- | --- |
-| `core-scaffold` | `isometric-engineer` | Scaffold core utilities/systems (`src/utils/iso.ts`, `src/utils/grid.ts`, `src/systems/DepthSort.ts`, `src/entities/Entity.ts`). | Use once at the beginning or when bootstrapping missing core pieces. |
-| `new-scene` | `game-architect` | Create a new Phaser Scene in `src/scenes/` with proper lifecycle and typing. | `new-scene <SceneName>` (e.g. `Game`, `UI`). |
-| `new-entity` | `entity-scripter` | Scaffold a minimal, component-driven entity with isometric positioning prep and depth-sorting readiness. | `new-entity <EntityName>`. |
-| `gen-tight-dungeon` | `level-designer` | Suggest claustrophobic room+corridor layouts with chokepoints, dead-ends, and LOS-friendly paths. | `gen-tight-dungeon size:20x20 depth:3` (tune params as needed). |
-| `drone-test` | `combat-ai` | Suggest a minimal LOS-based drone AI (idle/patrol/chase/search/disengage) with avoidance-first behavior. | `drone-test <context>` (e.g. describe corridor constraints). |
-| `warden-sim` | `warden-director` | Suggest depth-based WARDEN spawn/pacing plan with gradual escalation. | `warden-sim depth:5`. |
+- [docs/GDD.md](docs/GDD.md) — game design document
+- [docs/SCENARIO.md](docs/SCENARIO.md) — story, terminals, endings (spoilers)
+- [AGENTS.md](AGENTS.md) — rules, conventions and tech constraints (source of truth for AI agents)
+- [ART_BRIEF.md](ART_BRIEF.md), [PROMPTS.md](PROMPTS.md) — early art brief and development plan (Turkish, historical)
 
-## Sub-Agent Usage (Efficient)
+## Working with AI agents
 
-Pick the right agent for the job instead of dumping everything to `general`. Use the `$ARGUMENTS` pattern with commands where applicable, or call agents directly via OpenCode.
+`AGENTS.md` defines the project rules. The agent harness lives in `.opencode/` (agents, commands, skills) and is symlinked as `.claude/agents`, `.claude/commands` and `.claude/skills`, so both OpenCode and Claude Code use the same files.
 
-| Agent | When to use | Notes |
-| --- | --- | --- |
-| `explore` | Find files/symbols or understand unfamiliar code quickly. | Choose `quick`/`medium`/`very thorough` based on scope. Great for answering "where is X used?". |
-| `game-architect` | High-level design, modular restructuring, or preventing scope creep. | Keep decisions aligned with `AGENTS.md` pillars. |
-| `isometric-engineer` | Isometric math, camera, tilemap, depth sorting. | Must follow `AGENTS.md` formulas. Use for `src/utils/iso.ts`, `src/systems/DepthSort.ts`. |
-| `entity-scripter` | Adding player, drones, mines, or other entities/components. | Component-driven. Keep minimal and ready for depth sorting. |
-| `combat-ai` | Drone behavior, LOS, aggro/disengage, pursuit limits. | Avoidance-first. Use with the `drone-ai-los` skill for tighter consistency. |
-| `level-designer` | Tight corridor dungeon layouts. | Use with `dungeon-tight-corridors` skill. Prioritize chokepoints and evasion paths. |
-| `warden-director` | WARDEN director logic, spawns, alarm state, depth escalation. | Use with `warden-director-systems` skill. Tension over difficulty spikes. |
-| `perf-reviewer` | Review large changes for strict TS, isometric correctness, and performance. | Mostly read-only. Best after implementing systems. |
+- **Agents:** `game-architect`, `isometric-engineer`, `entity-scripter`, `combat-ai`, `level-designer`, `warden-director`, `narrative-director`, `perf-reviewer`, `vibe-conductor`
+- **Commands:** `core-scaffold`, `new-scene`, `new-entity`, `gen-tight-dungeon`, `drone-test`, `warden-sim`
+- **Skills:** `iso-math-grid`, `ts-strict-phaser`, `phaser-v4-iso-combat`, `drone-ai-los`, `dungeon-tight-corridors`, `warden-director-systems`
 
-## Skills
+Before changing code: keep scope to *Exploration + Mining + Avoidance/Combat*, keep entities small, keep depth sorting, and run `npm run typecheck`.
 
-Load a skill when the task matches its description (`skill` tool). Skills provide specialized workflows that keep behavior consistent with project rules.
+## Credits
 
-| Skill | When to load | Purpose |
-| --- | --- | --- |
-| `iso-math-grid` | Working with grid <-> screen conversions or tile selection. | Cartesian<->isometric math, tile picking, grid collision helpers. |
-| `ts-strict-phaser` | Writing/refactoring Phaser code in strict TypeScript. | Strict typing patterns, lifecycle safety, clean imports. |
-| `phaser-v4-iso-combat` | Implementing movement, damage, or minimal combat. | Phaser v4 isometric combat patterns with minimal scope. |
-| `drone-ai-los` | Implementing drone AI. | LOS-based aggro/disengage with avoidance-first gameplay. |
-| `dungeon-tight-corridors` | Generating dungeon layouts. | Room+corridor generation tuned for claustrophobic spaces. |
-| `warden-director-systems` | Implementing WARDEN director. | Depth-based escalation, spawns, alarm state, pacing. |
-| `opencode` | Questions about OpenCode itself. | Config, agents/skills/commands/tools, MCP, troubleshooting. |
-| `report` | Want to report an OpenCode issue/bug. | Collect diagnostics and publish via GitHub CLI. |
-
-## Tips & Best Practices
-
-- **Read `AGENTS.md` first** — Treat it as the source of truth for rules and conventions.
-- **Typecheck often** — Run `npm run typecheck` after meaningful edits.
-- **Keep it small** — Prefer minimal implementations that are easy to test and reason about.
-- **Embrace darkness** — Limited visibility sells the horror better than over-lighting.
-- **Avoidance is valid** — Many fights are avoidable. The AI should respect that (especially drones).
-- **Use `context7` for Phaser API** — For Phaser v4 API questions, use `tools.context7["query-docs"]` with the `phaser` library. This is often faster and more up-to-date than guessing.
-- **Route to specialists** — Use agents/skills/commands over ad-hoc prompting when they fit the task.
+Developer: **Bora Akgün** ([QuickOrBeDead](https://github.com/QuickOrBeDead)) · Studio: **AIVoidLabs** · Engine: [Phaser 4](https://phaser.io/) · Tooling: TypeScript, Vite, sharp, ffmpeg, espeak-ng · Built with OpenCode and Claude Code. Art and audio are drawn and synthesised in code.
 
 ## License
 
-This project is in early development. License to be determined.
+[MIT](LICENSE) © 2026 AIVoidLabs

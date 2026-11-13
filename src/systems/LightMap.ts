@@ -1,7 +1,12 @@
 import type { GameObjects, Scene, Textures } from 'phaser';
 import { CAMERA_ZOOM, DEPTH_DARKNESS, GAME_HEIGHT, GAME_WIDTH } from '../data/config';
 import { createCanvasContext, refreshCanvasTexture } from '../utils/canvas';
-import type { DarknessLayer } from './Darkness';
+
+export interface DarknessLayer {
+  update(x: number, y: number): void;
+  setVisionScale(scale: number): void;
+  destroy(): void;
+}
 
 export type LightTint = 'warm' | 'cold' | 'red' | 'amber' | 'cyan' | 'ember' | 'green';
 

@@ -1,7 +1,7 @@
 import { Scene } from 'phaser';
 import { ASSETS } from '../assets/manifest';
 import { ensureArt } from '../systems/PlaceholderArt';
-import { buildIsoTiles, registerTilesV2 } from '../systems/TileShaper';
+import { registerTilesV2 } from '../systems/TileShaper';
 import { VOICE_KEYS, voiceAudioKey, voicePath } from '../data/voicelist';
 import { settings } from '../systems/Settings';
 import { voice } from '../systems/Voice';
@@ -42,7 +42,6 @@ export class Preload extends Scene {
 
   create(): void {
     ensureArt(this);
-    buildIsoTiles(this);
     registerTilesV2(this);
     this.scene.start(isDevStart() ? 'Game' : 'Menu');
   }

@@ -1,9 +1,9 @@
 import type { GameObjects, Scene } from 'phaser';
-import { selectWorldArt, TILES_V2_KEY } from '../assets/manifest';
+import { TILES_V2_KEY } from '../assets/manifest';
 import { DEPTH_FLOOR, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import { cartesianToIso } from '../utils/iso';
 import type { Dungeon, FloorStyle } from './DungeonGen';
-import { ISO_TILES_KEY, TILE_FRAMES, type TileFrame } from './TileShaper';
+import { TILE_FRAMES, type TileFrame } from './TileShaper';
 
 export type CellKind = 'floor' | 'wall';
 
@@ -103,9 +103,6 @@ export class Level {
   }
 
   render(scene: Scene): void {
-    const art = selectWorldArt();
-    const floorAtlas = art.floor ? TILES_V2_KEY : ISO_TILES_KEY;
-    const wallAtlas = art.wall ? TILES_V2_KEY : ISO_TILES_KEY;
     for (let gridY = 0; gridY < this.height; gridY += 1) {
       for (let gridX = 0; gridX < this.width; gridX += 1) {
         const iso = cartesianToIso(gridX, gridY, TILE_WIDTH, TILE_HEIGHT);
@@ -114,7 +111,7 @@ export class Level {
           if (!this.touchesFloor(gridX, gridY)) continue;
           const frame = this.wallFrame(gridX, gridY);
           const wall = scene.add
-            .image(iso.isoX, iso.isoY + TILE_HEIGHT / 2, wallAtlas, frame)
+            .image(iso.isoX, iso.isoY + TILE_HEIGHT / 2, TILES_V2_KEY, frame)
             .setOrigin(0.5, 1)
             .setDepth(iso.isoY);
           this.walls.push(wall);
@@ -122,7 +119,7 @@ export class Level {
         }
 
         scene.add
-          .image(iso.isoX, iso.isoY, floorAtlas, this.floorKey(gridX, gridY))
+          .image(iso.isoX, iso.isoY, TILES_V2_KEY, this.floorKey(gridX, gridY))
           .setDepth(DEPTH_FLOOR);
       }
     }

@@ -15,7 +15,6 @@ export const PLAYER_SPEED = 190;
 export const PLAYER_FOOTPRINT = 0.3;
 export const PLAYER_STRIDE_TILES = 1.8;
 export const FOOTSTEP_DISTANCE = 0.9;
-export const PLAYER_SWAY_PX = 1;
 
 export const DUNGEON_WIDTH = 27;
 export const DUNGEON_HEIGHT = 27;
@@ -35,8 +34,6 @@ export const PLAYER_KNOCKBACK_TILES = 0.9;
 export const PLAYER_KNOCKBACK_MS = 180;
 export const PLAYER_KNOCKBACK_SHAKE_MS = 80;
 
-export const VISION_INNER_RADIUS = 110;
-export const VISION_OUTER_RADIUS = 430;
 
 export const LANTERN_RADIUS = 185;
 export const PLAYER_LIGHT_RADIUS = 150;

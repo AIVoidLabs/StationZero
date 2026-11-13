@@ -18,9 +18,7 @@ import type { Drone } from '../entities/enemies/Drone';
 import { Player, type MoveInput, type WeaponType } from '../entities/Player';
 import { Ambience } from '../systems/Ambience';
 import { Combat } from '../systems/Combat';
-import { Darkness, type DarknessLayer } from '../systems/Darkness';
-import { LightMap, type LightEmitter, type LightSource } from '../systems/LightMap';
-import { DebugMap } from '../systems/DebugMap';
+import { LightMap, type DarknessLayer, type LightEmitter, type LightSource } from '../systems/LightMap';
 import { Decor } from '../systems/Decor';
 import { DepthManager } from '../systems/DepthManager';
 import { DescentGate } from '../systems/DescentGate';
@@ -50,6 +48,7 @@ import { runFlags } from '../systems/RunFlags';
 import { descentCutscene } from '../data/cutscenes';
 import { logKeyFor } from '../systems/LogFeed';
 import { sfx } from '../systems/Sfx';
+import { isDebugMode, devStartFloor } from '../utils/devflags';
 import { isDevStart } from '../utils/devstart';
 import { settings } from '../systems/Settings';
 import { gridVectorToWorld, worldToGrid } from '../utils/iso';
@@ -103,7 +102,6 @@ interface DebugWindow extends Window {
     floor: number;
     exit: DungeonExit | null;
     gate: DescentGate | null;
-    debugMap: DebugMap | null;
     scene: Game;
   };
 }
@@ -122,7 +120,6 @@ export class Game extends Scene {
   private loot: LootSystem | undefined = undefined;
   private depth: DepthManager | undefined = undefined;
   private gate: DescentGate | undefined = undefined;
-  private debugMap: DebugMap | undefined = undefined;
   private tileCursor: TileCursor | undefined = undefined;
   private playerCombat: PlayerCombat | undefined = undefined;
   private floor = 0;
@@ -169,7 +166,7 @@ export class Game extends Scene {
     this.clearMs = 0;
     this.hintClock = 0;
     this.hintHp = -1;
-    const requested = data?.floor ?? this.readFloorOverride() ?? 0;
+    const requested = data?.floor ?? devStartFloor() ?? 0;
     this.floor = this.clampFloor(requested);
     this.transitioning = false;
   }
@@ -192,8 +189,7 @@ export class Game extends Scene {
     if (dungeon.exit) level.blockCell(dungeon.exit.x, dungeon.exit.y);
     const lantern = new Lantern(this, player.x, player.y);
     const emitLights: LightEmitter = (emit) => this.emitLights(emit, lantern, combat);
-    const legacyLight = new URLSearchParams(window.location.search).get('light') === 'legacy';
-    const darkness: DarknessLayer = legacyLight ? new Darkness(this) : new LightMap(this, emitLights);
+    const darkness: DarknessLayer = new LightMap(this, emitLights);
     const warden = new WardenAtmosphere(this, player.x, player.y);
     const ambience = new Ambience(this);
     sfx.attach(this);
@@ -208,8 +204,6 @@ export class Game extends Scene {
       ...decor.occluders,
     ]);
     const tileCursor = new TileCursor(this);
-    const debugMode = window.location.search.includes('debug');
-    const debugMap = window.location.search.includes('debugmap') ? new DebugMap(this, level, dungeon) : null;
     const exploration = new Exploration(level, dungeon);
     runStats.reachFloor(floor + 1);
     if (!isDevStart()) {
@@ -241,7 +235,6 @@ export class Game extends Scene {
     this.loot = loot;
     this.depth = depth;
     this.gate = gate ?? undefined;
-    this.debugMap = debugMap ?? undefined;
     this.playerCombat = playerCombat;
     this.attackTarget = undefined;
     this.repathCell = undefined;
@@ -287,7 +280,7 @@ export class Game extends Scene {
     this.setupInput(player);
 
     const debugWindow = window as DebugWindow;
-    if (debugMode) {
+    if (isDebugMode()) {
       debugWindow.__sz = {
         level,
         player,
@@ -304,7 +297,6 @@ export class Game extends Scene {
         floor,
         exit: dungeon.exit,
         gate,
-        debugMap,
         scene: this,
       };
     }
@@ -342,8 +334,6 @@ export class Game extends Scene {
       this.loot = undefined;
       this.gate?.destroy();
       this.gate = undefined;
-      this.debugMap?.destroy();
-      this.debugMap = undefined;
       this.depth = undefined;
       this.occlusion?.destroy();
       this.occlusion = undefined;
@@ -445,7 +435,6 @@ export class Game extends Scene {
     } else {
       this.loot?.hoverAt(null, 0, player);
     }
-    this.debugMap?.update(player, combat.roster);
 
     const lead = player.leadDirection;
     this.cameras.main.setFollowOffset(
@@ -732,14 +721,6 @@ export class Game extends Scene {
 
   private clampFloor(value: number): number {
     return Math.max(0, Math.min(FLOOR_COUNT - 1, Math.round(value)));
-  }
-
-  private readFloorOverride(): number | null {
-    const params = new URLSearchParams(window.location.search);
-    const raw = params.get('floor') ?? params.get('depth');
-    if (raw === null) return null;
-    const value = Number.parseInt(raw, 10);
-    return Number.isFinite(value) ? value : null;
   }
 
   private setupInput(player: Player): void {
