@@ -46,6 +46,9 @@ const SECTOR_X = GAME_WIDTH - 14 - SECTOR_W;
 const SECTOR_Y = 26;
 const LOW_AMMO = 3;
 const HEARTBEAT_MS = 950;
+const ALARM_ECG_GAIN = 0.25;
+const ALARM_BEAT_GAIN = 0.3;
+const ALARM_RED = 0xe0452a;
 const CARD_FADE_IN = 500;
 const CARD_HOLD = 2400;
 const CARD_FADE_OUT = 800;
@@ -132,6 +135,7 @@ export class HudScene extends Scene {
   private prevAmmo = -1;
   private prevFloor = -1;
   private nextBeat = 0;
+  private alert = 0;
   private deathShown = false;
 
   constructor() {
@@ -312,6 +316,7 @@ export class HudScene extends Scene {
     this.prevFloor = state.floor;
 
     this.updateSector(state.floorCode, state.floorName, state.objective, state.objectiveCalm);
+    this.alert = state.alert;
     this.drawHealth(delta);
     this.drawStripe(state.objectiveCalm);
 
@@ -413,15 +418,17 @@ export class HudScene extends Scene {
 
     const low = hp === 1 && !this.deathShown;
     this.lowVignette.setAlpha(low ? 0.16 + 0.22 * (0.5 + 0.5 * Math.sin(this.time.now / 260)) : 0);
-    if (low && this.time.now >= this.nextBeat) {
-      this.nextBeat = this.time.now + HEARTBEAT_MS;
-      sfx.play('heartbeat');
+    const racing = this.alert >= 1;
+    if ((low || racing) && this.time.now >= this.nextBeat) {
+      this.nextBeat = this.time.now + HEARTBEAT_MS / (1 + ALARM_BEAT_GAIN * this.alert);
+      sfx.play('heartbeat', low ? 1 : Math.min(1, 0.35 + 0.15 * this.alert));
     }
   }
 
   private drawHealth(delta: number): void {
     const hp = this.currentHp;
     const color = this.hpColor(hp);
+    const ecgColor = this.alert >= 2.5 ? ALARM_RED : this.alert >= 1 ? AMBER : color;
     const g = this.barGfx;
     g.clear();
     const x0 = HP_X + 56 + this.shakeX;
@@ -448,7 +455,8 @@ export class HudScene extends Scene {
     });
 
     this.ecgClock += delta;
-    const rate = hp >= 4 ? 0.9 : hp === 3 ? 1.05 : hp === 2 ? 1.35 : hp === 1 ? 1.9 : 0;
+    const baseRate = hp >= 4 ? 0.9 : hp === 3 ? 1.05 : hp === 2 ? 1.35 : hp === 1 ? 1.9 : 0;
+    const rate = baseRate * (1 + ALARM_ECG_GAIN * this.alert);
     while (this.ecgClock >= ECG_STEP_MS) {
       this.ecgClock -= ECG_STEP_MS;
       this.ecgPhase = (this.ecgPhase + (ECG_STEP_MS / 1000) * rate) % 1;
@@ -465,7 +473,7 @@ export class HudScene extends Scene {
     e.moveTo(ex, ey);
     e.lineTo(ex + ECG_SAMPLES * 2, ey);
     e.strokePath();
-    e.lineStyle(1.5, hp > 0 ? color : RED, 0.95);
+    e.lineStyle(1.5, hp > 0 ? ecgColor : RED, 0.95);
     e.beginPath();
     this.ecg.forEach((value, index) => {
       const px = ex + index * 2;

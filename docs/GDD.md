@@ -75,6 +75,7 @@ WARDEN is not a character on screen; it is a **director**.
 - **Atmosphere pulses:** periodic light dips (every 21–47 s, shorter on deeper floors) and "silence" holds where all ambience cuts out (25% chance on B1 rising to 60% on B11, held up to 1.8× longer).
 - **Announcements:** a short line when you arrive and when the floor is cleared, in text and a synthetic voice (see [SCENARIO.md](SCENARIO.md)).
 - **Escalation per floor (B1→B11):** vision radius ×1→0.65, lantern ×1→0.68, ambience pitch −3% per floor, drone awareness ×1→1.3.
+- **Alarm (0–4):** shown by the HUD pulse line, which speeds up and turns amber then red, and by a heartbeat sound. It rises while any drone is chasing the Exile (about +0.45 per second) and by +1 when a secret is taken. It falls slowly (-0.15 per second) after 2.5 s with no drone chasing, and resets at the start of each floor. Each point adds +12% to depth pressure (the light dims a little), +10% drone awareness and -5% drone fire cooldown.
 - **Difficulty formula (`src/data/difficulty.ts`, d = floor index):** drones `round(11 + 0.55·d)` (boss floors ×0.8); non-boss enemy HP ×`1 + 0.08·d`; fire cooldown ×`max(0.7, 1 − 0.03·d)`; enemy ammo drops scale with the HP multiplier. Counts are baked into the floor JSON: change the numbers, then `npm run levels:bake`.
 
 ## 7. Progression and structure

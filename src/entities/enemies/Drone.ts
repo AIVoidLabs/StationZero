@@ -34,6 +34,7 @@ import {
 import { fireCooldownScale, scaledEnemyHp } from '../../data/difficulty';
 import { ENEMY_SPECS, TANK_FRONT_COS, type EnemyKind, type EnemySpec } from '../../data/enemies';
 import type { Projectiles } from '../../systems/Projectiles';
+import { runFlags } from '../../systems/RunFlags';
 import { distanceGain, sfx } from '../../systems/Sfx';
 import { upgradeStats } from '../../systems/Upgrades';
 import { DIRECTION_VECTOR, DIRECTIONS, facingForGridStep } from '../../utils/facing';
@@ -659,7 +660,7 @@ export class Drone extends Entity {
       this.fireMs += deltaMs;
       if (this.fireMs >= this.spec.fireRecoverMs) {
         this.fireState = 'NONE';
-        this.fireCooldownMs = this.spec.fireCooldownMs * fireCooldownScale(this.depthManager.floor);
+        this.fireCooldownMs = this.spec.fireCooldownMs * fireCooldownScale(this.depthManager.floor, runFlags.alert);
       }
       return true;
     }

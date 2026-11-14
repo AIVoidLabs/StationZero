@@ -78,8 +78,10 @@ export interface HudState {
   exit: 'NONE' | 'LOCKED' | 'OPEN';
   lastFloor: boolean;
   secrets: number;
+  alert: number;
 }
 
+const SECRET_ALERT = 1;
 const DEATH_TO_END_MS = 2200;
 const CLEAR_TO_END_MS = 1500;
 
@@ -144,6 +146,7 @@ export class Game extends Scene {
   private clearMs = 0;
   private cardToken = 0;
   private lightMul = 1;
+  private appliedAlert = 0;
   private hintClock = 0;
   private hintHp = -1;
   private startSeen = 0;
@@ -188,6 +191,8 @@ export class Game extends Scene {
     level.render(this);
 
     const decor = new Decor(this, level, dungeon);
+    runFlags.alert = 0;
+    this.appliedAlert = 0;
     const player = new Player(this, level, level.spawnX, level.spawnY, this.carry);
     if (!this.entry) {
       const state = player.getHealth();
@@ -433,6 +438,12 @@ export class Game extends Scene {
     this.exploration?.update(Math.round(grid.x), Math.round(grid.y), this.time.now);
 
     combat.update(delta);
+    const spotted = combat.roster.some((drone) => !drone.isDead && drone.currentState === 'CHASE');
+    runFlags.tickAlert(delta, spotted);
+    if (Math.abs(runFlags.alert - this.appliedAlert) >= 0.05) {
+      this.appliedAlert = runFlags.alert;
+      this.applyDepth(depth);
+    }
     this.decor?.update(grid.x, grid.y, delta, this.time.now);
     this.hazards?.update();
     this.barrels?.update(delta);
@@ -502,6 +513,8 @@ export class Game extends Scene {
       if (Math.hypot(at.x - grid.x, at.y - grid.y) >= 10) continue;
       hints.trigger(drone.kind === 'tank' ? 'tank' : 'boss', t(drone.kind === 'tank' ? 'hint.tank' : 'hint.boss'));
     }
+
+    if (runFlags.alert >= 1) hints.trigger('alarm', t('hint.alarm'));
 
     for (const cell of this.hazards?.ventCells ?? []) {
       if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 4) hints.trigger('steam', t('hint.steam'));
@@ -769,6 +782,7 @@ export class Game extends Scene {
     const player = this.player;
     if (!player || runFlags.hasSecret(floor)) return;
     runFlags.addSecret(floor);
+    runFlags.addAlert(SECRET_ALERT);
     player.refreshUpgrades();
     if (floor === SECRET_COUNT - 1) player.heal(Number.MAX_SAFE_INTEGER);
     this.lightMul = upgradeStats().lightMul;
@@ -888,6 +902,7 @@ export class Game extends Scene {
       exit,
       lastFloor,
       secrets: runFlags.secretCount,
+      alert: runFlags.alert,
     };
   }
 
