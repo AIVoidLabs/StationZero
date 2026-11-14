@@ -13,6 +13,12 @@ const VOICE_GAIN = 0.95;
 const TAIL_MS = 700;
 const FALLBACK_MS_PER_CHAR = 62;
 const MIN_DURATION_MS = 1800;
+const FADE_OUT_S = 0.06;
+
+interface ActiveLine {
+  readonly source: AudioBufferSourceNode;
+  readonly gain: GainNode;
+}
 
 function resolveContext(sound: unknown): AudioContext | null {
   if (typeof sound !== 'object' || sound === null) return null;
@@ -38,6 +44,7 @@ class VoiceEngine {
   private busy = false;
   private subtitle: Subtitle | null = null;
   private timer: number | null = null;
+  private active: ActiveLine | null = null;
 
   get current(): Subtitle | null {
     return this.subtitle;
@@ -97,8 +104,30 @@ class VoiceEngine {
     this.queue.length = 0;
     if (this.timer !== null) window.clearTimeout(this.timer);
     this.timer = null;
+    this.stopActive();
     this.subtitle = null;
     this.setBusy(false);
+  }
+
+  private stopActive(): void {
+    const active = this.active;
+    const context = this.context;
+    this.active = null;
+    if (!active || !context) return;
+    const { source, gain } = active;
+    try {
+      const now = context.currentTime;
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.linearRampToValueAtTime(0, now + FADE_OUT_S);
+      source.stop(now + FADE_OUT_S);
+    } catch {
+      try {
+        source.stop();
+      } catch {
+        // already stopped
+      }
+    }
   }
 
   speakerLabel(speaker: VoiceSpeaker): string {
@@ -137,8 +166,16 @@ class VoiceEngine {
       durationMs = buffer.duration * 1000;
       if (settings.data.voice && context.state === 'running') {
         const source = context.createBufferSource();
+        const lineGain = context.createGain();
         source.buffer = buffer;
-        source.connect(this.gain);
+        source.connect(lineGain);
+        lineGain.connect(this.gain);
+        const active: ActiveLine = { source, gain: lineGain };
+        source.onended = () => {
+          if (this.active === active) this.active = null;
+          lineGain.disconnect();
+        };
+        this.active = active;
         source.start();
       }
     }
