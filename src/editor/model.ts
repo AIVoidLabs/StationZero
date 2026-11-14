@@ -25,7 +25,6 @@ export interface EditorEntities {
 export interface EditorDoc {
   floor: number;
   seed: number;
-  locked: boolean;
   rows: string[];
   rooms: MutableRoom[];
   entities: EditorEntities;
@@ -57,7 +56,6 @@ export function docFromJson(raw: unknown, floor: number): EditorDoc {
   return {
     floor: typeof raw.floor === 'number' ? raw.floor : floor,
     seed: typeof raw.seed === 'number' ? raw.seed : 0,
-    locked: raw.locked === true,
     rows: [...(raw.rows as string[])],
     rooms: list<MutableRoom>(raw.rooms),
     entities: {
@@ -76,7 +74,7 @@ export function docToJson(doc: EditorDoc): Record<string, unknown> {
   return {
     floor: doc.floor,
     seed: doc.seed,
-    ...(doc.locked ? { locked: true } : {}),
+    locked: true,
     rows: doc.rows,
     rooms: doc.rooms.map((room) => ({ x: room.x, y: room.y, width: room.width, height: room.height, style: room.style })),
     entities: {

@@ -188,7 +188,7 @@ export function mountPanels(state: EditorState): void {
 function renderFloors(root: HTMLElement, state: EditorState): void {
   root.replaceChildren(el('h2', { text: 'Floors' }));
   for (const badge of state.badges()) {
-    const label = `B${badge.floor + 1}${badge.locked ? '  LOCKED' : ''}${badge.draft ? '  *draft' : ''}`;
+    const label = `B${badge.floor + 1}${badge.draft ? '  *draft' : ''}`;
     const node = button(label, () => state.openFloor(badge.floor), false, badge.floor === state.doc.floor ? 'active' : '');
     root.append(node);
   }
@@ -210,15 +210,6 @@ function renderTopbar(root: HTMLElement, state: EditorState, fileInput: HTMLInpu
   seed.type = 'number';
   seed.value = String(state.doc.seed || state.defaultSeed());
   seed.title = 'Seed for regenerate';
-
-  const lock = el('input');
-  lock.type = 'checkbox';
-  lock.checked = state.doc.locked;
-  lock.addEventListener('change', () => {
-    state.checkpoint();
-    state.doc.locked = lock.checked;
-    state.changed();
-  });
 
   const report = (message: string | null): void => {
     state.status = message ?? '';
@@ -243,7 +234,6 @@ function renderTopbar(root: HTMLElement, state: EditorState, fileInput: HTMLInpu
     }),
     button('Upload JSON', () => fileInput.click()),
     button('Play draft', () => state.playDraft()),
-    el('label', { className: 'inline' }, [lock, el('span', { text: 'Locked' })]),
     el('label', { className: 'inline' }, [el('span', { text: 'Seed' }), seed]),
     button('Regenerate floor', () => {
       if (!window.confirm('Regenerate the map and every placement from this seed? Unsaved edits on this floor are replaced.')) return;

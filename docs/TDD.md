@@ -709,7 +709,7 @@ model         (EditorDoc, JSON dönüşümü, hücre/nesne işlemleri)          
 **Tek yönlü akış:** DOM paneli ve sahne yalnızca `EditorState` üzerinden değişiklik yapar; `state.changed()` taslağı kaydeder, doğrulamayı zamanlar, dinleyicilere (`onChange`) haber verir. Sahne her değişimde `rebuild()` ile **bütün çizimi yeniden kurar** (35×35 harita için yeterince ucuzdur; kodu basit tutar).
 
 ### 14.2 Veri modeli ve geri al/yinele
-`EditorDoc = { floor, seed, locked, rows: string[], rooms[], entities{props, terminals, corpse, loot, enemies, vents} }` oyunun JSON'uyla birebir eşleşir (`docFromJson` / `docToJson`; JSON'da yalnızca `locked: true` ise yazılır). Tipler `levelTypes.ts`'ten `Mut<T>` ile **değişebilir** hale getirilir.
+`EditorDoc = { floor, seed, rows: string[], rooms[], entities{props, terminals, corpse, loot, enemies, vents} }` oyunun JSON'uyla birebir eşleşir (`docFromJson` / `docToJson`; `docToJson` her zaman `locked: true` yazar). Tipler `levelTypes.ts`'ten `Mut<T>` ile **değişebilir** hale getirilir.
 **Geri al/yinele** anlık görüntü yığınıdır: `checkpoint()` mevcut belgenin JSON'unu `past` yığınına iter (en çok 200), `future` temizlenir; `undo/redo` yığınlar arası taşır. Bir fırça darbesi (sürükleyerek boyama) **tek** `checkpoint` ile tek geri alma adımıdır; tıklayıp bırakıp taşımayan seçim `undoLastCheckpoint` ile boş adımı geri alır. Basitlik için fark değil **tam anlık görüntü** kullanılır (belge birkaç KB'tır).
 **Taslak:** her değişimde belge `localStorage`'a (`station-zero:editor-N`) yazılır ve kat açılırken önce taslak okunur; "Reset floor" taslağı siler.
 
@@ -727,7 +727,7 @@ Editör ve `levels:check` aynı tahmini kullanır: [LevelRating.ts](../src/syste
 ### 14.5 Üretici, kilit, oyna
 - *Regenerate floor:* `generateDungeon(seed, floor)` + `planLevel` ile yeni harita ve yerleşimler (`levels:bake` mantığının tarayıcıdaki hali; çıkışa `X` yazma dahil).
 - *Re-plan entities:* mevcut haritayı katı biçimde ayrıştırıp (`parseLevelJson`) `planLevel` ile yalnızca varlıkları yeniden üretir. Aynı haritada **birebir aynı sonucu** vermesi, planlayıcının saf ve belirlenimsel olduğunu doğrular.
-- *Locked:* `doc.locked`; JSON'a `locked: true` yazılır (bake zaten var olan dosyayı ezmez, bu alan elle yapılmış katı işaretler).
+- *Locked:* editörde ayrı bir ayar yoktur; kaydedilen her dosya `locked: true` taşır (bake zaten var olan dosyayı ezmez).
 - *Play draft:* `docToJson`'u `station-zero:draft-N` anahtarına yazar ve `/?debug&depth=N&level=draft` açar; `LevelLoader.loadDungeon` yalnızca `draftLevelRequested()` (dev ve `?level=draft`) ise taslağı bundle yerine okur.
 - *Save to file:* `EditorState.saveToFile()` `docToJson` çıktısını `POST /__levels/save?floor=N` ile gönderir. Uç nokta [tools/vite-level-save.mjs](../tools/vite-level-save.mjs) Vite eklentisidir (`apply: 'serve'`, yalnızca dev sunucusunda var): `floor` tamsayısını, gövdenin o kata ait bir seviye olduğunu ve boyutu (2 MB) doğrular, yalnızca `src/data/levels/floor-N.json` yoluna yazar. Geçersiz belge (`parseError`) kaydedilmez. Kayıttan sonra taslak silinir. *İndir/Yükle* yedek yoldur: `Blob` ile indirir, dosya seçici ile yükler.
 
@@ -868,7 +868,7 @@ Silah çeşitliliği yerine **çevre etkileşimi** derinleştirmek (daha çok ku
 - **Windup:** ateş öncesi hazırlık/uyarı süresi.
 - **Bake:** üretici ve planlayıcıyı çalıştırıp sonucu JSON'a yazmak.
 - **Planlayıcı:** `LevelPlan`, yerleşim kararlarını veren saf modül.
-- **Kilit (`locked`):** elle yapılmış katı işaretleyen JSON alanı (bake var olan dosyayı zaten ezmez).
+- **Kilit (`locked`):** her kat dosyasında bulunan `true` işareti (bake var olan dosyayı zaten ezmez; editör her kayıtta yazar).
 - **Baskı (pressure):** derinlik ve alarmdan türeyen, ışık/ses/farkındalığı birlikte ölçekleyen değer.
 - **FloorEntry:** kata girişteki can/mermi/bayrak anlık görüntüsü; ölünce buna dönülür.
 - **Sır (secret):** ölüden alınan kalıcı yükseltme.

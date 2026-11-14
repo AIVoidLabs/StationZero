@@ -58,7 +58,6 @@ export interface FloorRating {
 export interface FloorBadge {
   readonly floor: number;
   readonly draft: boolean;
-  readonly locked: boolean;
 }
 
 export class EditorState {
@@ -102,10 +101,8 @@ export class EditorState {
 
   badges(): FloorBadge[] {
     return Array.from({ length: FLOOR_COUNT }, (_, floor) => {
-      const bundled = BUNDLED[floor] as { locked?: unknown } | undefined;
       const draft = this.readDraft(floor);
-      const locked = draft ? (draft as { locked?: unknown }).locked === true : bundled?.locked === true;
-      return { floor, draft: draft !== null, locked };
+      return { floor, draft: draft !== null };
     });
   }
 
@@ -207,7 +204,6 @@ export class EditorState {
         entities: planLevel(dungeon),
       };
       const next = docFromJson(base, this.doc.floor);
-      next.locked = this.doc.locked;
       next.entities.corpse = base.entities.corpse ? { ...base.entities.corpse } : null;
       this.loadDocument(next);
       return null;
@@ -221,7 +217,6 @@ export class EditorState {
       const dungeon = parseLevelJson(docToJson(this.doc), this.doc.floor);
       const entities = planLevel(dungeon);
       const next = docFromJson({ ...docToJson(this.doc), entities }, this.doc.floor);
-      next.locked = this.doc.locked;
       this.loadDocument(next);
       return null;
     } catch (error) {
