@@ -52,7 +52,7 @@ Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previe
 
 ## 5. Enemies — rogue maintenance drones
 
-- 2 HP, hover with a bob, hostile since WARDEN rebuilt them. Two on B1, rising to five by B7 (see the floor table).
+- 2 HP, hover with a bob, hostile since WARDEN rebuilt them. Three on B1, rising to five by B7 (see the floor table).
 - **States:** idle/patrol → chase → search → return/disengage. Sight: 7.5 tiles in a 120° cone, plus 1.8 tiles of peripheral awareness; sight scales up with depth (+30% at B11).
 - **Rules:** need line of sight; chase leashes (max 7 s / 11 tiles), search for 2.6 s, then return home. No infinite pursuit.
 - **Attack:** a red flash wind-up (0.45 s), then a red bullet (4.5 tiles/s, slower than the player), 1 damage; fire cooldown ~2.4 s, shorter deeper. They also sidestep player shots (50% chance) and deal contact damage in melee.
@@ -81,7 +81,7 @@ WARDEN is not a character on screen; it is a **director**.
 
 | Floor | Name | Hostiles | Notes |
 | --- | --- | --- | --- |
-| B1 | INTAKE | 2 | Teaches movement, click-to-walk, terminals, loot; Hale's recording (WARDEN's old name) |
+| B1 | INTAKE | 3 | Teaches movement, click-to-walk, terminals, loot; Hale's recording (WARDEN's old name) |
 | B2 | CELL BLOCK | 3 | Voss: patrol loop; first dark corners |
 | B3 | INFIRMARY | 3 | Lund: WARDEN reads pulse and voice |
 | B4 | DRILL 3 | 4 | Dray: drones are rebuilt miners; steam vents |
