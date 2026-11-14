@@ -1,4 +1,3 @@
-import { runFlags } from './RunFlags';
 import {
   DEPTH_AWARENESS_MAX_SCALE,
   DEPTH_LANTERN_MIN_SCALE,
@@ -55,13 +54,7 @@ export class DepthManager {
   }
 
   get pressure(): DepthPressure {
-    const alert = runFlags.alert;
-    if (alert <= 0) return this.cached;
-    return {
-      ...this.cached,
-      t: Math.min(1, this.cached.t + 0.12 * alert),
-      awareness: this.cached.awareness * (1 + 0.1 * alert),
-    };
+    return this.cached;
   }
 }
 
