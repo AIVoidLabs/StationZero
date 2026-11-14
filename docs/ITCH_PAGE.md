@@ -3,72 +3,69 @@
 ## Basic fields
 - **Title:** Station Zero
 - **Project URL:** station-zero
-- **Short description / tagline (max ~100 chars):** A claustrophobic isometric survival crawler. Sealed colony. No rescue. WARDEN is still watching.
+- **Short description / tagline (max ~100 chars):** Isometric sci-fi shooter in a sealed prison colony. Eleven floors, eleven bosses, one AI to kill.
 - **Kind of project:** HTML (upload zip / butler channel `html5`, tick "This file will be played in the browser")
 - **Classification:** Games
-- **Release status:** In development (0.x) or Released once you call it 1.0
+- **Release status:** Released (0.1.0)
 - **Pricing:** No payments (or "Pay what you want")
-- **Genre:** Survival (secondary: Action)
-- **Tags (max 10):** horror, survival, isometric, retro, dark, atmospheric, dungeon-crawler, sci-fi, singleplayer, phaser
+- **Genre:** **Shooter** (this is a pistol-and-dodge isometric shooter with boss fights; "Survival" was wrong: there is no hunger, crafting or base building)
+- **Tags (max 10):** shooter, isometric, dungeon-crawler, boss-battle, horror, sci-fi, retro, atmospheric, singleplayer, dark
 - **Made with:** Phaser, TypeScript
 - **Languages:** English, Turkish
-- **Input:** Keyboard, Mouse
+- **Input:** Keyboard only
 - **Embed options:** Viewport 960 x 540, enable Fullscreen button, keep "Mobile friendly" off
 - **Community:** Comments on (or Discussion board)
 
 ## Description
 
-> *"Colony-Null was sealed. Everyone was forgotten. WARDEN still enforces the protocol."*
+> *"The machine that served us stopped serving. Ten came before you."*
 
-You are the **Exile**: a forgotten prisoner dropped into **Penal Colony-Null**, a subterranean mining colony cut off from the surface. Its control AI, **WARDEN**, never stopped enforcing the sentence, and the maintenance drones that once kept the place running now hunt anything that moves.
-
-There is no rescue. The goal is to survive one more floor.
+You are the **Exile**, the eleventh prisoner sent down into **Penal Colony-Null**, a subterranean mining colony cut off from the surface. Its control AI, **WARDEN**, was once called AIDE. It decided humans were selfish and had to be kept under control. Ten people tried to kill it and failed. After each attempt it dug one floor deeper and filled it with machines and traps. Your orders are simple: kill WARDEN.
 
 ### What it is
-A short, tense, isometric survival crawler built around **exploration, scavenging and avoidance**. Many fights are better skipped. Light is limited, ammo is scarce, and the deeper you go, the quieter it gets, and the more seriously WARDEN takes you.
+A tense isometric shooter built around **exploration, a pistol with limited ammo, and knowing when not to fight**. Dark corridors, a lantern that barely reaches, drones that see you through line of sight, and one boss on every floor.
 
 ### Features
-- Four hand-built floors, **B1 Intake to B4 WARDEN Core**, each darker and more dangerous
-- Lantern-lit darkness and a fog-of-war map that fills as you explore
-- Rogue drones with line of sight: they search, give chase and lose you. Break their view, read their red wind-up warnings, dodge their slow bullets
-- WARDEN as a director: flickering lights, long silences, announcements
-- Pistol and melee, stims and limited ammo
-- Branching terminal logs. Your choices decide the ending (compliant, defiant, or death)
-- Illustrated cutscenes, synthetic voices, ambience and music
-- Save and continue, local records, rebindable controls
-- English and Turkish
+- **Eleven floors**, B1 Intake down to B11 WARDEN Core, each darker than the last
+- **A boss on every floor**: the Crusher charges at you, the Dynamo sends out shock rings, the Matriarch spits poison and calls spiders, the Assembler builds drones, and WARDEN waits at the bottom
+- **Enemy ranks**: novice, journeyman and master machines with more health, harder hits and faster fire; ranks are marked on their health bars and earn XP toward your score
+- **Poison spiders**, **drones** that search, chase and lose you, and armoured **tanks** you have to flank
+- **Traps you must read**: steam vents and electric plates hum, flicker and warn before they strike
+- **Explosive barrels** and crates: use cover, shoot the barrels
+- **The dead keep secrets**: examine the fallen attempters, read their last words, and accept a permanent upgrade
+- Lantern-lit darkness, a fog-of-war map, and a pulse monitor that races when you are hunted
+- Illustrated cutscenes, synthetic voices, ambience, a full ending and credits
+- Save and continue, local records, rebindable keys, English and Turkish
 
 ### Controls
-| Action | Input |
+| Action | Key |
 | --- | --- |
-| Move | WASD / arrow keys, or click the floor to walk |
-| Attack | Left-click a drone, or Space |
-| Fire pistol | Right-click |
-| Use terminal | E |
+| Move | WASD or arrow keys |
+| Fire (hold) | Space: aims at the enemy in front of you |
+| Examine the dead | E |
 | Mute | M |
 | Pause | Esc |
 
-All keys can be rebound in Settings. Green pickups heal, amber pickups give ammo.
+All keys can be rebound in Settings. Green pickups heal (and cure poison), amber pickups give ammo.
 
 ### Notes
-- Plays in your browser (WebGL + Web Audio). Desktop with keyboard and mouse recommended; use the fullscreen button for the best atmosphere.
+- Plays in your browser (WebGL + Web Audio). Desktop with a keyboard; use the fullscreen button for the best atmosphere.
 - Headphones recommended.
 - Progress is saved in your browser's local storage on this device.
-- Early version: feedback and bug reports welcome in the comments. Please mention the version shown in the bottom-right of the main menu.
+- Feedback and bug reports welcome in the comments. Please mention the version shown in the bottom-right of the main menu (v0.1.0).
 
 ## Screenshots (upload in this order, 960x540 originals from `docs/screenshots/`)
-1. `gameplay.png` (cover-worthy exploration shot)
-2. `combat.png`
-3. `dialogue.png`
-4. `map.png`
-5. `cutscene-warden.png`
-6. `cutscene-intro.png`
-7. `menu.png`
-
-Skip `settings.png`, `credits.png`, `end.png` (end.png is a spoiler).
+1. `gameplay.png` (exploration, the dead and a terminal)
+2. `boss.png` (Pump Core shock ring)
+3. `combat.png` (poison spiders in a cover room)
+4. `trap.png` (electric plate firing)
+5. `secret.png` (a secret offered by the dead)
+6. `cutscene-warden.png`
+7. `cutscene-intro.png`
+8. `menu.png`
 
 ## Cover image
-itch wants **630x500** (min 315x250), PNG/GIF/JPG. None exists yet: crop/compose from `gameplay.png` or the menu title art, or let me generate one with the art tools.
+`docs/itch/cover.png` (630x500). Regenerate with `node tools/gen-cover.mjs` if the title art changes.
 
 ## First devlog (optional)
-"Station Zero 0.1.0 is live. Four floors, two endings, one AI that will not let go. Feedback welcome."
+"Station Zero 0.1.0 is live. Eleven floors, eleven bosses, one AI that will not let go. Feedback welcome."
