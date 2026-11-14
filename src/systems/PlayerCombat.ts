@@ -1,5 +1,6 @@
 import { BlendModes, Scene } from 'phaser';
 import type { Player } from '../entities/Player';
+import { upgradeStats } from './Upgrades';
 import type { Drone } from '../entities/enemies/Drone';
 import type { Level } from './Level';
 import type { Projectiles } from './Projectiles';
@@ -10,7 +11,6 @@ import {
   DRONE_HEIGHT,
   MELEE_ARC_DEGREES,
   MELEE_COOLDOWN_MS,
-  MELEE_DAMAGE,
   MELEE_RANGE,
   PISTOL_COOLDOWN_MS,
   PISTOL_RANGE,
@@ -84,7 +84,7 @@ export class PlayerCombat {
     this.projectiles.spawn('player', from.x, from.y, to.x - from.x, to.y - from.y);
     sfx.play('pistol');
     this.playPistolFx(target);
-    this.player.startAttackCooldown(timeNow, PISTOL_COOLDOWN_MS);
+    this.player.startAttackCooldown(timeNow, PISTOL_COOLDOWN_MS * upgradeStats().pistolCooldownMul);
     return true;
   }
 
@@ -99,7 +99,7 @@ export class PlayerCombat {
     this.player.startAttackCooldown(timeNow, MELEE_COOLDOWN_MS);
     const from = this.player.gridPosition;
     const to = target.gridPosition;
-    target.takeDamage(MELEE_DAMAGE, { x: to.x - from.x, y: to.y - from.y });
+    target.takeDamage(upgradeStats().meleeDamage, { x: to.x - from.x, y: to.y - from.y });
     this.spawnImpact(target.x, target.y - DRONE_HEIGHT * 0.45);
     return true;
   }

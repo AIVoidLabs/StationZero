@@ -15,13 +15,11 @@ import {
   PLAYER_KNOCKBACK_MS,
   PLAYER_KNOCKBACK_SHAKE_MS,
   PLAYER_KNOCKBACK_TILES,
-  PISTOL_MAX_AMMO as AMMO_CAP,
   MELEE_COOLDOWN_MS,
   PISTOL_AMMO_START,
   PISTOL_MAX_AMMO,
   PLAYER_FOOTPRINT,
   PLAYER_IFRAMES_MS,
-  PLAYER_MAX_HP,
   PLAYER_SPEED,
   PLAYER_STRIDE_TILES,
   TILE_HEIGHT,
@@ -31,6 +29,7 @@ import type { Level } from '../systems/Level';
 import { runStats } from '../systems/RunStats';
 import { settings } from '../systems/Settings';
 import { sfx } from '../systems/Sfx';
+import { upgradeStats } from '../systems/Upgrades';
 import { findPath, type GridPoint } from '../systems/Pathfinding';
 import { facingForGridStep } from '../utils/facing';
 import { gridVectorToWorld, worldVectorToGrid } from '../utils/iso';
@@ -106,6 +105,8 @@ export class Player extends Entity {
   private weaponType: WeaponType = 'PISTOL';
   private ammo: number = PISTOL_AMMO_START;
   private maxAmmo: number = PISTOL_MAX_AMMO;
+  private speedMul = 1;
+  private iframesMs = PLAYER_IFRAMES_MS;
   private combatState: PlayerCombatState = 'IDLE';
 
   getHealth(): { hp: number; maxHp: number; ammo: number; maxAmmo: number; weaponType: WeaponType } {
@@ -216,7 +217,7 @@ export class Player extends Entity {
 
   takeDamage(amount: number, timeNow: number, source?: HitSource): boolean {
     if (this.dead) return false;
-    if (timeNow < this.lastHitAt + PLAYER_IFRAMES_MS) return false;
+    if (timeNow < this.lastHitAt + this.iframesMs) return false;
     this.lastHitAt = timeNow;
     this.hp -= amount;
     if (this.hp <= 0) {
@@ -241,6 +242,18 @@ export class Player extends Entity {
     if (settings.data.screenShake) this.scene.cameras.main.shake(PLAYER_KNOCKBACK_SHAKE_MS, 0.004);
   }
 
+  refreshUpgrades(): void {
+    const stats = upgradeStats();
+    const hpGain = Math.max(0, stats.maxHp - this.maxHp);
+    const ammoGain = Math.max(0, stats.maxAmmo - this.maxAmmo);
+    this.maxHp = stats.maxHp;
+    this.maxAmmo = stats.maxAmmo;
+    this.hp = Math.min(this.maxHp, this.hp + hpGain);
+    this.ammo = Math.min(this.maxAmmo, this.ammo + ammoGain);
+    this.speedMul = stats.speedMul;
+    this.iframesMs = stats.iframesMs;
+  }
+
   heal(amount: number): void {
     if (this.dead) return;
     this.hp = Math.min(this.maxHp, this.hp + amount);
@@ -254,11 +267,14 @@ export class Player extends Entity {
     this.level = level;
     this.gridPosX = gridX;
     this.gridPosY = gridY;
-    this.maxHp = PLAYER_MAX_HP;
-    this.hp = Math.max(1, Math.min(PLAYER_MAX_HP, start?.hp ?? PLAYER_MAX_HP));
+    const stats = upgradeStats();
+    this.maxHp = stats.maxHp;
+    this.hp = Math.max(1, Math.min(stats.maxHp, start?.hp ?? stats.maxHp));
     this.weaponType = 'PISTOL';
-    this.ammo = Math.max(0, Math.min(AMMO_CAP, start?.ammo ?? PISTOL_AMMO_START));
-    this.maxAmmo = PISTOL_MAX_AMMO;
+    this.ammo = Math.max(0, Math.min(stats.maxAmmo, start?.ammo ?? PISTOL_AMMO_START));
+    this.maxAmmo = stats.maxAmmo;
+    this.speedMul = stats.speedMul;
+    this.iframesMs = stats.iframesMs;
     this.combatState = 'IDLE';
 
     this.shadow = scene.add.image(0, 0, 'shadow').setOrigin(0.5, 0.5);
@@ -411,8 +427,8 @@ export class Player extends Entity {
 
   private moveAlongWorldDirection(directionX: number, directionY: number, dt: number): void {
     const velocity = worldVectorToGrid(
-      directionX * PLAYER_SPEED,
-      directionY * PLAYER_SPEED,
+      directionX * PLAYER_SPEED * this.speedMul,
+      directionY * PLAYER_SPEED * this.speedMul,
       TILE_WIDTH,
       TILE_HEIGHT,
     );
@@ -448,8 +464,8 @@ export class Player extends Entity {
     const directionX = offsetX / distance;
     const directionY = offsetY / distance;
     const velocity = worldVectorToGrid(
-      directionX * PLAYER_SPEED,
-      directionY * PLAYER_SPEED,
+      directionX * PLAYER_SPEED * this.speedMul,
+      directionY * PLAYER_SPEED * this.speedMul,
       TILE_WIDTH,
       TILE_HEIGHT,
     );

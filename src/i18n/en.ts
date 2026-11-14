@@ -369,6 +369,18 @@ export const en = {
   'term.b11.c3b': 'Maybe.',
   'term.b11.n4': 'Then we are done talking. The eleventh will fall like the rest. Or it will not, and that is also data.',
   'term.b11.c4a': 'Begin.',
+  'hud.secrets': 'SECRETS',
+  'secret.taken': 'SECRET TAKEN',
+  'secret.b1': '+1 MAX HP',
+  'secret.b2': '+6% SPEED',
+  'secret.b3': 'STIMS HEAL +1',
+  'secret.b4': '+3 AMMO CAPACITY',
+  'secret.b5': 'FRONT HITS BREAK ARMOUR FASTER',
+  'secret.b6': 'MELEE DAMAGE +1',
+  'secret.b7': 'LIGHT RADIUS +10%',
+  'secret.b8': 'LONGER HIT RECOVERY',
+  'secret.b9': 'PISTOL FIRES 20% FASTER',
+  'secret.b10': '+1 MAX HP, FULL HEAL',
 } as const;
 
 export type StringKey = keyof typeof en;

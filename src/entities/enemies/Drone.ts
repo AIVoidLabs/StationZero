@@ -35,6 +35,7 @@ import {
 import { ENEMY_SPECS, TANK_FRONT_COS, type EnemyKind, type EnemySpec } from '../../data/enemies';
 import type { Projectiles } from '../../systems/Projectiles';
 import { distanceGain, sfx } from '../../systems/Sfx';
+import { upgradeStats } from '../../systems/Upgrades';
 import { DIRECTION_VECTOR, DIRECTIONS, facingForGridStep } from '../../utils/facing';
 import { gridVectorToWorld, worldVectorToGrid } from '../../utils/iso';
 import { BlendModes } from 'phaser';
@@ -209,7 +210,7 @@ export class Drone extends Entity {
   takeDamage(amount: number, travel?: HitDirection): boolean {
     if (this.dead) return false;
     if (this.armorHp > 0 && travel && this.isFrontalHit(travel)) {
-      this.armorHp -= 1;
+      this.armorHp = Math.max(0, this.armorHp - upgradeStats().armorHit);
       this.updateArmorBar();
       if (this.armorHp <= 0) {
         sfx.play('armorBreak', this.audioGain());

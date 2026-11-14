@@ -1,5 +1,6 @@
 import { GameObjects, Scene } from 'phaser';
 import { HUD_BULLET_EMPTY_KEY, HUD_BULLET_KEY, HUD_CROSS_KEY } from '../assets/manifest';
+import { SECRET_COUNT } from '../data/secrets';
 import { GAME_HEIGHT, GAME_WIDTH, PISTOL_MAX_AMMO, PLAYER_MAX_HP } from '../data/config';
 import { t } from '../i18n';
 import { hints } from '../systems/Hints';
@@ -21,17 +22,19 @@ const AMBER = 0xd9a441;
 const ORANGE = 0xff7a4a;
 const RED = 0xc8321e;
 const CYAN = 0x3ab4d2;
-const SEG_WIDTH = 25;
+const SEG_WIDTH = 22;
 const SEG_HEIGHT = 16;
-const SEG_PITCH = 28;
+const SEG_PITCH = 25;
 const SEG_SKEW = 4;
 const HP_X = 14;
 const HP_Y = 26;
 const HP_W = 262;
 const HP_H = 62;
+const HP_SLOTS = PLAYER_MAX_HP + 2;
+const AMMO_SLOTS = PISTOL_MAX_AMMO + 3;
 const ECG_SAMPLES = 100;
 const ECG_STEP_MS = 16;
-const PIP_SPACING = 12;
+const PIP_SPACING = 11;
 const PIP_SCALE = 1.5;
 const AMMO_W = 262;
 const AMMO_H = 44;
@@ -118,6 +121,8 @@ export class HudScene extends Scene {
   private ecgClock = 0;
   private shakeX = 0;
   private currentHp = 4;
+  private maxHpShown = PLAYER_MAX_HP;
+  private secretText!: GameObjects.Text;
   private objectiveCalm = false;
   private lastObjective = '';
   private lastCode = '';
@@ -151,9 +156,13 @@ export class HudScene extends Scene {
     this.barGfx = this.add.graphics();
     this.ecgGfx = this.add.graphics();
     this.segments = [];
-    for (let index = 0; index < PLAYER_MAX_HP; index += 1) {
+    for (let index = 0; index < HP_SLOTS; index += 1) {
       this.segments.push({ fill: 1, flash: 0, flashColor: 0xffffff, animating: false });
     }
+
+    this.secretText = this.add
+      .text(HP_X + 4, HP_Y + HP_H + 8, '', { fontFamily: FONT, fontSize: '9px', color: '#d9a441' })
+      .setOrigin(0, 0);
 
     this.ammoFrame = new PanelFrame(this, AMMO_X, AMMO_Y, AMMO_W, AMMO_H, { label: t('hud.ammo'), accent: AMBER });
     const ammoBox = this.add.graphics();
@@ -162,7 +171,7 @@ export class HudScene extends Scene {
     ammoBox.lineStyle(1, 0x6b5a44, 0.9);
     ammoBox.strokeRect(AMMO_X + 182.5, AMMO_Y + 8.5, 67, AMMO_H - 17);
     this.pips = [];
-    for (let index = 0; index < PISTOL_MAX_AMMO; index += 1) {
+    for (let index = 0; index < AMMO_SLOTS; index += 1) {
       this.pips.push(
         this.add
           .image(AMMO_X + 14 + index * PIP_SPACING, AMMO_Y + 13, HUD_BULLET_KEY)
@@ -298,7 +307,8 @@ export class HudScene extends Scene {
 
     const floorChanged = state.floor !== this.prevFloor;
     this.updateHealth(state.hp, state.maxHp, floorChanged);
-    this.updateAmmo(state.ammo, state.weaponType, floorChanged);
+    this.updateAmmo(state.ammo, state.maxAmmo, state.weaponType, floorChanged);
+    this.secretText.setText(`${t('hud.secrets')} ${state.secrets}/${SECRET_COUNT}`);
     this.prevFloor = state.floor;
 
     this.updateSector(state.floorCode, state.floorName, state.objective, state.objectiveCalm);
@@ -339,8 +349,8 @@ export class HudScene extends Scene {
   }
 
   private hpColor(hp: number): number {
-    if (hp >= PLAYER_MAX_HP * 0.6) return GREEN;
-    if (hp > PLAYER_MAX_HP * 0.3) return AMBER;
+    if (hp >= this.maxHpShown * 0.6) return GREEN;
+    if (hp > this.maxHpShown * 0.3) return AMBER;
     return RED;
   }
 
@@ -389,6 +399,7 @@ export class HudScene extends Scene {
     const previous = this.prevHp;
     this.prevHp = hp;
     this.currentHp = hp;
+    this.maxHpShown = maxHp;
     this.hpFrame.setAccent(this.hpColor(hp));
 
     this.segments.forEach((segment, index) => {
@@ -420,6 +431,7 @@ export class HudScene extends Scene {
     this.cross.setX(HP_X + 14 + this.shakeX);
 
     this.segments.forEach((segment, index) => {
+      if (index >= this.maxHpShown) return;
       const x = x0 + index * SEG_PITCH;
       drawSlantCell(g, x - 1, y0 - 1, SEG_WIDTH + 2, SEG_HEIGHT + 2, SEG_SKEW, 0x050505, 1);
       drawSlantCell(g, x, y0, SEG_WIDTH, SEG_HEIGHT, SEG_SKEW, 0x241d14, 1);
@@ -533,14 +545,16 @@ export class HudScene extends Scene {
     this.hpFrame.flash(0x7af0a0);
   }
 
-  private updateAmmo(ammo: number, weapon: string, skipEffects: boolean): void {
+  private updateAmmo(ammo: number, maxAmmo: number, weapon: string, skipEffects: boolean): void {
     const previous = this.prevAmmo;
     this.prevAmmo = ammo;
     const empty = ammo <= 0 || weapon === 'MELEE';
     const low = ammo > 0 && ammo <= LOW_AMMO;
     const blink = 0.55 + 0.45 * Math.abs(Math.sin(this.time.now / 220));
 
+    this.ammoMax.setText(`/${maxAmmo}`);
     this.pips.forEach((pip, index) => {
+      pip.setVisible(index < maxAmmo);
       const filled = index < ammo;
       pip.setTexture(filled ? HUD_BULLET_KEY : HUD_BULLET_EMPTY_KEY);
       if (filled && low) pip.setTint(ORANGE);

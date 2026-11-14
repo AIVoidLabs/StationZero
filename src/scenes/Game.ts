@@ -5,6 +5,7 @@ import {
   CAMERA_LOOK_AHEAD,
   CAMERA_LERP,
   CAMERA_ZOOM,
+  DEPTH_VFX,
   DESCENT_ARRIVAL_PULSE_MS,
   DESCENT_FADE_MS,
   DESCENT_SPIN_MS,
@@ -43,9 +44,11 @@ import { floorInfo } from '../data/floors';
 import { hints } from '../systems/Hints';
 import { voice } from '../systems/Voice';
 import { keyName } from '../systems/Settings';
-import { t } from '../i18n';
+import { t, type StringKey } from '../i18n';
 import { dialogueForFloor, type Effect } from '../data/dialogue';
 import { runFlags } from '../systems/RunFlags';
+import { upgradeStats } from '../systems/Upgrades';
+import { SECRET_COUNT } from '../data/secrets';
 import { descentCutscene } from '../data/cutscenes';
 import { logKeyFor } from '../systems/LogFeed';
 import { sfx } from '../systems/Sfx';
@@ -75,6 +78,7 @@ export interface HudState {
   hostiles: number;
   exit: 'NONE' | 'LOCKED' | 'OPEN';
   lastFloor: boolean;
+  secrets: number;
 }
 
 const DEATH_TO_END_MS = 2200;
@@ -131,6 +135,7 @@ export class Game extends Scene {
   private deathMs = 0;
   private clearMs = 0;
   private cardToken = 0;
+  private lightMul = 1;
   private hintClock = 0;
   private hintHp = -1;
   private startSeen = 0;
@@ -255,6 +260,7 @@ export class Game extends Scene {
     this.exploration = exploration;
     this.startSeen = exploration.seenCount;
     this.cardToken = ++cardCounter;
+    this.lightMul = upgradeStats().lightMul;
     voice.attach(this);
     voice.clear();
     hints.clear();
@@ -630,7 +636,7 @@ export class Game extends Scene {
       emit({
         x: player.x,
         y: player.y - 14,
-        radius: PLAYER_LIGHT_RADIUS * lantern.intensityScale * flicker,
+        radius: PLAYER_LIGHT_RADIUS * lantern.intensityScale * flicker * this.lightMul,
         intensity: 1,
         tint: 'warm',
         squash: 0.8,
@@ -846,6 +852,9 @@ export class Game extends Scene {
           this.exploration.revealRadius(Math.round(grid.x), Math.round(grid.y), effect.radius, this.time.now);
         }
         break;
+      case 'secret':
+        this.collectSecret(effect.floor);
+        break;
       case 'cache':
         if (player) {
           const grid = player.gridPosition;
@@ -853,6 +862,33 @@ export class Game extends Scene {
         }
         break;
     }
+  }
+
+  private collectSecret(floor: number): void {
+    const player = this.player;
+    if (!player || runFlags.hasSecret(floor)) return;
+    runFlags.addSecret(floor);
+    player.refreshUpgrades();
+    if (floor === SECRET_COUNT - 1) player.heal(Number.MAX_SAFE_INTEGER);
+    this.lightMul = upgradeStats().lightMul;
+    sfx.play('pickupHealth');
+
+    const label = this.add
+      .text(player.x, player.y - 56, `${t('secret.taken')}: ${t(`secret.b${floor + 1}` as StringKey)}`, {
+        fontFamily: 'monospace',
+        fontSize: '8px',
+        color: '#d9a441',
+      })
+      .setOrigin(0.5, 1)
+      .setDepth(DEPTH_VFX + 5);
+    this.tweens.add({
+      targets: label,
+      y: label.y - 18,
+      alpha: 0,
+      duration: 2600,
+      ease: 'Quad.easeOut',
+      onComplete: () => label.destroy(),
+    });
   }
 
   private exileOnce(id: string, key: string): void {
@@ -968,6 +1004,7 @@ export class Game extends Scene {
       hostiles,
       exit,
       lastFloor,
+      secrets: runFlags.secretCount,
     };
   }
 

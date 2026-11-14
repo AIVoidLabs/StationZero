@@ -5,7 +5,8 @@ export type Effect =
   | { readonly type: 'stance'; readonly amount: number }
   | { readonly type: 'reveal'; readonly radius: number }
   | { readonly type: 'cache'; readonly kind: 'stim' | 'ammo' }
-  | { readonly type: 'lore'; readonly id: string };
+  | { readonly type: 'lore'; readonly id: string }
+  | { readonly type: 'secret'; readonly floor: number };
 
 export type Speaker =
   | 'hale'
@@ -67,7 +68,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         line: 'term.b1.n3',
         effects: [{ type: 'lore', id: 'secret_b1' }, { type: 'cache', kind: 'ammo' }],
         choices: [
-          { text: 'term.b1.c3a', next: null },
+          { text: 'term.b1.c3a', next: null, effects: [{ type: 'secret', floor: 0 }] },
         ],
       },
     },
@@ -97,7 +98,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         line: 'term.b2.n3',
         effects: [{ type: 'lore', id: 'secret_b2' }, { type: 'reveal', radius: 6 }],
         choices: [
-          { text: 'term.b2.c3a', next: null },
+          { text: 'term.b2.c3a', next: null, effects: [{ type: 'secret', floor: 1 }] },
         ],
       },
     },
@@ -126,7 +127,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         line: 'term.b3.n3',
         effects: [{ type: 'lore', id: 'secret_b3' }, { type: 'cache', kind: 'stim' }],
         choices: [
-          { text: 'term.b3.c3a', next: null },
+          { text: 'term.b3.c3a', next: null, effects: [{ type: 'secret', floor: 2 }] },
         ],
       },
     },
@@ -156,7 +157,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         line: 'term.b4.n3',
         effects: [{ type: 'lore', id: 'secret_b4' }, { type: 'reveal', radius: 5 }],
         choices: [
-          { text: 'term.b4.c3a', next: null },
+          { text: 'term.b4.c3a', next: null, effects: [{ type: 'secret', floor: 3 }] },
         ],
       },
     },
@@ -185,7 +186,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         line: 'term.b5.n3',
         effects: [{ type: 'lore', id: 'secret_b5' }, { type: 'cache', kind: 'ammo' }],
         choices: [
-          { text: 'term.b5.c3a', next: null },
+          { text: 'term.b5.c3a', next: null, effects: [{ type: 'secret', floor: 4 }] },
         ],
       },
     },
@@ -215,7 +216,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         line: 'term.b6.n3',
         effects: [{ type: 'lore', id: 'secret_b6' }, { type: 'lore', id: 'rear_seam' }],
         choices: [
-          { text: 'term.b6.c3a', next: null },
+          { text: 'term.b6.c3a', next: null, effects: [{ type: 'secret', floor: 5 }] },
         ],
       },
     },
@@ -245,7 +246,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         line: 'term.b7.n3',
         effects: [{ type: 'lore', id: 'secret_b7' }, { type: 'lore', id: 'file_zero' }],
         choices: [
-          { text: 'term.b7.c3a', next: null },
+          { text: 'term.b7.c3a', next: null, effects: [{ type: 'secret', floor: 6 }] },
         ],
       },
     },
@@ -274,7 +275,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         line: 'term.b8.n3',
         effects: [{ type: 'lore', id: 'secret_b8' }, { type: 'reveal', radius: 8 }],
         choices: [
-          { text: 'term.b8.c3a', next: null },
+          { text: 'term.b8.c3a', next: null, effects: [{ type: 'secret', floor: 7 }] },
         ],
       },
     },
@@ -304,7 +305,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         line: 'term.b9.n3',
         effects: [{ type: 'lore', id: 'secret_b9' }, { type: 'lore', id: 'first_command' }],
         choices: [
-          { text: 'term.b9.c3a', next: null },
+          { text: 'term.b9.c3a', next: null, effects: [{ type: 'secret', floor: 8 }] },
         ],
       },
     },
@@ -335,7 +336,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         line: 'term.b10.n3',
         effects: [{ type: 'lore', id: 'secret_b10' }, { type: 'cache', kind: 'ammo' }, { type: 'reveal', radius: 10 }],
         choices: [
-          { text: 'term.b10.c3a', next: null },
+          { text: 'term.b10.c3a', next: null, effects: [{ type: 'secret', floor: 9 }] },
         ],
       },
     },

@@ -3,6 +3,7 @@ export interface FlagSnapshot {
   readonly stance: number;
   readonly lore: readonly string[];
   readonly used: readonly string[];
+  readonly secrets?: readonly number[];
 }
 
 const MAX_ALERT = 4;
@@ -12,12 +13,14 @@ class RunFlagStore {
   stance = 0;
   private lore = new Set<string>();
   private used = new Set<string>();
+  private secrets = new Set<number>();
 
   reset(): void {
     this.alert = 0;
     this.stance = 0;
     this.lore.clear();
     this.used.clear();
+    this.secrets.clear();
   }
 
   restore(snapshot: FlagSnapshot | undefined): void {
@@ -27,10 +30,11 @@ class RunFlagStore {
     this.stance = snapshot.stance;
     for (const id of snapshot.lore) this.lore.add(id);
     for (const id of snapshot.used) this.used.add(id);
+    for (const floor of snapshot.secrets ?? []) this.secrets.add(floor);
   }
 
   snapshot(): FlagSnapshot {
-    return { alert: this.alert, stance: this.stance, lore: [...this.lore], used: [...this.used] };
+    return { alert: this.alert, stance: this.stance, lore: [...this.lore], used: [...this.used], secrets: [...this.secrets] };
   }
 
   addAlert(amount: number): void {
@@ -47,6 +51,18 @@ class RunFlagStore {
 
   hasLore(id: string): boolean {
     return this.lore.has(id);
+  }
+
+  addSecret(floor: number): void {
+    this.secrets.add(floor);
+  }
+
+  hasSecret(floor: number): boolean {
+    return this.secrets.has(floor);
+  }
+
+  get secretCount(): number {
+    return this.secrets.size;
   }
 
   markUsed(id: string): void {

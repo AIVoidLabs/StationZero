@@ -7,7 +7,6 @@ import {
   LOOT_DROP_CHANCE,
   LOOT_DROP_CHANCE_MIN,
   LOOT_DROP_DEPTH_STEP,
-  LOOT_HEAL_AMOUNT,
   LOOT_PICKUP_RANGE,
   TILE_HEIGHT,
   TILE_WIDTH,
@@ -20,6 +19,7 @@ import { createRng } from '../utils/random';
 import type { Dungeon } from './DungeonGen';
 import type { Level } from './Level';
 import { sfx } from './Sfx';
+import { upgradeStats } from './Upgrades';
 
 const LOOT_SEED = 0x1097;
 const FLOOR_LOOT_SEED = 0x2b3c;
@@ -100,7 +100,7 @@ export class LootSystem {
     const full = best.kind === 'stim' ? state.hp >= state.maxHp : state.ammo >= state.maxAmmo;
     const effect =
       best.kind === 'stim'
-        ? t('loot.stimEffect', { n: LOOT_HEAL_AMOUNT })
+        ? t('loot.stimEffect', { n: upgradeStats().stimHeal })
         : t('loot.ammoEffect', { n: LOOT_AMMO_AMOUNT });
     const name = best.kind === 'stim' ? t('loot.stim') : t('loot.ammo');
     label
@@ -169,9 +169,10 @@ export class LootSystem {
     const state = player.getHealth();
     if (kind === 'stim') {
       if (state.hp >= state.maxHp) return null;
-      player.heal(LOOT_HEAL_AMOUNT);
+      const heal = upgradeStats().stimHeal;
+      player.heal(heal);
       sfx.play('pickupHealth');
-      return t('loot.gainHp', { n: LOOT_HEAL_AMOUNT });
+      return t('loot.gainHp', { n: heal });
     }
     if (state.ammo >= state.maxAmmo) return null;
     const added = player.addAmmo(LOOT_AMMO_AMOUNT);

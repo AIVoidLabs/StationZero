@@ -91,6 +91,21 @@ WARDEN is not a character on screen; it is a **director**.
 | B10 | COMMS ARRAY | 4 | Kessler: how to end it |
 | B11 | WARDEN CORE | 4 | WARDEN's terminal; final boss, the WARDEN core; killing it ends the run |
 
+- **Secrets:** each recording on B1-B10 ends with a "take" choice that grants a permanent upgrade for the rest of the run (kept in saves). The hatch is unaffected: it still opens when every hostile is dead. A `SECRETS n/10` counter sits under the vitals panel.
+
+| Floor | Secret | Upgrade |
+| --- | --- | --- |
+| B1 Hale | badge | +1 max HP |
+| B2 Voss | route map | +6% move speed |
+| B3 Lund | syringe | stims heal +1 |
+| B4 Dray | badge | +3 ammo capacity |
+| B5 Sato | valve key | front hits do 2 armour damage |
+| B6 Brandt | cutter | melee damage +1 |
+| B7 Pell | page | light radius +10% |
+| B8 Moreau | fuse | 0.9 s recovery after a hit (was 0.6 s) |
+| B9 Iyer | page | pistol fires 20% faster |
+| B10 Kessler | final key | +1 max HP and a full heal |
+
 - **Sealed hatch:** opens when all hostiles on the floor are destroyed (the door plays an opening animation, a guide arrow appears). Stepping onto it makes the Exile spin on the spot, then descend with a fade and a short cutscene.
 - **Save:** an autosave on arrival at each floor (floor, HP, ammo, run stats, story flags) powers *Continue*.
 - **Endings:** one ending (kill WARDEN) whose last line depends on stance, or death (see [SCENARIO.md](SCENARIO.md)).
