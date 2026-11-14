@@ -42,6 +42,7 @@ export class Decor {
   private readonly propOccluders: OccluderSpec[] = [];
   private readonly terminalCells: TerminalCell[] = [];
   private readonly barrelCells: BarrelCell[] = [];
+  private corpse: { x: number; y: number } | null = null;
   private readonly exit: DungeonExit | null;
   private readonly decalTarget: number;
   private readonly floorIndex: number;
@@ -63,7 +64,10 @@ export class Decor {
       this.addProp(terminal.x, terminal.y, 'terminal');
       this.level.blockCell(terminal.x, terminal.y);
     }
-    if (corpse) this.addCorpse(corpse.x, corpse.y);
+    if (corpse) {
+      this.corpse = { x: corpse.x, y: corpse.y };
+      this.addCorpse(corpse.x, corpse.y);
+    }
     this.placeDecals(dungeon);
   }
 
@@ -73,6 +77,10 @@ export class Decor {
 
   get terminals(): readonly TerminalCell[] {
     return this.terminalCells;
+  }
+
+  get corpseCell(): { readonly x: number; readonly y: number } | null {
+    return this.corpse;
   }
 
   get barrels(): readonly BarrelCell[] {
@@ -85,6 +93,7 @@ export class Decor {
     this.propOccluders.length = 0;
     this.terminalCells.length = 0;
     this.barrelCells.length = 0;
+    this.corpse = null;
   }
 
   private addThemeProp(gridX: number, gridY: number): void {

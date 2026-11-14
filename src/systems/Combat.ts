@@ -52,10 +52,6 @@ export class Combat {
     }
   }
 
-  wakeBoss(): void {
-    for (const unit of this.drones) if (unit.isDormant) unit.wake();
-  }
-
   get roster(): readonly Drone[] {
     return this.drones;
   }

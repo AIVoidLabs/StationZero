@@ -44,7 +44,7 @@ export class End extends Scene {
       .text(
         GAME_WIDTH / 2,
         230,
-        survived ? (runFlags.compliant ? t('end.compliantLine') : t('end.defiantLine')) : t('end.deadLine'),
+        survived ? t('end.defiantLine') : t('end.deadLine'),
         { fontFamily: 'monospace', fontSize: '11px', color: MENU_COLORS.dim },
       )
       .setOrigin(0.5, 0)

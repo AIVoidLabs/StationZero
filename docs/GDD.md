@@ -18,12 +18,12 @@ A 2D isometric, retro-futuristic survival dungeon crawler set in `Penal Colony-N
 
 ### Platform and target
 
-Browser (desktop), HTML5 / WebGL via Phaser 4, 960×540 logical resolution scaled to fit, keyboard + mouse. A single run takes roughly 10–20 minutes.
+Browser (desktop), HTML5 / WebGL via Phaser 4, 960×540 logical resolution scaled to fit, keyboard only. A single run takes roughly 10–20 minutes.
 
 ## 2. Core loop
 
 1. **Explore** a small, dark floor with a lantern and a fog-of-war minimap.
-2. **Scavenge** loot: stims (health) and ammo; terminals reveal map areas or unlock caches.
+2. **Scavenge** loot: stims (health) and ammo; terminals show gameplay tips; the dead hold the secrets.
 3. **Avoid or engage** drones. They see in a cone and with line of sight; evasion is often right.
 4. **Clear** the floor: when every hostile on the floor is destroyed, the hatch unseals.
 5. **Descend** by stepping onto the hatch. Light dims, drones get sharper, WARDEN grows louder.
@@ -39,7 +39,7 @@ Browser (desktop), HTML5 / WebGL via Phaser 4, 960×540 logical resolution scale
 | Melee | 1 damage, range 1.8 tiles, 95° arc, 0.28 s cooldown |
 | Loot | Stim +2 HP; ammo box +4 rounds. Every drone drops +4 ammo (tank +8, Assembler +8); stims drop 30% (falling with depth) when HP is missing, and 0.4 stims per hostile are left in separate rooms plus a guaranteed number per floor (3 on B1, fewer deeper) |
 
-Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previews the target tile), left-click or Space attacks, right-click fires the pistol, `E` interacts with terminals, `M` mutes, `Esc` pauses.
+Input: WASD/arrows (rebindable), hold Space to fire at the target in front of the Exile (no mouse play), `E` examines the dead, `M` mutes, `Esc` pauses.
 
 ## 4. World
 
@@ -66,7 +66,7 @@ Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previe
 - **Laser grid** (from B7): a beam across a one-tile corridor on a 3.4 s cycle: off 1.7 s, flickering warning 0.5 s, on 1.2 s. Touching it deals 1 damage and raises WARDEN alert by 1.
 - **Armour** (tank and bosses): the front plate has its own HP. Head-on hits chip it down (3 for the tank); once it breaks the enemy is open from every side. Flanking hits skip the plate entirely.
 - **Assembler** (B9 mid boss): 6 HP, 3 armour, slow tank body. Fires a fan of 3 shells and calls a drone every 11 s (up to 2 alive). Summoned drones give no loot or score and die with it.
-- **WARDEN core** (B11 final boss): 9 HP, 4 armour, immobile. It sleeps (dark, inactive) until the Exile finishes its terminal conversation, comes within 6 tiles, or hits it. Turns slowly. Fires a fan of 5 shells and calls drones every 10 s (up to 2 alive). Killing it ends the run.
+- **WARDEN core** (B11 final boss): 9 HP, 4 armour, immobile. It sleeps (dark, inactive) until the Exile comes within 6 tiles or hits it. Turns slowly. Fires a fan of 5 shells and calls drones every 10 s (up to 2 alive). Killing it ends the run.
 - **Robot tank** (from B6, rare): 2 HP, slow, turns slowly (one facing change per 0.9 s). Its front armour (a 37 degree cone) deflects shots; shots from the sides and rear, melee from behind, and hazards hurt it. Fires a heavy shell (1 damage, slow) after a 1.1 s wind-up; crushes in melee for 1.
 
 ## 6. WARDEN — the director
@@ -77,13 +77,13 @@ WARDEN is not a character on screen; it is a **director**.
 - **Announcements:** a short line when you arrive and when the floor is cleared, in text and a synthetic voice (see [SCENARIO.md](SCENARIO.md)).
 - **Escalation per floor (B1→B11):** vision radius ×1→0.65, lantern ×1→0.68, ambience pitch −3% per floor, drone awareness ×1→1.3.
 - **Difficulty formula (`src/data/difficulty.ts`, d = floor index):** drones `round(11 + 0.55·d)` (boss floors ×0.8); non-boss enemy HP ×`1 + 0.08·d`; fire cooldown ×`max(0.7, 1 − 0.03·d)` (and −5% per alert); enemy ammo drops scale with the HP multiplier. Counts are baked into the floor JSON: change the numbers, then `npm run levels:bake`.
-- **Alert** (0–4, set by terminal choices): each point adds +12% to depth pressure and +10% awareness on top of the floor baseline.
+- **Alert** (0–4, raised by laser hits): each point adds +12% to depth pressure and +10% awareness on top of the floor baseline.
 
 ## 7. Progression and structure
 
 | Floor | Name | Hostiles | Notes |
 | --- | --- | --- | --- |
-| B1 | INTAKE | 6 | Teaches movement, click-to-walk, terminals, loot; Hale's recording (WARDEN's old name) |
+| B1 | INTAKE | 6 | Teaches movement, fire, terminal tips, loot; Hale's body holds the first secret |
 | B2 | CELL BLOCK | 7 | Voss: patrol loop; first dark corners |
 | B3 | INFIRMARY | 7 | Lund: WARDEN reads pulse and voice |
 | B4 | DRILL 3 | 8 | Dray: drones are rebuilt miners; steam vents |
@@ -93,7 +93,7 @@ WARDEN is not a character on screen; it is a **director**.
 | B8 | POWER GRID | 9 + tank | Moreau: backup feed |
 | B9 | DRONE FOUNDRY | 6 + boss | Iyer: first instruction; mid boss, the Assembler |
 | B10 | COMMS ARRAY | 9 + tank | Kessler: how to end it |
-| B11 | WARDEN CORE | 6 + boss | WARDEN's terminal; final boss, the WARDEN core; killing it ends the run |
+| B11 | WARDEN CORE | 6 + boss | Final boss, the WARDEN core; killing it ends the run |
 
 - **Secrets:** each recording on B1-B10 ends with a "take" choice that grants a permanent upgrade for the rest of the run (kept in saves). The hatch is unaffected: it still opens when every hostile is dead. A `SECRETS n/10` counter sits under the vitals panel.
 
@@ -112,7 +112,7 @@ WARDEN is not a character on screen; it is a **director**.
 
 - **Sealed hatch:** opens when all hostiles on the floor are destroyed (the door plays an opening animation, a guide arrow appears). Stepping onto it makes the Exile spin on the spot, then descend with a fade and a short cutscene.
 - **Save:** an autosave on arrival at each floor (floor, HP, ammo, run stats, story flags) powers *Continue*.
-- **Endings:** one ending (kill WARDEN) whose last line depends on stance, or death (see [SCENARIO.md](SCENARIO.md)).
+- **Endings:** one ending (kill WARDEN), or death (you restart the floor with its entry hp, ammo and secrets) (see [SCENARIO.md](SCENARIO.md)).
 - **Score:** `floorReached × 1000 + kills × 150 + (survived ? 3000 : 0) − seconds played`, minimum 0; top 10 kept locally in *Records*.
 
 ## 8. Systems
@@ -122,7 +122,7 @@ WARDEN is not a character on screen; it is a **director**.
 | Menus | Main menu (Continue / New game / Records / Settings / Credits), pause, end screen; mouse and keyboard, hover sound |
 | Settings | Master/music/SFX volume, screen shake, minimap, FPS counter, cutscenes, hints, voice, language, key rebinding |
 | Hints | One-time contextual hint bar (move, attack, dodge, loot, sealed hatch, map, low HP…) with *Reset hints* |
-| Terminals | Interaction prompt; branching dialogue panel with 1–3 hotkeys; effects (stance, alert, reveal, cache, lore) |
+| Terminals / the dead | Terminals show a gameplay tip when you stand near. Examine a body (`E`): poem, the gain it gives, Accept / Leave; accepting grants the secret |
 | Cutscenes | Intro, descents (every floor from B2 has a still), two ending stills; illustrated stills with camera moves, skippable, can be disabled |
 | Records | Local leaderboard in `localStorage` (`station-zero:records`) |
 | Localisation | English and Turkish, auto-detected from the browser, switchable in Settings |

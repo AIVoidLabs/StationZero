@@ -44,14 +44,12 @@ import { hints } from '../systems/Hints';
 import { voice } from '../systems/Voice';
 import { keyName } from '../systems/Settings';
 import { t, type StringKey } from '../i18n';
-import { dialogueForFloor, type Effect } from '../data/dialogue';
 import { runFlags, type FlagSnapshot } from '../systems/RunFlags';
 import { upgradeStats } from '../systems/Upgrades';
 import { scaledAmmoDrop } from '../data/difficulty';
 import { ENEMY_SPECS } from '../data/enemies';
 import { SECRET_COUNT } from '../data/secrets';
 import { descentCutscene } from '../data/cutscenes';
-import { logKeyFor } from '../systems/LogFeed';
 import { sfx } from '../systems/Sfx';
 import { isDebugMode, devStartFloor } from '../utils/devflags';
 import { isDevStart } from '../utils/devstart';
@@ -486,7 +484,7 @@ export class Game extends Scene {
       );
     }
 
-    if (this.terminalNear() !== null) hints.trigger('interact', t('hint.interact', { key: keyName(keys.interact) }));
+    if (this.corpseNear()) hints.trigger('interact', t('hint.examine', { key: keyName(keys.interact) }));
 
     for (const drone of combat.roster) {
       if (drone.isDead) continue;
@@ -577,7 +575,7 @@ export class Game extends Scene {
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.stop('HudScene');
       if (outcome === 'survived' && settings.data.cutscenes) {
-        const id = runFlags.compliant ? 'end_comply' : 'end_defy';
+        const id = 'end_defy';
         this.scene.start('Cutscene', { id, next: { scene: 'End', data: { outcome } } });
         return;
       }
@@ -770,40 +768,7 @@ export class Game extends Scene {
     this.interactKey = keyboard.addKey(keys.interact);
   }
 
-  applyDialogueEffect(effect: Effect): void {
-    const player = this.player;
-    switch (effect.type) {
-      case 'alert':
-        runFlags.addAlert(effect.amount);
-        break;
-      case 'stance':
-        runFlags.addStance(effect.amount);
-        break;
-      case 'lore':
-        runFlags.addLore(effect.id);
-        break;
-      case 'reveal':
-        if (player && this.exploration) {
-          const grid = player.gridPosition;
-          this.exploration.revealRadius(Math.round(grid.x), Math.round(grid.y), effect.radius, this.time.now);
-        }
-        break;
-      case 'secret':
-        this.collectSecret(effect.floor);
-        break;
-      case 'wake':
-        this.combat?.wakeBoss();
-        break;
-      case 'cache':
-        if (player) {
-          const grid = player.gridPosition;
-          this.loot?.spawnNear(grid.x, grid.y, effect.kind);
-        }
-        break;
-    }
-  }
-
-  private collectSecret(floor: number): void {
+  collectSecret(floor: number): void {
     const player = this.player;
     if (!player || runFlags.hasSecret(floor)) return;
     runFlags.addSecret(floor);
@@ -836,46 +801,28 @@ export class Game extends Scene {
     voice.say(key, 'exile');
   }
 
-  private terminalNear(): { index: number; cell: { x: number; y: number } } | null {
+  private corpseNear(): boolean {
     const player = this.player;
-    const terminals = this.decor?.terminals ?? [];
-    if (!player) return null;
+    const corpse = this.decor?.corpseCell;
+    if (!player || !corpse || this.floor >= SECRET_COUNT || runFlags.hasSecret(this.floor)) return false;
     const grid = player.gridPosition;
-    let best: { index: number; cell: { x: number; y: number } } | null = null;
-    let bestDistance = LOG_REACH_TILES + 0.2;
-    terminals.forEach((cell, index) => {
-      const distance = Math.max(Math.abs(cell.x - grid.x), Math.abs(cell.y - grid.y));
-      if (distance > bestDistance) return;
-      bestDistance = distance;
-      best = { index, cell: { x: cell.x, y: cell.y } };
-    });
-    return best;
+    return Math.max(Math.abs(corpse.x - grid.x), Math.abs(corpse.y - grid.y)) <= LOG_REACH_TILES + 0.2;
   }
 
   private promptText(): string | null {
-    const near = this.terminalNear();
-    if (!near) return null;
-    const key = keyName(settings.data.keys.interact);
-    if (near.index === 0 && dialogueForFloor(this.floor)) return t('prompt.access', { key });
-    return t('prompt.read', { key });
+    if (!this.corpseNear()) return null;
+    return t('prompt.examine', { key: keyName(settings.data.keys.interact) });
   }
 
   private interact(): void {
-    const near = this.terminalNear();
-    if (!near) return;
-    if (near.index === 0 && dialogueForFloor(this.floor)) {
-      this.exileOnce('terminal', 'exile.terminal');
-      this.openDialogue();
-      return;
-    }
-    voice.say(logKeyFor(near.cell, this.floor), 'log');
+    if (this.corpseNear()) this.openSecret();
   }
 
-  private openDialogue(): void {
+  private openSecret(): void {
     if (this.transitioning || this.scene.isPaused()) return;
     this.scene.pause();
     this.scene.pause('HudScene');
-    this.scene.launch('Dialogue', { floor: this.floor });
+    this.scene.launch('Secret', { floor: this.floor });
   }
 
   private openPause(): void {

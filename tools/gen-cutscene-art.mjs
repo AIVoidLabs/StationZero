@@ -427,24 +427,6 @@ async function descentCore() {
   );
 }
 
-async function endComply() {
-  let marks = '';
-  for (let i = 0; i < 10; i += 1) marks += `<rect x="${58 + i * 12.5}" y="7" width="1.4" height="9" fill="#6a5a4a"/>`;
-  marks += `<path d="M171,16 q3,-8 6,0" fill="none" stroke="#d9a441" stroke-width="1.3"/>`;
-  const scene = coreScene({ ring: '#3a3a3e', pupil: '#7a4a2a', center: '#5a3a2a', mid: '#2a1a18', edge: '#0e0a0a', beam: '#8a7a5a', crack: false, extra: marks });
-  const exile = await sprite(path.join(V2, 'player.png'), 0);
-  const figure = await scaled(exile, 2.4);
-  return finish(
-    svg(scene.body, scene.defs),
-    [{ input: figure, left: 214, top: 146 }],
-    [
-      { x: 240, y: 92, r: 220, color: 'rgb(200,150,90)', a: 0.3 },
-      { x: 240, y: 200, r: 80, color: 'rgb(217,164,65)', a: 0.3 },
-    ],
-    0.82,
-  );
-}
-
 async function endDefy() {
   const shaft = `<polygon points="${105},0 ${135},0 ${160},${LOW_H} ${80},${LOW_H}" fill="#cfe0f0" opacity="0.14"/>`;
   const scene = coreScene({ ring: '#3a2a28', pupil: '#120a0a', center: '#2a1a18', mid: '#1a0e0c', edge: '#0a0606', beam: '#cfe0f0', crack: true, extra: shaft });
@@ -483,7 +465,6 @@ async function main() {
     descent_power: await descentPower(),
     descent_dronefoundry: await descentDroneFoundry(),
     descent_comms: await descentComms(),
-    end_comply: await endComply(),
     end_defy: await endDefy(),
   };
   for (const [name, buffer] of Object.entries(panels)) {

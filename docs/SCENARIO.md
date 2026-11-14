@@ -1,5 +1,8 @@
 # Station Zero — Scenario (DRAFT v3)
 
+> **Revision (current build):** terminals no longer hold conversations; they show a short gameplay tip. The secret of each floor B1-B10 is taken from the body of the dead (stand next to it, `E`): a short poem, the gain it grants, then *Accept* or *Leave it*. WARDEN no longer speaks at a terminal on B11; it wakes when the Exile comes close, and there is a single ending (kill WARDEN, the defiant variant). The terminal and stance material below is kept as source for names and tone only.
+
+
 > **Spoiler warning.** Describes the whole story and every ending.
 > Status: draft. Decisions so far: one ending (kill WARDEN), the player was chosen by the humans above, WARDEN is calm and half right.
 

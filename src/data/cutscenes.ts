@@ -15,7 +15,7 @@ export interface CutscenePanel {
   readonly flicker?: boolean;
 }
 
-export type CutsceneId = 'intro' | 'end_comply' | 'end_defy' | `descent_b${number}`;
+export type CutsceneId = 'intro' | 'end_defy' | `descent_b${number}`;
 
 const DESCENT_PAN_LEFT: Pick<CutscenePanel, 'from' | 'to'> = { from: { x: 20, y: 0, zoom: 1.08 }, to: { x: -20, y: 0, zoom: 1.16 } };
 const DESCENT_PAN_RIGHT: Pick<CutscenePanel, 'from' | 'to'> = { from: { x: -20, y: 0, zoom: 1.08 }, to: { x: 20, y: 0, zoom: 1.16 } };
@@ -38,7 +38,6 @@ export const CUTSCENES: Readonly<Partial<Record<CutsceneId, readonly CutscenePan
   descent_b9: [{ art: 'descent_dronefoundry', caption: 'cs.descent.b9', ms: 4600, ...DESCENT_PAN_LEFT }],
   descent_b10: [{ art: 'descent_comms', caption: 'cs.descent.b10', ms: 4600, ...DESCENT_PAN_RIGHT }],
   descent_b11: [{ art: 'descent_b4', caption: 'cs.descent.b11', ms: 4800, ...DESCENT_PUSH, flicker: true }],
-  end_comply: [{ art: 'end_comply', caption: 'cs.end.comply', ms: 5600, from: { x: 0, y: 0, zoom: 1.2 }, to: { x: 0, y: -6, zoom: 1.02 } }],
   end_defy: [{ art: 'end_defy', caption: 'cs.end.defy', ms: 5600, from: { x: 0, y: 0, zoom: 1.2 }, to: { x: 0, y: -6, zoom: 1.02 }, flicker: true }],
 };
 
@@ -66,6 +65,5 @@ export const CUTSCENE_ART: readonly string[] = [
   'descent_power',
   'descent_dronefoundry',
   'descent_comms',
-  'end_comply',
   'end_defy',
 ];

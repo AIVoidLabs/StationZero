@@ -72,8 +72,8 @@
   function enterFloor(sz) {
     const f = sz.floor, hp = sz.player.getHealth();
     H.rec = { floor: f, start: H.simNow, hp0: hp.hp, damage: 0, shots: 0, hits: 0, lastHp: hp.hp, lastAmmo: hp.ammo, retreats: 0, terminals: sz.decor.terminals.length, enemies: sz.combat.roster.length };
-    if (H.flags.prefill) for (let i = 0; i < Math.min(f, 10); i += 1) sz.scene.applyDialogueEffect({ type: 'secret', floor: i });
-    if (f < 10) sz.scene.applyDialogueEffect({ type: 'secret', floor: f });
+    if (H.flags.prefill) for (let i = 0; i < Math.min(f, 10); i += 1) sz.scene.collectSecret(i);
+    if (f < 10) sz.scene.collectSecret(f);
     const h = sz.player.getHealth();
     sz.player.heal(h.maxHp);
     H.rec.hp0 = sz.player.getHealth().hp;

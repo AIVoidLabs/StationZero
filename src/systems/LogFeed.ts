@@ -1,6 +1,5 @@
 import type { GameObjects, Scene } from 'phaser';
 import { FLOOR_COUNT, LOG_REACH_TILES, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
-import { floorLogs, LOGS_PER_FLOOR } from '../data/logs';
 import { t, type StringKey } from '../i18n';
 import { gridVectorToWorld } from '../utils/iso';
 
@@ -12,15 +11,9 @@ export interface TerminalCell {
 const LABEL_OFFSET_Y = 56;
 const FADE_PER_SECOND = 3.2;
 
-export function logKeyFor(cell: TerminalCell, floor: number): StringKey {
-  const hash = ((cell.x * 73856093) ^ (cell.y * 19349663)) >>> 0;
-  const index = (hash % LOGS_PER_FLOOR) + 1;
-  return `log.b${Math.max(1, Math.min(FLOOR_COUNT, floor + 1))}.${index}` as StringKey;
-}
-
-function logFor(cell: TerminalCell, floor: number): string {
-  void floorLogs;
-  return t(logKeyFor(cell, floor));
+function tipFor(index: number, floor: number): string {
+  const number = Math.max(1, Math.min(FLOOR_COUNT, floor + 1));
+  return t(`tip.b${number}.${index + 1}` as StringKey);
 }
 
 function step(current: number, target: number, delta: number): number {
@@ -45,6 +38,8 @@ export class LogFeed {
         fontFamily: 'monospace',
         fontSize: '10px',
         color: '#b0a27a',
+        align: 'center',
+        wordWrap: { width: 240 },
         resolution: 2,
         stroke: '#050505',
         strokeThickness: 3,
@@ -79,7 +74,7 @@ export class LogFeed {
 
     const iso = gridVectorToWorld(cell.x, cell.y, TILE_WIDTH, TILE_HEIGHT);
     this.label
-      .setText(logFor(cell, this.floor))
+      .setText(tipFor(index, this.floor))
       .setPosition(iso.x, iso.y - LABEL_OFFSET_Y)
       .setDepth(iso.y);
   }
