@@ -1,7 +1,7 @@
 import { FLOOR_COUNT } from './config';
 
-export const DRONES_BASE = 8;
-export const DRONES_PER_FLOOR = 0.4;
+export const DRONES_BASE = 11;
+export const DRONES_PER_FLOOR = 0.55;
 export const BOSS_FLOOR_DRONE_SHARE = 0.8;
 export const HP_GROWTH_PER_FLOOR = 0.08;
 export const FIRE_RATE_GAIN_PER_FLOOR = 0.03;
