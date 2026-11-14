@@ -1,9 +1,6 @@
 import { BlendModes, type GameObjects, type Scene } from 'phaser';
 import { DEPTH_FLOOR, DEPTH_VFX, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import {
-  HAZARD_LOOT_CLEARANCE,
-  HAZARD_MIN_SEPARATION,
-  HAZARD_SPAWN_CLEARANCE,
   LASER_ALERT,
   LASER_CYCLE_MS,
   LASER_DAMAGE,
@@ -16,26 +13,19 @@ import {
   STEAM_IDLE_MS,
   STEAM_RADIUS,
   STEAM_WARN_MS,
-  laserCount,
-  steamCount,
 } from '../data/hazards';
 import { ENEMY_SPECS } from '../data/enemies';
+import type { GateSpawn, VentSpawn } from '../data/levelTypes';
 import type { Drone } from '../entities/enemies/Drone';
 import type { Player } from '../entities/Player';
 import { gridVectorToWorld } from '../utils/iso';
-import { createRng } from '../utils/random';
 import type { Dungeon } from './DungeonGen';
-import type { Level } from './Level';
 import type { LightSource } from './LightMap';
 import { runFlags } from './RunFlags';
 import { distanceGain, sfx } from './Sfx';
 
-const HAZARD_SEED = 0x7a5e;
-const EXIT_CLEARANCE = 2.5;
-const STEAM_CORRIDOR_SHARE = 0.6;
 const PUFF_INTERVAL_MS = 110;
 const BEAM_HEIGHT_PX = 16;
-const SPAWN_CLEARANCE_SQ = HAZARD_SPAWN_CLEARANCE * HAZARD_SPAWN_CLEARANCE;
 
 type Phase = 'idle' | 'warn' | 'active';
 type Axis = 'x' | 'y';
@@ -43,10 +33,6 @@ type Axis = 'x' | 'y';
 interface Cell {
   readonly x: number;
   readonly y: number;
-}
-
-interface CorridorCell extends Cell {
-  readonly axis: Axis;
 }
 
 interface Vent {
@@ -75,18 +61,6 @@ function phaseAt(time: number, offset: number, cycle: number, idle: number, warn
   return at < idle + warn ? 'warn' : 'active';
 }
 
-function shuffle<T>(items: T[], rng: () => number): T[] {
-  for (let index = items.length - 1; index > 0; index -= 1) {
-    const swap = Math.floor(rng() * (index + 1));
-    const held = items[index];
-    const other = items[swap];
-    if (held === undefined || other === undefined) continue;
-    items[index] = other;
-    items[swap] = held;
-  }
-  return items;
-}
-
 export class Hazards {
   private readonly scene: Scene;
   private readonly player: Player;
@@ -96,33 +70,16 @@ export class Hazards {
 
   constructor(
     scene: Scene,
-    level: Level,
     dungeon: Dungeon,
     player: Player,
     getEnemies: () => readonly Drone[],
-    avoid: readonly Cell[],
   ) {
     this.scene = scene;
     this.player = player;
     this.getEnemies = getEnemies;
 
-    const rng = createRng(dungeon.seed ^ HAZARD_SEED);
-    const { corridor, open } = this.collectCandidates(level, dungeon, avoid);
-    shuffle(corridor, rng);
-    shuffle(open, rng);
-
-    const placed: Cell[] = [];
-    const lasers = this.take(corridor, laserCount(dungeon.floor), placed);
-    const steamTotal = steamCount(dungeon.floor);
-    const steamCorridor = Math.ceil(steamTotal * STEAM_CORRIDOR_SHARE);
-    const steam = [
-      ...this.take(corridor, steamCorridor, placed),
-      ...this.take(open, steamTotal - steamCorridor, placed),
-    ];
-    if (steam.length < steamTotal) steam.push(...this.take(corridor, steamTotal - steam.length, placed));
-
-    for (const cell of lasers) this.gates.push(this.buildGate(cell, rng));
-    for (const cell of steam) this.vents.push(this.buildVent(cell, rng));
+    for (const gate of dungeon.entities.hazards.gates) this.gates.push(this.buildGate(gate));
+    for (const vent of dungeon.entities.hazards.vents) this.vents.push(this.buildVent(vent));
   }
 
   get ventCells(): readonly Cell[] {
@@ -174,54 +131,8 @@ export class Hazards {
     this.gates.length = 0;
   }
 
-  private collectCandidates(
-    level: Level,
-    dungeon: Dungeon,
-    avoid: readonly Cell[],
-  ): { corridor: CorridorCell[]; open: Cell[] } {
-    const corridor: CorridorCell[] = [];
-    const open: Cell[] = [];
-    const inRoom = new Set<string>();
-    for (const room of dungeon.rooms) {
-      for (let y = room.y; y < room.y + room.height; y += 1) {
-        for (let x = room.x; x < room.x + room.width; x += 1) inRoom.add(`${x},${y}`);
-      }
-    }
-
-    const walkable = (x: number, y: number): boolean => level.isWalkable(x, y);
-    for (let y = 0; y < dungeon.height; y += 1) {
-      for (let x = 0; x < dungeon.width; x += 1) {
-        if (!walkable(x, y)) continue;
-        const dx = x - level.spawnX;
-        const dy = y - level.spawnY;
-        if (dx * dx + dy * dy < SPAWN_CLEARANCE_SQ) continue;
-        if (dungeon.exit && Math.hypot(x - dungeon.exit.x, y - dungeon.exit.y) < EXIT_CLEARANCE) continue;
-        if (avoid.some((cell) => Math.hypot(cell.x - x, cell.y - y) < HAZARD_LOOT_CLEARANCE)) continue;
-
-        const north = walkable(x, y - 1);
-        const south = walkable(x, y + 1);
-        const west = walkable(x - 1, y);
-        const east = walkable(x + 1, y);
-        if (west && east && !north && !south) corridor.push({ x, y, axis: 'x' });
-        else if (north && south && !west && !east) corridor.push({ x, y, axis: 'y' });
-        else if (north && south && west && east && inRoom.has(`${x},${y}`)) open.push({ x, y });
-      }
-    }
-    return { corridor, open };
-  }
-
-  private take<T extends Cell>(list: T[], count: number, placed: Cell[]): T[] {
-    const picked: T[] = [];
-    for (const candidate of list) {
-      if (picked.length >= count) break;
-      if (placed.some((cell) => Math.hypot(cell.x - candidate.x, cell.y - candidate.y) < HAZARD_MIN_SEPARATION)) continue;
-      picked.push(candidate);
-      placed.push(candidate);
-    }
-    return picked;
-  }
-
-  private buildVent(cell: Cell, rng: () => number): Vent {
+  private buildVent(spawn: VentSpawn): Vent {
+    const cell = { x: spawn.x, y: spawn.y };
     const world = gridVectorToWorld(cell.x, cell.y, TILE_WIDTH, TILE_HEIGHT);
     const grate = this.scene.add.ellipse(world.x, world.y, 26, 13, 0x1c1f1f, 0.95).setDepth(DEPTH_FLOOR + 2);
     const glow = this.scene.add
@@ -230,7 +141,7 @@ export class Hazards {
       .setBlendMode(BlendModes.ADD);
     return {
       cell,
-      phaseMs: Math.floor(rng() * STEAM_CYCLE_MS),
+      phaseMs: spawn.phaseMs,
       grate,
       glow,
       enemyHurt: new Map(),
@@ -239,7 +150,8 @@ export class Hazards {
     };
   }
 
-  private buildGate(cell: CorridorCell, rng: () => number): Gate {
+  private buildGate(spawn: GateSpawn): Gate {
+    const cell = { x: spawn.x, y: spawn.y, axis: spawn.axis };
     const half = 0.5;
     const from = cell.axis === 'x' ? { x: cell.x, y: cell.y - half } : { x: cell.x - half, y: cell.y };
     const to = cell.axis === 'x' ? { x: cell.x, y: cell.y + half } : { x: cell.x + half, y: cell.y };
@@ -257,7 +169,7 @@ export class Hazards {
     return {
       cell,
       axis: cell.axis,
-      phaseMs: Math.floor(rng() * LASER_CYCLE_MS),
+      phaseMs: spawn.phaseMs,
       beam,
       posts,
       state: 'idle',

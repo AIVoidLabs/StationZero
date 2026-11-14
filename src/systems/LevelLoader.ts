@@ -3,6 +3,18 @@ import {
   FLOOR_COUNT,
   FLOOR_SEED_STRIDE,
 } from '../data/config';
+import { ENEMY_SPECS, type EnemyKind } from '../data/enemies';
+import type {
+  EnemySpawn,
+  GateAxis,
+  GateSpawn,
+  GridPoint,
+  LevelEntities,
+  LootSpawn,
+  PlacedProp,
+  PropKind,
+  VentSpawn,
+} from '../data/levelTypes';
 import type { Dungeon, DungeonExit, FloorStyle, Room } from './DungeonGen';
 
 const RAW_LEVELS: readonly unknown[] = Object.entries(
@@ -174,6 +186,74 @@ function countReachable(rows: readonly string[], start: DungeonExit): number {
   return seen.size;
 }
 
+const PROP_KINDS: readonly PropKind[] = ['barrel', 'crate', 'pipe', 'theme'];
+
+function readList(record: Record<string, unknown>, key: string, floor: number, path: string): readonly unknown[] {
+  const value = record[key];
+  if (!Array.isArray(value)) fail(floor, `\`${path}.${key}\` must be an array`);
+  return value;
+}
+
+function readPoint(raw: unknown, floor: number, path: string, rows: readonly string[]): { x: number; y: number; record: Record<string, unknown> } {
+  if (!isRecord(raw)) fail(floor, `\`${path}\` must be an object`);
+  const x = readInteger(raw, 'x', floor);
+  const y = readInteger(raw, 'y', floor);
+  const char = rows[y]?.[x];
+  if (char === undefined || char === WALL) fail(floor, `\`${path}\` (${x},${y}) is not on a floor cell`);
+  return { x, y, record: raw };
+}
+
+function parseEntities(value: unknown, floor: number, rows: readonly string[]): LevelEntities {
+  if (!isRecord(value)) fail(floor, '`entities` must be an object');
+
+  const props: PlacedProp[] = readList(value, 'props', floor, 'entities').map((raw, index) => {
+    const { x, y, record } = readPoint(raw, floor, `entities.props[${index}]`, rows);
+    const kind = PROP_KINDS.find((candidate) => candidate === record.kind);
+    if (!kind) fail(floor, `\`entities.props[${index}].kind\` must be one of ${PROP_KINDS.join(', ')}`);
+    return { x, y, kind };
+  });
+
+  const terminals: GridPoint[] = readList(value, 'terminals', floor, 'entities').map((raw, index) => {
+    const { x, y } = readPoint(raw, floor, `entities.terminals[${index}]`, rows);
+    return { x, y };
+  });
+
+  let corpse: GridPoint | null = null;
+  if (value.corpse !== null && value.corpse !== undefined) {
+    const { x, y } = readPoint(value.corpse, floor, 'entities.corpse', rows);
+    corpse = { x, y };
+  }
+
+  const loot: LootSpawn[] = readList(value, 'loot', floor, 'entities').map((raw, index) => {
+    const { x, y, record } = readPoint(raw, floor, `entities.loot[${index}]`, rows);
+    if (record.kind !== 'ammo' && record.kind !== 'stim') fail(floor, `\`entities.loot[${index}].kind\` must be ammo or stim`);
+    return { x, y, kind: record.kind, amount: readInteger(record, 'amount', floor) };
+  });
+
+  const enemyKinds = Object.keys(ENEMY_SPECS) as EnemyKind[];
+  const enemies: EnemySpawn[] = readList(value, 'enemies', floor, 'entities').map((raw, index) => {
+    const { x, y, record } = readPoint(raw, floor, `entities.enemies[${index}]`, rows);
+    const kind = enemyKinds.find((candidate) => candidate === record.kind);
+    if (!kind) fail(floor, `\`entities.enemies[${index}].kind\` must be one of ${enemyKinds.join(', ')}`);
+    return { x, y, kind, seed: readInteger(record, 'seed', floor) };
+  });
+
+  const hazardRaw = value.hazards;
+  if (!isRecord(hazardRaw)) fail(floor, '`entities.hazards` must be an object');
+  const vents: VentSpawn[] = readList(hazardRaw, 'vents', floor, 'entities.hazards').map((raw, index) => {
+    const { x, y, record } = readPoint(raw, floor, `entities.hazards.vents[${index}]`, rows);
+    return { x, y, phaseMs: readInteger(record, 'phaseMs', floor) };
+  });
+  const gates: GateSpawn[] = readList(hazardRaw, 'gates', floor, 'entities.hazards').map((raw, index) => {
+    const { x, y, record } = readPoint(raw, floor, `entities.hazards.gates[${index}]`, rows);
+    const axis: GateAxis | null = record.axis === 'x' ? 'x' : record.axis === 'y' ? 'y' : null;
+    if (!axis) fail(floor, `\`entities.hazards.gates[${index}].axis\` must be x or y`);
+    return { x, y, axis, phaseMs: readInteger(record, 'phaseMs', floor) };
+  });
+
+  return { props, terminals, corpse, loot, enemies, hazards: { vents, gates } };
+}
+
 function parseDungeon(input: unknown, expectedFloor: number): Dungeon {
   if (!isRecord(input)) fail(expectedFloor, 'root must be an object');
 
@@ -215,6 +295,7 @@ function parseDungeon(input: unknown, expectedFloor: number): Dungeon {
   }
 
   const rooms = parseRooms(input.rooms, expectedFloor, width, height, rows);
+  const entities = parseEntities(input.entities, expectedFloor, rows);
 
   const seedValue = input.seed;
   let seed = DUNGEON_SEED + expectedFloor * FLOOR_SEED_STRIDE;
@@ -235,6 +316,7 @@ function parseDungeon(input: unknown, expectedFloor: number): Dungeon {
     seed,
     floor: expectedFloor,
     exit,
+    entities,
   };
 }
 

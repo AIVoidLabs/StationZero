@@ -1,9 +1,6 @@
 import type { GameObjects, Scene } from 'phaser';
 import {
   DEPTH_VFX,
-  FLOOR_LOOT_BASE,
-  HEALTH_PER_HOSTILE,
-  FLOOR_LOOT_MIN,
   LOOT_AMMO_AMOUNT,
   LOOT_DROP_CHANCE,
   LOOT_DROP_CHANCE_MIN,
@@ -12,7 +9,6 @@ import {
   TILE_HEIGHT,
   TILE_WIDTH,
 } from '../data/config';
-import { hostileCountForFloor } from '../data/enemies';
 import { t } from '../i18n';
 import type { Player } from '../entities/Player';
 import { LootPickup, type LootKind } from '../entities/props/LootPickup';
@@ -24,8 +20,6 @@ import { sfx } from './Sfx';
 import { upgradeStats } from './Upgrades';
 
 const LOOT_SEED = 0x1097;
-const FLOOR_LOOT_SEED = 0x2b3c;
-const SPAWN_CLEARANCE = 5;
 const TEXT_COLORS: Record<LootKind, string> = { stim: '#8fe8ae', ammo: '#f0c070' };
 const HOVER_RADIUS_PX = 20;
 const HOVER_LABEL_OFFSET_Y = 34;
@@ -51,7 +45,7 @@ export class LootSystem {
     this.player = player;
     this.rng = createRng(dungeon.seed ^ LOOT_SEED);
     this.dropChance = Math.max(LOOT_DROP_CHANCE_MIN, LOOT_DROP_CHANCE - dungeon.floor * LOOT_DROP_DEPTH_STEP);
-    this.placeFloorLoot(dungeon);
+    for (const item of dungeon.entities.loot) this.spawn(item.x, item.y, item.kind, item.amount);
   }
 
   get pickups(): readonly LootPickup[] {
@@ -224,83 +218,5 @@ export class LootSystem {
       return { x: cx, y: cy };
     }
     return null;
-  }
-
-  private placeFloorLoot(dungeon: Dungeon): void {
-    const rng = createRng(dungeon.seed ^ FLOOR_LOOT_SEED);
-    const target = Math.max(FLOOR_LOOT_MIN, Math.round(FLOOR_LOOT_BASE - dungeon.floor / 2));
-    const roomCells: Cell[] = [];
-    const deadEnds: Cell[] = [];
-
-    const farFromSpawn = (x: number, y: number): boolean =>
-      Math.hypot(x - this.level.spawnX, y - this.level.spawnY) >= SPAWN_CLEARANCE;
-    const isExit = (x: number, y: number): boolean =>
-      dungeon.exit !== null && dungeon.exit.x === x && dungeon.exit.y === y;
-
-    for (const room of dungeon.rooms) {
-      for (let y = room.y; y < room.y + room.height; y += 1) {
-        for (let x = room.x; x < room.x + room.width; x += 1) {
-          if (!this.level.isWalkable(x, y) || isExit(x, y) || !farFromSpawn(x, y)) continue;
-          roomCells.push({ x, y });
-        }
-      }
-    }
-
-    for (let y = 0; y < this.level.height; y += 1) {
-      for (let x = 0; x < this.level.width; x += 1) {
-        if (!this.level.isWalkable(x, y) || isExit(x, y) || !farFromSpawn(x, y)) continue;
-        const open =
-          Number(this.level.isWalkable(x + 1, y)) +
-          Number(this.level.isWalkable(x - 1, y)) +
-          Number(this.level.isWalkable(x, y + 1)) +
-          Number(this.level.isWalkable(x, y - 1));
-        if (open <= 1) deadEnds.push({ x, y });
-      }
-    }
-
-    for (let index = 0; index < target; index += 1) {
-      const pool = deadEnds.length > 0 && rng() < 0.3 ? deadEnds : roomCells;
-      if (pool.length === 0) break;
-      const pick = pool.splice(Math.floor(rng() * pool.length), 1)[0];
-      if (!pick) continue;
-      this.spawn(pick.x, pick.y, index % 2 === 0 ? 'ammo' : 'stim');
-    }
-
-    this.placeHealthRooms(dungeon, rng, farFromSpawn, isExit);
-  }
-
-  private placeHealthRooms(
-    dungeon: Dungeon,
-    rng: () => number,
-    farFromSpawn: (x: number, y: number) => boolean,
-    isExit: (x: number, y: number) => boolean,
-  ): void {
-    const target = Math.max(1, Math.round(hostileCountForFloor(dungeon.floor) * HEALTH_PER_HOSTILE));
-    const rooms = [...dungeon.rooms];
-    for (let index = rooms.length - 1; index > 0; index -= 1) {
-      const swap = Math.floor(rng() * (index + 1));
-      const held = rooms[index];
-      const other = rooms[swap];
-      if (held === undefined || other === undefined) continue;
-      rooms[index] = other;
-      rooms[swap] = held;
-    }
-
-    let placed = 0;
-    for (const room of rooms) {
-      if (placed >= target) break;
-      const cells: Cell[] = [];
-      for (let y = room.y; y < room.y + room.height; y += 1) {
-        for (let x = room.x; x < room.x + room.width; x += 1) {
-          if (!this.level.isWalkable(x, y) || isExit(x, y) || !farFromSpawn(x, y)) continue;
-          if (this.items.some((item) => item.gridX === x && item.gridY === y)) continue;
-          cells.push({ x, y });
-        }
-      }
-      const pick = cells[Math.floor(rng() * cells.length)];
-      if (!pick) continue;
-      this.spawn(pick.x, pick.y, 'stim');
-      placed += 1;
-    }
   }
 }

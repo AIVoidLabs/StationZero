@@ -12,6 +12,7 @@ try {
     '/src/data/config.ts',
   );
   const { generateDungeon } = await server.ssrLoadModule('/src/systems/DungeonGen.ts');
+  const { planLevel } = await server.ssrLoadModule('/src/systems/LevelPlan.ts');
 
   await mkdir('src/data/levels', { recursive: true });
 
@@ -37,6 +38,7 @@ try {
         height: room.height,
         style: room.style,
       })),
+      entities: planLevel(dungeon),
     };
 
     await writeFile(
@@ -45,8 +47,9 @@ try {
       'utf8',
     );
 
+    const e = level.entities;
     const exit = dungeon.exit ? `${dungeon.exit.x},${dungeon.exit.y}` : 'sealed';
-    console.log(`floor-${floor}.json  rooms=${dungeon.rooms.length}  spawn=${dungeon.spawnX},${dungeon.spawnY}  exit=${exit}`);
+    console.log(`floor-${floor}.json  rooms=${dungeon.rooms.length}  spawn=${dungeon.spawnX},${dungeon.spawnY}  exit=${exit}  enemies=${e.enemies.length} loot=${e.loot.length} props=${e.props.length} terminals=${e.terminals.length} vents=${e.hazards.vents.length} gates=${e.hazards.gates.length}`);
   }
 } finally {
   await server.close();

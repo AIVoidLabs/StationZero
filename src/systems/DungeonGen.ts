@@ -1,5 +1,6 @@
 import { DUNGEON_HEIGHT, DUNGEON_SEED, DUNGEON_WIDTH, FLOOR_COUNT } from '../data/config';
 import { bossForFloor } from '../data/enemies';
+import type { LevelEntities } from '../data/levelTypes';
 import { createRng } from '../utils/random';
 
 export type FloorStyle = 0 | 1 | 2;
@@ -27,7 +28,17 @@ export interface Dungeon {
   readonly seed: number;
   readonly floor: number;
   readonly exit: DungeonExit | null;
+  readonly entities: LevelEntities;
 }
+
+export const EMPTY_ENTITIES: LevelEntities = {
+  props: [],
+  terminals: [],
+  corpse: null,
+  loot: [],
+  enemies: [],
+  hazards: { vents: [], gates: [] },
+};
 
 interface Point {
   readonly x: number;
@@ -401,6 +412,7 @@ function attemptDungeon(seed: number, floor: number): Dungeon | null {
     seed,
     floor,
     exit,
+    entities: EMPTY_ENTITIES,
   };
 }
 

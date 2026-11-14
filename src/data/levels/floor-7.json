@@ -88,5 +88,245 @@
       "height": 6,
       "style": 2
     }
-  ]
+  ],
+  "entities": {
+    "props": [
+      {
+        "x": 18,
+        "y": 18,
+        "kind": "crate"
+      },
+      {
+        "x": 22,
+        "y": 4,
+        "kind": "barrel"
+      },
+      {
+        "x": 18,
+        "y": 33,
+        "kind": "theme"
+      },
+      {
+        "x": 2,
+        "y": 11,
+        "kind": "crate"
+      },
+      {
+        "x": 26,
+        "y": 20,
+        "kind": "barrel"
+      },
+      {
+        "x": 28,
+        "y": 16,
+        "kind": "barrel"
+      },
+      {
+        "x": 6,
+        "y": 27,
+        "kind": "theme"
+      },
+      {
+        "x": 28,
+        "y": 28,
+        "kind": "theme"
+      },
+      {
+        "x": 31,
+        "y": 26,
+        "kind": "theme"
+      },
+      {
+        "x": 15,
+        "y": 15,
+        "kind": "crate"
+      },
+      {
+        "x": 24,
+        "y": 6,
+        "kind": "crate"
+      },
+      {
+        "x": 22,
+        "y": 6,
+        "kind": "crate"
+      },
+      {
+        "x": 24,
+        "y": 17,
+        "kind": "crate"
+      },
+      {
+        "x": 24,
+        "y": 18,
+        "kind": "crate"
+      },
+      {
+        "x": 26,
+        "y": 18,
+        "kind": "crate"
+      },
+      {
+        "x": 26,
+        "y": 16,
+        "kind": "crate"
+      },
+      {
+        "x": 5,
+        "y": 29,
+        "kind": "barrel"
+      },
+      {
+        "x": 28,
+        "y": 26,
+        "kind": "crate"
+      }
+    ],
+    "terminals": [
+      {
+        "x": 18,
+        "y": 16
+      }
+    ],
+    "corpse": {
+      "x": 18,
+      "y": 17
+    },
+    "loot": [
+      {
+        "x": 7,
+        "y": 27,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 5,
+        "y": 27,
+        "kind": "stim",
+        "amount": 0
+      },
+      {
+        "x": 30,
+        "y": 26,
+        "kind": "stim",
+        "amount": 0
+      },
+      {
+        "x": 24,
+        "y": 7,
+        "kind": "stim",
+        "amount": 0
+      },
+      {
+        "x": 17,
+        "y": 17,
+        "kind": "stim",
+        "amount": 0
+      }
+    ],
+    "enemies": [
+      {
+        "x": 4,
+        "y": 11,
+        "kind": "drone",
+        "seed": 9888625
+      },
+      {
+        "x": 23,
+        "y": 6,
+        "kind": "drone",
+        "seed": 11554717
+      },
+      {
+        "x": 26,
+        "y": 5,
+        "kind": "drone",
+        "seed": 13930733
+      },
+      {
+        "x": 28,
+        "y": 20,
+        "kind": "drone",
+        "seed": 12455414
+      },
+      {
+        "x": 22,
+        "y": 14,
+        "kind": "drone",
+        "seed": 110703
+      },
+      {
+        "x": 13,
+        "y": 18,
+        "kind": "drone",
+        "seed": 13334112
+      },
+      {
+        "x": 16,
+        "y": 17,
+        "kind": "drone",
+        "seed": 12613703
+      },
+      {
+        "x": 3,
+        "y": 29,
+        "kind": "drone",
+        "seed": 4960598
+      },
+      {
+        "x": 30,
+        "y": 25,
+        "kind": "drone",
+        "seed": 4290606
+      },
+      {
+        "x": 27,
+        "y": 17,
+        "kind": "tank",
+        "seed": 2895187
+      }
+    ],
+    "hazards": {
+      "vents": [
+        {
+          "x": 23,
+          "y": 26,
+          "phaseMs": 825
+        },
+        {
+          "x": 11,
+          "y": 10,
+          "phaseMs": 832
+        },
+        {
+          "x": 9,
+          "y": 29,
+          "phaseMs": 1360
+        },
+        {
+          "x": 28,
+          "y": 27,
+          "phaseMs": 1592
+        },
+        {
+          "x": 25,
+          "y": 15,
+          "phaseMs": 3207
+        },
+        {
+          "x": 15,
+          "y": 13,
+          "phaseMs": 4597
+        }
+      ],
+      "gates": [
+        {
+          "x": 8,
+          "y": 10,
+          "axis": "x",
+          "phaseMs": 1868
+        }
+      ]
+    }
+  }
 }

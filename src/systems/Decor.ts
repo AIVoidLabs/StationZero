@@ -3,30 +3,14 @@ import { DEAD_FRAME_COUNT, PROPS_FLOOR_KEY } from '../assets/manifest';
 import { DEPTH_FLOOR, FLOOR_COUNT, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import { gridVectorToWorld } from '../utils/iso';
 import { createRng } from '../utils/random';
-import type { Dungeon, DungeonExit, Room } from './DungeonGen';
+import type { Dungeon, DungeonExit } from './DungeonGen';
 import type { BarrelCell } from './Barrels';
 import type { Level } from './Level';
 import type { TerminalCell } from './LogFeed';
 import type { OccluderSpec } from './Occlusion';
 
-const DECOR_SEED = 0x5a17e;
 const DECAL_SEED = 0xdecaf;
-const COVER_SEED = 0xc07e5;
-const BARRELS_PER_COVER_ROOM = 2;
-const EXTRA_BARREL_CHANCE = 0.5;
-const SMALL_ROOM_BARREL_CHANCE = 0.6;
-const SMALL_ROOM_MIN_SIZE = 4;
-const COVER_MIN_ROOM_WIDTH = 6;
-const COVER_MIN_ROOM_HEIGHT = 5;
-const COVER_BIG_ROOM_AREA = 40;
-const COVER_PAIR_CHANCE = 0.55;
-const COVER_START_CLEARANCE = 3;
-const COVER_SPACING = 2;
-const TERMINAL_SEED = 0x7e34a;
-const MAX_PROPS = 10;
-const MIN_TERMINALS = 3;
 const MAX_DECALS = 12;
-const PROPS_PER_FLOOR = 2;
 const DECALS_PER_FLOOR = 2;
 const PROP_FRAMES = {
   barrel: 0,
@@ -34,7 +18,6 @@ const PROP_FRAMES = {
   terminal: 2,
   pipe: 3,
 } as const;
-const RANDOM_PROP_KINDS: readonly PropKind[] = ['barrel', 'barrel', 'crate', 'pipe'];
 const PROP_SCALE: Record<keyof typeof PROP_FRAMES, number> = {
   barrel: 0.45,
   crate: 0.5,
@@ -42,19 +25,8 @@ const PROP_SCALE: Record<keyof typeof PROP_FRAMES, number> = {
   pipe: 0.5,
 };
 const DECAL_FRAMES: readonly number[] = [0, 1];
-const THEME_PROP_CHANCE = 0.6;
 const FLOOR_PROP_BASE_ORIGIN_Y = 40 / 48;
 const CORPSE_DEPTH_OFFSET = 4;
-const CORPSE_NEIGHBORS: readonly (readonly [number, number])[] = [
-  [1, 0],
-  [0, 1],
-  [-1, 0],
-  [0, -1],
-  [1, 1],
-  [-1, 1],
-  [1, -1],
-  [-1, -1],
-];
 
 type PropKind = keyof typeof PROP_FRAMES;
 
@@ -71,30 +43,27 @@ export class Decor {
   private readonly terminalCells: TerminalCell[] = [];
   private readonly barrelCells: BarrelCell[] = [];
   private readonly exit: DungeonExit | null;
-  private readonly terminalTarget: number;
-  private readonly propBudget: number;
   private readonly decalTarget: number;
   private readonly floorIndex: number;
-  private propCount = 0;
 
   constructor(scene: Scene, level: Level, dungeon: Dungeon) {
     this.scene = scene;
     this.level = level;
     this.exit = dungeon.exit;
     this.floorIndex = dungeon.floor;
-    this.terminalTarget = Math.max(1, MIN_TERMINALS - dungeon.floor);
-
-    const propTarget = Math.min(
-      MAX_PROPS,
-      MIN_TERMINALS + 5 + dungeon.floor * PROPS_PER_FLOOR,
-    );
-    this.propBudget = Math.max(1, propTarget - this.terminalTarget);
     this.decalTarget = Math.min(MAX_DECALS, 5 + dungeon.floor * DECALS_PER_FLOOR);
 
-    this.placeProps(dungeon);
-    this.placeTerminals(dungeon);
-    this.placeCorpse();
-    this.placeCover(dungeon);
+    const { props, terminals, corpse } = dungeon.entities;
+    for (const prop of props) {
+      if (prop.kind === 'theme') this.addThemeProp(prop.x, prop.y);
+      else this.addProp(prop.x, prop.y, prop.kind);
+      this.level.blockCell(prop.x, prop.y);
+    }
+    for (const terminal of terminals) {
+      this.addProp(terminal.x, terminal.y, 'terminal');
+      this.level.blockCell(terminal.x, terminal.y);
+    }
+    if (corpse) this.addCorpse(corpse.x, corpse.y);
     this.placeDecals(dungeon);
   }
 
@@ -118,189 +87,6 @@ export class Decor {
     this.barrelCells.length = 0;
   }
 
-  private placeProps(dungeon: Dungeon): void {
-    const rng = createRng(dungeon.seed ^ DECOR_SEED);
-    const budget = this.propBudget;
-
-    for (const room of dungeon.rooms) {
-      if (this.propCount >= budget) break;
-
-      const candidates = this.propCandidates(room);
-      if (candidates.length === 0) continue;
-
-      const wanted = room.width >= 5 && room.height >= 5 && rng() < 0.45 ? 2 : 1;
-      const count = Math.min(wanted, candidates.length, budget - this.propCount);
-
-      for (let index = 0; index < count; index += 1) {
-        const candidateIndex = Math.floor(rng() * candidates.length);
-        const cell = candidates.splice(candidateIndex, 1)[0];
-        if (!cell) continue;
-
-        if (rng() < THEME_PROP_CHANCE) {
-          this.addThemeProp(cell.x, cell.y);
-        } else {
-          const kind = RANDOM_PROP_KINDS[Math.floor(rng() * RANDOM_PROP_KINDS.length)] ?? 'barrel';
-          this.addProp(cell.x, cell.y, kind);
-        }
-        this.level.blockCell(cell.x, cell.y);
-        this.propCount += 1;
-      }
-    }
-  }
-
-  private placeTerminals(dungeon: Dungeon): void {
-    const rng = createRng(dungeon.seed ^ TERMINAL_SEED);
-    let placed = 0;
-
-    for (const room of dungeon.rooms) {
-      if (placed >= this.terminalTarget) break;
-
-      const candidates = this.propCandidates(room);
-      if (candidates.length === 0) continue;
-
-      const cell = candidates[Math.floor(rng() * candidates.length)];
-      if (!cell) continue;
-
-      this.addProp(cell.x, cell.y, 'terminal');
-      this.level.blockCell(cell.x, cell.y);
-      this.propCount += 1;
-      placed += 1;
-    }
-  }
-
-  private propCandidates(room: Room): Cell[] {
-    const result: Cell[] = [];
-
-    for (let y = room.y; y < room.y + room.height; y += 1) {
-      for (let x = room.x; x < room.x + room.width; x += 1) {
-        if (!this.level.isWalkable(x, y)) continue;
-        if (x === this.level.spawnX && y === this.level.spawnY) continue;
-        if (this.exit !== null && x === this.exit.x && y === this.exit.y) continue;
-
-        const onPerimeter =
-          x === room.x ||
-          x === room.x + room.width - 1 ||
-          y === room.y ||
-          y === room.y + room.height - 1;
-        if (!onPerimeter) continue;
-        if (this.hasOutsideFloorNeighbor(room, x, y)) continue;
-
-        result.push({ x, y });
-      }
-    }
-
-    return result;
-  }
-
-  private hasOutsideFloorNeighbor(room: Room, x: number, y: number): boolean {
-    const neighbors: readonly (readonly [number, number])[] = [
-      [x + 1, y],
-      [x - 1, y],
-      [x, y + 1],
-      [x, y - 1],
-    ];
-
-    for (const [neighborX, neighborY] of neighbors) {
-      const inside =
-        neighborX >= room.x &&
-        neighborX < room.x + room.width &&
-        neighborY >= room.y &&
-        neighborY < room.y + room.height;
-      if (!inside && this.level.isWalkable(neighborX, neighborY)) return true;
-    }
-
-    return false;
-  }
-
-  private placeCover(dungeon: Dungeon): void {
-    const rng = createRng(dungeon.seed ^ COVER_SEED);
-    const placed: Cell[] = [];
-    let walkable = this.countWalkable();
-
-    const tryBlock = (cell: Cell, kind: PropKind = 'crate'): boolean => {
-      this.level.blockCell(cell.x, cell.y);
-      if (this.countReachable() === walkable - 1) {
-        walkable -= 1;
-        this.addProp(cell.x, cell.y, kind);
-        placed.push(cell);
-        return true;
-      }
-      this.level.unblockCell(cell.x, cell.y);
-      return false;
-    };
-
-    for (const room of dungeon.rooms) {
-      if (room.width < COVER_MIN_ROOM_WIDTH || room.height < COVER_MIN_ROOM_HEIGHT) {
-        if (room.width < SMALL_ROOM_MIN_SIZE || room.height < SMALL_ROOM_MIN_SIZE || rng() >= SMALL_ROOM_BARREL_CHANCE) continue;
-        const spots = this.coverCandidates(room, placed, 1);
-        const spot = spots[Math.floor(rng() * spots.length)];
-        if (spot) tryBlock(spot, 'barrel');
-        continue;
-      }
-      const blocks = room.width * room.height >= COVER_BIG_ROOM_AREA ? 3 : 2;
-
-      for (let index = 0; index < blocks; index += 1) {
-        const candidates = this.coverCandidates(room, placed);
-        const cell = candidates[Math.floor(rng() * candidates.length)];
-        if (!cell || !tryBlock(cell)) continue;
-        if (rng() >= COVER_PAIR_CHANCE) continue;
-
-        const along = rng() < 0.5 ? { x: 1, y: 0 } : { x: 0, y: 1 };
-        const next = { x: cell.x + along.x, y: cell.y + along.y };
-        if (candidates.some((other) => other.x === next.x && other.y === next.y)) tryBlock(next);
-      }
-
-      const barrelCount = BARRELS_PER_COVER_ROOM + (rng() < EXTRA_BARREL_CHANCE ? 1 : 0);
-      for (let index = 0; index < barrelCount; index += 1) {
-        const spots = this.coverCandidates(room, placed);
-        const spot = spots[Math.floor(rng() * spots.length)];
-        if (spot) tryBlock(spot, 'barrel');
-      }
-    }
-  }
-
-  private coverCandidates(room: Room, placed: readonly Cell[], margin = 2): Cell[] {
-    const result: Cell[] = [];
-    for (let y = room.y + margin; y < room.y + room.height - margin; y += 1) {
-      for (let x = room.x + margin; x < room.x + room.width - margin; x += 1) {
-        if (!this.level.isWalkable(x, y)) continue;
-        if (Math.hypot(x - this.level.spawnX, y - this.level.spawnY) < COVER_START_CLEARANCE) continue;
-        if (this.exit !== null && Math.hypot(x - this.exit.x, y - this.exit.y) < COVER_START_CLEARANCE) continue;
-        if (placed.some((cell) => Math.max(Math.abs(cell.x - x), Math.abs(cell.y - y)) < COVER_SPACING)) continue;
-        if (this.terminalCells.some((cell) => Math.max(Math.abs(cell.x - x), Math.abs(cell.y - y)) <= 1)) continue;
-        result.push({ x, y });
-      }
-    }
-    return result;
-  }
-
-  private countWalkable(): number {
-    let count = 0;
-    for (let y = 0; y < this.level.height; y += 1) {
-      for (let x = 0; x < this.level.width; x += 1) if (this.level.isWalkable(x, y)) count += 1;
-    }
-    return count;
-  }
-
-  private countReachable(): number {
-    const start = { x: Math.round(this.level.spawnX), y: Math.round(this.level.spawnY) };
-    const seen = new Set<number>([start.y * this.level.width + start.x]);
-    const queue: Cell[] = [start];
-    for (let head = 0; head < queue.length; head += 1) {
-      const cell = queue[head];
-      if (!cell) continue;
-      for (const [dx, dy] of CORPSE_NEIGHBORS.slice(0, 4)) {
-        const x = cell.x + dx;
-        const y = cell.y + dy;
-        const key = y * this.level.width + x;
-        if (seen.has(key) || !this.level.isWalkable(x, y)) continue;
-        seen.add(key);
-        queue.push({ x, y });
-      }
-    }
-    return seen.size;
-  }
-
   private addThemeProp(gridX: number, gridY: number): void {
     const iso = gridVectorToWorld(gridX, gridY, TILE_WIDTH, TILE_HEIGHT);
     const image = this.scene.add
@@ -311,26 +97,13 @@ export class Decor {
     this.propOccluders.push({ sprite: image, baseY: iso.y });
   }
 
-  private placeCorpse(): void {
-    if (this.floorIndex >= DEAD_FRAME_COUNT) return;
-    const terminal = this.terminalCells[0];
-    if (!terminal) return;
-
-    for (const [dx, dy] of CORPSE_NEIGHBORS) {
-      const x = terminal.x + dx;
-      const y = terminal.y + dy;
-      if (!this.level.isWalkable(x, y)) continue;
-      if (x === this.level.spawnX && y === this.level.spawnY) continue;
-      if (this.exit !== null && x === this.exit.x && y === this.exit.y) continue;
-
-      const iso = gridVectorToWorld(x, y, TILE_WIDTH, TILE_HEIGHT);
-      const image = this.scene.add
-        .image(iso.x, iso.y, PROPS_FLOOR_KEY, this.floorIndex)
-        .setOrigin(0.5, FLOOR_PROP_BASE_ORIGIN_Y)
-        .setDepth(DEPTH_FLOOR + CORPSE_DEPTH_OFFSET);
-      this.images.push(image);
-      return;
-    }
+  private addCorpse(gridX: number, gridY: number): void {
+    const iso = gridVectorToWorld(gridX, gridY, TILE_WIDTH, TILE_HEIGHT);
+    const image = this.scene.add
+      .image(iso.x, iso.y, PROPS_FLOOR_KEY, this.floorIndex)
+      .setOrigin(0.5, FLOOR_PROP_BASE_ORIGIN_Y)
+      .setDepth(DEPTH_FLOOR + CORPSE_DEPTH_OFFSET);
+    this.images.push(image);
   }
 
   private addProp(gridX: number, gridY: number, kind: PropKind): void {

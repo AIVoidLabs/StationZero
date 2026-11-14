@@ -103,6 +103,8 @@ interface DebugWindow extends Window {
     ambience: Ambience;
     combat: Combat;
     loot: LootSystem;
+    hazards: Hazards;
+    barrels: Barrels;
     depth: DepthManager;
     darkness: DarknessLayer;
     lantern: Lantern;
@@ -197,11 +199,9 @@ export class Game extends Scene {
     });
     const hazards = new Hazards(
       this,
-      level,
       dungeon,
       player,
       () => combat.roster,
-      loot.pickups.map((item) => ({ x: item.gridX, y: item.gridY })),
     );
     const barrels = new Barrels(this, level, player, () => combat.roster, decor.barrels);
     combat.projectileSystem.setBlockedHitHandler((x, y, owner) => barrels.hitCell(x, y, owner === 'player'));
@@ -314,6 +314,8 @@ export class Game extends Scene {
         ambience,
         combat,
         loot,
+        hazards,
+        barrels,
         depth,
         darkness,
         lantern,
