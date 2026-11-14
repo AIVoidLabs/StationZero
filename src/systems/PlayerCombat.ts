@@ -172,12 +172,17 @@ export class PlayerCombat {
       return preferred;
     }
 
+    const facing = facingToVector(this.player.facingDirection);
     let best: Drone | null = null;
-    let bestDistance = Number.POSITIVE_INFINITY;
+    let bestScore = Number.POSITIVE_INFINITY;
     for (const drone of this.getDrones()) {
       const distance = inRange(drone);
-      if (distance === null || distance >= bestDistance) continue;
-      bestDistance = distance;
+      if (distance === null) continue;
+      const dgrid = drone.gridPosition;
+      const angle = angleBetween(facing.x, facing.y, dgrid.x - grid.x, dgrid.y - grid.y);
+      const score = distance * (1 + angle / Math.PI);
+      if (score >= bestScore) continue;
+      bestScore = score;
       best = drone;
     }
     return best;

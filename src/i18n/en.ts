@@ -57,7 +57,7 @@ export const en = {
 
   'controls.title': 'CONTROLS',
   'controls.body1': 'ARROW KEYS ALWAYS MOVE.',
-  'controls.body2': 'MOUSE: LEFT MOVE / ATTACK, RIGHT FIRE.',
+  'controls.body2': 'KEYBOARD ONLY. HOLD THE ATTACK KEY TO FIRE.',
   'controls.footer': 'ENTER TO REBIND  -  ESC CANCELS',
   'controls.pressKey': 'PRESS A KEY...',
   'controls.reset': 'RESET DEFAULTS',
@@ -114,8 +114,8 @@ export const en = {
   'obj.hatch': 'REACH THE EXIT HATCH',
   'obj.clear': 'SECTOR CLEAR',
 
-  'hint.move': 'MOVE: [{keys}] / ARROWS, OR CLICK THE FLOOR',
-  'hint.attack': 'LEFT CLICK A DRONE OR PRESS [{key}] TO ATTACK - RIGHT CLICK FIRES. AMMO IS LIMITED',
+  'hint.move': 'MOVE: [{keys}] / ARROWS',
+  'hint.attack': 'PRESS [{key}] TO FIRE AT THE NEAREST DRONE. HOLD TO KEEP FIRING. AMMO IS LIMITED',
   'hint.dodge': 'DRONES FLASH RED BEFORE THEY FIRE. SIDESTEP THE SHOT',
   'hint.steam': 'STEAM VENTS HISS BEFORE THEY BLAST. CROSS WHILE THEY ARE QUIET',
   'hint.laser': 'LASER GRIDS CYCLE. WAIT FOR THE BEAM TO DROP, THEN CROSS',

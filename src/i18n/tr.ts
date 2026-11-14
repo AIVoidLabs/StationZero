@@ -59,7 +59,7 @@ export const tr: Record<StringKey, string> = {
 
   'controls.title': 'KONTROLLER',
   'controls.body1': 'OK TUŞLARI HER ZAMAN HAREKET ETTİRİR.',
-  'controls.body2': 'FARE: SOL TIK GİT / SALDIR, SAĞ TIK ATEŞ.',
+  'controls.body2': 'SADECE KLAVYE. ATEŞ İÇİN SALDIRI TUŞUNA BAS, BASILI TUT.',
   'controls.footer': 'DEĞİŞTİRMEK İÇİN ENTER  -  ESC İPTAL',
   'controls.pressKey': 'BİR TUŞA BAS...',
   'controls.reset': 'VARSAYILANA DÖN',
@@ -116,8 +116,8 @@ export const tr: Record<StringKey, string> = {
   'obj.hatch': 'ÇIKIŞ KAPAĞINA ULAŞ',
   'obj.clear': 'SEKTÖR TEMİZ',
 
-  'hint.move': 'HAREKET: [{keys}] / OK TUŞLARI, YA DA ZEMİNE TIKLA',
-  'hint.attack': 'DRONE’A SOL TIKLA YA DA [{key}] İLE SALDIR - SAĞ TIK ATEŞ EDER. MERMİ SINIRLI',
+  'hint.move': 'HAREKET: [{keys}] / OK TUŞLARI',
+  'hint.attack': 'EN YAKIN DRONE’A ATEŞ İÇİN [{key}] TUŞUNA BAS, BASILI TUT. MERMİ SINIRLI',
   'hint.dodge': 'DRONE’LAR ATEŞTEN ÖNCE KIRMIZI YANAR. YANA ÇEKİL',
   'hint.steam': 'BUHAR DELİKLERİ PATLAMADAN ÖNCE TISLAR. SUSTUKLARINDA GEÇ',
   'hint.laser': 'LAZER IZGARALARI DÖNGÜYLE ÇALIŞIR. IŞIN KESİLİNCE GEÇ',

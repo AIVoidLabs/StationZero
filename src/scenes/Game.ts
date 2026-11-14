@@ -15,7 +15,6 @@ import {
   TILE_HEIGHT,
   TILE_WIDTH,
 } from '../data/config';
-import type { Drone } from '../entities/enemies/Drone';
 import { Player, type MoveInput, type WeaponType } from '../entities/Player';
 import { Ambience } from '../systems/Ambience';
 import { Combat } from '../systems/Combat';
@@ -35,7 +34,6 @@ import { Hazards } from '../systems/Hazards';
 import { LootSystem } from '../systems/LootSystem';
 import { Occlusion } from '../systems/Occlusion';
 import { PlayerCombat } from '../systems/PlayerCombat';
-import { TileCursor, type HoverTarget } from '../systems/TileCursor';
 import { WardenAtmosphere } from '../systems/WardenAtmosphere';
 import { facingScreenAngle } from '../utils/facing';
 import { runStats } from '../systems/RunStats';
@@ -47,7 +45,7 @@ import { voice } from '../systems/Voice';
 import { keyName } from '../systems/Settings';
 import { t, type StringKey } from '../i18n';
 import { dialogueForFloor, type Effect } from '../data/dialogue';
-import { runFlags } from '../systems/RunFlags';
+import { runFlags, type FlagSnapshot } from '../systems/RunFlags';
 import { upgradeStats } from '../systems/Upgrades';
 import { scaledAmmoDrop } from '../data/difficulty';
 import { ENEMY_SPECS } from '../data/enemies';
@@ -58,7 +56,7 @@ import { sfx } from '../systems/Sfx';
 import { isDebugMode, devStartFloor } from '../utils/devflags';
 import { isDevStart } from '../utils/devstart';
 import { settings } from '../systems/Settings';
-import { gridVectorToWorld, worldToGrid } from '../utils/iso';
+import { gridVectorToWorld } from '../utils/iso';
 
 let cardCounter = 0;
 
@@ -91,6 +89,13 @@ interface GameSceneData {
   readonly floor?: number;
   readonly hp?: number;
   readonly ammo?: number;
+  readonly entry?: FloorEntry;
+}
+
+interface FloorEntry {
+  readonly hp: number;
+  readonly ammo: number;
+  readonly flags: FlagSnapshot;
 }
 
 interface DebugWindow extends Window {
@@ -132,7 +137,6 @@ export class Game extends Scene {
   private loot: LootSystem | undefined = undefined;
   private depth: DepthManager | undefined = undefined;
   private gate: DescentGate | undefined = undefined;
-  private tileCursor: TileCursor | undefined = undefined;
   private playerCombat: PlayerCombat | undefined = undefined;
   private floor = 0;
   private transitioning = false;
@@ -148,6 +152,7 @@ export class Game extends Scene {
   private unsubscribeVoice: (() => void) | undefined = undefined;
   private exploration: Exploration | undefined = undefined;
   private carry: { hp: number; ammo: number } | undefined = undefined;
+  private entry: FloorEntry | undefined = undefined;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | undefined = undefined;
   private wKey: Input.Keyboard.Key | undefined = undefined;
   private aKey: Input.Keyboard.Key | undefined = undefined;
@@ -158,14 +163,7 @@ export class Game extends Scene {
   private interactKey: Input.Keyboard.Key | undefined = undefined;
   private unsubscribeSettings: (() => void) | undefined = undefined;
   private unlockedHandler: (() => void) | undefined = undefined;
-  private pointerHandler: ((pointer: Phaser.Input.Pointer) => void) | undefined = undefined;
-  private pointerMoveHandler: ((pointer: Phaser.Input.Pointer) => void) | undefined = undefined;
-  private pointerOutHandler: (() => void) | undefined = undefined;
   private attackKey: Phaser.Input.Keyboard.Key | undefined = undefined;
-  private attackTarget: Drone | undefined = undefined;
-  private repathCell: { x: number; y: number } | undefined = undefined;
-  private lastRepathAt = 0;
-  private pointerInside = false;
 
   constructor() {
     super({ key: 'Game' });
@@ -173,6 +171,7 @@ export class Game extends Scene {
 
   init(data?: GameSceneData): void {
     this.carry = data?.hp !== undefined && data.ammo !== undefined ? { hp: data.hp, ammo: data.ammo } : undefined;
+    this.entry = data?.entry;
     this.spinning = false;
     this.ending = false;
     this.deathMs = 0;
@@ -192,6 +191,10 @@ export class Game extends Scene {
 
     const decor = new Decor(this, level, dungeon);
     const player = new Player(this, level, level.spawnX, level.spawnY, this.carry);
+    if (!this.entry) {
+      const state = player.getHealth();
+      this.entry = { hp: state.hp, ammo: state.ammo, flags: runFlags.snapshot() };
+    }
     const depth = new DepthManager(floor);
     const loot = new LootSystem(this, level, dungeon, player);
     const combat = new Combat(this, level, dungeon, player, depth, (drone) => {
@@ -224,7 +227,6 @@ export class Game extends Scene {
       ...level.walls.map((sprite) => ({ sprite, baseY: sprite.y - TILE_HEIGHT / 2 })),
       ...decor.occluders,
     ]);
-    const tileCursor = new TileCursor(this);
     const exploration = new Exploration(level, dungeon);
     runStats.reachFloor(floor + 1);
     if (!isDevStart()) {
@@ -259,11 +261,7 @@ export class Game extends Scene {
     this.depth = depth;
     this.gate = gate ?? undefined;
     this.playerCombat = playerCombat;
-    this.attackTarget = undefined;
-    this.repathCell = undefined;
-    this.lastRepathAt = 0;
     this.unlockedHandler = unlockedHandler;
-    this.tileCursor = tileCursor;
     this.exploration = exploration;
     this.startSeen = exploration.seenCount;
     this.cardToken = ++cardCounter;
@@ -301,7 +299,7 @@ export class Game extends Scene {
     camera.startFollow(player, true, CAMERA_LERP, CAMERA_LERP);
     camera.fadeIn(900, 5, 5, 5);
 
-    this.setupInput(player);
+    this.setupInput();
 
     const debugWindow = window as DebugWindow;
     if (isDebugMode()) {
@@ -328,23 +326,10 @@ export class Game extends Scene {
     }
 
     this.events.once('shutdown', () => {
-      if (this.pointerHandler) {
-        this.input.off('pointerdown', this.pointerHandler);
-        this.pointerHandler = undefined;
-      }
-      if (this.pointerMoveHandler) {
-        this.input.off('pointermove', this.pointerMoveHandler);
-        this.pointerMoveHandler = undefined;
-      }
-      if (this.pointerOutHandler) {
-        this.input.off('gameout', this.pointerOutHandler);
-        this.pointerOutHandler = undefined;
-      }
       for (const key of [this.wKey, this.aKey, this.sKey, this.dKey, this.mKey, this.attackKey, this.pauseKey, this.interactKey]) {
         if (key) this.input.keyboard?.removeKey(key);
       }
       this.attackKey = undefined;
-      this.pointerInside = false;
       if (this.unlockedHandler) {
         this.sound.off('unlocked', this.unlockedHandler);
         this.unlockedHandler = undefined;
@@ -358,8 +343,6 @@ export class Game extends Scene {
       this.barrels?.destroy();
       this.barrels = undefined;
       this.playerCombat = undefined;
-      this.attackTarget = undefined;
-      this.repathCell = undefined;
       this.loot?.destroy();
       this.loot = undefined;
       this.gate?.destroy();
@@ -373,8 +356,6 @@ export class Game extends Scene {
       this.logFeed = undefined;
       this.warden?.destroy();
       this.warden = undefined;
-      this.tileCursor?.destroy();
-      this.tileCursor = undefined;
       this.lantern?.destroy();
       this.lantern = undefined;
       this.darkness?.destroy();
@@ -440,13 +421,10 @@ export class Game extends Scene {
       if (this.scene.isPaused()) return;
     }
 
-    const input = this.readInput();
-    if (input) this.clearAttackTarget();
-    player.update(delta, input);
-    this.updateCombatTarget();
+    player.update(delta, this.readInput());
 
-    if (this.attackKey && Input.Keyboard.JustDown(this.attackKey)) {
-      this.playerCombat?.tryAttack(this.time.now, this.attackTarget);
+    if (this.attackKey?.isDown) {
+      this.playerCombat?.tryAttack(this.time.now);
     }
 
     const grid = player.gridPosition;
@@ -460,25 +438,13 @@ export class Game extends Scene {
     this.hazards?.update();
     this.barrels?.update(delta);
     this.loot?.update(player);
-    if (this.pointerInside) {
-      const pointer = this.input.activePointer;
-      const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-      this.loot?.hoverAt(world.x, world.y, player);
-    } else {
-      this.loot?.hoverAt(null, 0, player);
-    }
-
     const lead = player.leadDirection;
     this.cameras.main.setFollowOffset(
       -lead.x * CAMERA_LOOK_AHEAD,
       -lead.y * CAMERA_LOOK_AHEAD,
     );
 
-    const hover = this.resolveHover();
-    if (hover) this.tileCursor?.show(hover);
-    else this.tileCursor?.hide();
-
-    occlusion.update(player.x, player.y, hover?.walkable === true ? hover : null);
+    occlusion.update(player.x, player.y, null);
     lantern.update(player.x, player.y);
     darkness.update(player.x, player.y);
     warden.update(delta, player.x, player.y);
@@ -581,7 +547,7 @@ export class Game extends Scene {
     if (player.isDeadState) {
       if (this.deathMs === 0) voice.say('warden.dead', 'warden');
       this.deathMs += delta;
-      if (this.deathMs >= DEATH_TO_END_MS) this.endRun('dead');
+      if (this.deathMs >= DEATH_TO_END_MS) this.retryFloor();
       return;
     }
 
@@ -591,6 +557,17 @@ export class Game extends Scene {
       this.clearMs += delta;
       if (this.clearMs >= CLEAR_TO_END_MS) this.endRun('survived');
     }
+  }
+
+  private retryFloor(): void {
+    const entry = this.entry;
+    this.ending = true;
+    this.transitioning = true;
+    this.cameras.main.fadeOut(700, 2, 2, 2);
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      if (entry) runFlags.restore(entry.flags);
+      this.scene.restart({ floor: this.floor, hp: entry?.hp, ammo: entry?.ammo, entry });
+    });
   }
 
   private endRun(outcome: 'dead' | 'survived'): void {
@@ -621,8 +598,6 @@ export class Game extends Scene {
 
     if (gate.update(delta, player) && !this.spinning) {
       this.spinning = true;
-      this.clearAttackTarget();
-      this.tileCursor?.hide();
       player.startSpin(DESCENT_SPIN_MS, gate.cell.x, gate.cell.y);
     }
 
@@ -752,8 +727,6 @@ export class Game extends Scene {
 
     this.transitioning = true;
     this.player?.cancelPath();
-    this.tileCursor?.hide();
-
     const health = this.player?.getHealth();
     this.cameras.main.fadeOut(DESCENT_FADE_MS, 2, 2, 2);
     this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -772,59 +745,9 @@ export class Game extends Scene {
     return Math.max(0, Math.min(FLOOR_COUNT - 1, Math.round(value)));
   }
 
-  private setupInput(player: Player): void {
+  private setupInput(): void {
     this.bindKeys();
     this.unsubscribeSettings = settings.subscribe(() => this.bindKeys());
-
-    const handler = (pointer: Phaser.Input.Pointer): void => {
-      if (this.transitioning) return;
-      this.pointerInside = true;
-
-      if (pointer.rightButtonDown()) {
-        this.stopAndFirePistol();
-        return;
-      }
-      if (!pointer.leftButtonDown()) return;
-
-      const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-      const hover = this.resolveHoverAt(world);
-      const target = this.findDroneAt(hover);
-
-      if (target) {
-        this.attackTarget = target;
-        this.repathCell = undefined;
-        player.setAttackTarget({ gridX: target.gridPosition.x, gridY: target.gridPosition.y });
-        return;
-      }
-
-      this.clearAttackTarget();
-      if (hover && hover.walkable) {
-        player.cancelPath();
-        player.setDestination(hover.gridX, hover.gridY);
-      }
-    };
-
-    const moveHandler = (pointer: Phaser.Input.Pointer): void => {
-      this.pointerInside = true;
-      if (this.transitioning) return;
-      if (pointer.rightButtonDown()) {
-        this.stopAndFirePistol();
-      }
-    };
-
-    const outHandler = (): void => {
-      this.pointerInside = false;
-      this.tileCursor?.hide();
-    };
-
-    this.input.on('pointerdown', handler);
-    this.input.on('pointermove', moveHandler);
-    this.input.on('gameout', outHandler);
-    this.pointerHandler = handler;
-    this.pointerMoveHandler = moveHandler;
-    this.pointerOutHandler = outHandler;
-
-    this.input.mouse?.disableContextMenu();
   }
 
   private bindKeys(): void {
@@ -1044,112 +967,6 @@ export class Game extends Scene {
     const dy = sy - cy;
     const scale = Math.min((cx - margin) / Math.max(1e-3, Math.abs(dx)), (cy - margin) / Math.max(1e-3, Math.abs(dy)));
     return { x: cx + dx * scale, y: cy + dy * scale, angle: Math.atan2(dy, dx), visible: true };
-  }
-
-  private findDroneAt(hover: HoverTarget | null): Drone | null {
-    if (!hover) return null;
-    let best: Drone | null = null;
-    let bestDistance = 1.2;
-
-    for (const drone of this.combat?.roster ?? []) {
-      if (drone.isDead) continue;
-      const grid = drone.gridPosition;
-      const distance = Math.hypot(grid.x - hover.gridX, grid.y - hover.gridY);
-      if (distance < bestDistance) {
-        bestDistance = distance;
-        best = drone;
-      }
-    }
-
-    return best;
-  }
-
-  private clearAttackTarget(): void {
-    this.attackTarget = undefined;
-    this.repathCell = undefined;
-    this.player?.setAttackTarget(null);
-  }
-
-  private stopAndFirePistol(): void {
-    const player = this.player;
-    if (!player) return;
-    if (player.weapon !== 'PISTOL' || player.ammoCount <= 0) return;
-    this.clearAttackTarget();
-    player.cancelPath();
-    this.playerCombat?.tryRightClickPistol(this.time.now, undefined);
-  }
-
-  private updateCombatTarget(): void {
-    const player = this.player;
-    const combat = this.playerCombat;
-    const target = this.attackTarget;
-    if (!player || !combat) return;
-
-    if (!target) return;
-    if (target.isDead) {
-      this.clearAttackTarget();
-      return;
-    }
-
-    const targetGrid = target.gridPosition;
-
-    if (combat.canAttackTarget(target)) {
-      player.cancelPath();
-      this.repathCell = undefined;
-      if (!player.canAttack(this.time.now)) return;
-      player.beginAttacking();
-      combat.tryAttack(this.time.now, target);
-      return;
-    }
-
-    const cellX = Math.round(targetGrid.x);
-    const cellY = Math.round(targetGrid.y);
-    const drifted =
-      !this.repathCell ||
-      Math.abs(cellX - this.repathCell.x) >= 1 ||
-      Math.abs(cellY - this.repathCell.y) >= 1;
-
-    if (!player.hasPath || drifted) {
-      if (!player.hasPath && this.time.now - this.lastRepathAt < 250) return;
-      player.cancelPath();
-      this.lastRepathAt = this.time.now;
-      if (!player.setDestination(cellX, cellY)) {
-        this.clearAttackTarget();
-        return;
-      }
-      player.setAttackTarget({ gridX: cellX, gridY: cellY });
-      this.repathCell = { x: cellX, y: cellY };
-    }
-  }
-
-  private resolveHoverAt(world: { x: number; y: number }): HoverTarget | null {
-    const level = this.level;
-    if (!level) return null;
-    const grid = worldToGrid(world.x, world.y, TILE_WIDTH, TILE_HEIGHT);
-    if (
-      grid.gridX < 0 ||
-      grid.gridY < 0 ||
-      grid.gridX >= level.width ||
-      grid.gridY >= level.height
-    ) {
-      return null;
-    }
-    const center = gridVectorToWorld(grid.gridX, grid.gridY, TILE_WIDTH, TILE_HEIGHT);
-    return {
-      x: center.x,
-      y: center.y,
-      gridX: grid.gridX,
-      gridY: grid.gridY,
-      walkable: level.isWalkable(grid.gridX, grid.gridY),
-    };
-  }
-
-  private resolveHover(): HoverTarget | null {
-    const level = this.level;
-    if (!level || !this.pointerInside) return null;
-    const pointer = this.input.activePointer;
-    const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
-    return this.resolveHoverAt(world);
   }
 
   private readInput(): MoveInput | null {
