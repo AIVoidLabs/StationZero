@@ -12,7 +12,10 @@ import type { OccluderSpec } from './Occlusion';
 const DECOR_SEED = 0x5a17e;
 const DECAL_SEED = 0xdecaf;
 const COVER_SEED = 0xc07e5;
-const BARREL_CHANCE = 0.75;
+const BARRELS_PER_COVER_ROOM = 2;
+const EXTRA_BARREL_CHANCE = 0.5;
+const SMALL_ROOM_BARREL_CHANCE = 0.6;
+const SMALL_ROOM_MIN_SIZE = 4;
 const COVER_MIN_ROOM_WIDTH = 6;
 const COVER_MIN_ROOM_HEIGHT = 5;
 const COVER_BIG_ROOM_AREA = 40;
@@ -31,7 +34,7 @@ const PROP_FRAMES = {
   terminal: 2,
   pipe: 3,
 } as const;
-const RANDOM_PROP_KINDS: readonly PropKind[] = ['barrel', 'crate', 'pipe'];
+const RANDOM_PROP_KINDS: readonly PropKind[] = ['barrel', 'barrel', 'crate', 'pipe'];
 const PROP_SCALE: Record<keyof typeof PROP_FRAMES, number> = {
   barrel: 0.45,
   crate: 0.5,
@@ -227,7 +230,13 @@ export class Decor {
     };
 
     for (const room of dungeon.rooms) {
-      if (room.width < COVER_MIN_ROOM_WIDTH || room.height < COVER_MIN_ROOM_HEIGHT) continue;
+      if (room.width < COVER_MIN_ROOM_WIDTH || room.height < COVER_MIN_ROOM_HEIGHT) {
+        if (room.width < SMALL_ROOM_MIN_SIZE || room.height < SMALL_ROOM_MIN_SIZE || rng() >= SMALL_ROOM_BARREL_CHANCE) continue;
+        const spots = this.coverCandidates(room, placed, 1);
+        const spot = spots[Math.floor(rng() * spots.length)];
+        if (spot) tryBlock(spot, 'barrel');
+        continue;
+      }
       const blocks = room.width * room.height >= COVER_BIG_ROOM_AREA ? 3 : 2;
 
       for (let index = 0; index < blocks; index += 1) {
@@ -241,7 +250,8 @@ export class Decor {
         if (candidates.some((other) => other.x === next.x && other.y === next.y)) tryBlock(next);
       }
 
-      if (rng() < BARREL_CHANCE) {
+      const barrelCount = BARRELS_PER_COVER_ROOM + (rng() < EXTRA_BARREL_CHANCE ? 1 : 0);
+      for (let index = 0; index < barrelCount; index += 1) {
         const spots = this.coverCandidates(room, placed);
         const spot = spots[Math.floor(rng() * spots.length)];
         if (spot) tryBlock(spot, 'barrel');
@@ -249,14 +259,15 @@ export class Decor {
     }
   }
 
-  private coverCandidates(room: Room, placed: readonly Cell[]): Cell[] {
+  private coverCandidates(room: Room, placed: readonly Cell[], margin = 2): Cell[] {
     const result: Cell[] = [];
-    for (let y = room.y + 2; y < room.y + room.height - 2; y += 1) {
-      for (let x = room.x + 2; x < room.x + room.width - 2; x += 1) {
+    for (let y = room.y + margin; y < room.y + room.height - margin; y += 1) {
+      for (let x = room.x + margin; x < room.x + room.width - margin; x += 1) {
         if (!this.level.isWalkable(x, y)) continue;
         if (Math.hypot(x - this.level.spawnX, y - this.level.spawnY) < COVER_START_CLEARANCE) continue;
         if (this.exit !== null && Math.hypot(x - this.exit.x, y - this.exit.y) < COVER_START_CLEARANCE) continue;
         if (placed.some((cell) => Math.max(Math.abs(cell.x - x), Math.abs(cell.y - y)) < COVER_SPACING)) continue;
+        if (this.terminalCells.some((cell) => Math.max(Math.abs(cell.x - x), Math.abs(cell.y - y)) <= 1)) continue;
         result.push({ x, y });
       }
     }

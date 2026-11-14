@@ -46,7 +46,7 @@ Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previe
 - **Projection:** dimetric 2:1 (tile 64×32, wall height 46); depth-sorted by iso Y; walls near the player fade out.
 - **Floors:** eleven hand-baked 35×35 grid levels (`src/data/levels/floor-*.json`), 6–7 rooms each, spawn and a far-away hatch (sealed on the last floor). Materials: steel, concrete, grate; decals and props (barrel, crate, terminal, pipe) add clutter; props block movement.
 - **Cover:** rooms 6x5 and larger get 2-3 crate blocks (some two tiles long) inside them. They block movement, sight and bullets, and placement is checked so the floor stays connected.
-- **Explosive barrels:** red barrels (about one per cover room, plus random ones) explode when any bullet hits them, the Exile's or an enemy's. The blast reaches 2.2 tiles: 3 damage to every enemy (armour ignored), 2 to the Exile, and it sets off barrels nearby after a short delay. The barrel leaves a scorch and frees its cell.
+- **Explosive barrels:** red barrels (2-3 per cover room, one in most smaller rooms, plus random ones; none next to a terminal) explode when any bullet hits them, the Exile's or an enemy's. The blast reaches 2.2 tiles: 3 damage to every enemy (armour ignored), 2 to the Exile, and it sets off barrels nearby after a short delay. The barrel leaves a scorch and frees its cell.
 - **Visibility:** a light map darkens everything except the player's light and the lantern cone; dying drone flares and shots briefly light the room. Walls occlude drone vision.
 - **Minimap:** bottom-right, fog-of-war (unexplored areas stay black), with a *% explored* readout.
 
