@@ -433,6 +433,7 @@ export class Game extends Scene {
     this.exploration?.update(Math.round(grid.x), Math.round(grid.y), this.time.now);
 
     combat.update(delta);
+    this.decor?.update(grid.x, grid.y, delta, this.time.now);
     this.hazards?.update();
     this.barrels?.update(delta);
     this.loot?.update(player);

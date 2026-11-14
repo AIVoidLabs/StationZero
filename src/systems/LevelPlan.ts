@@ -113,11 +113,11 @@ class Planner {
 
     this.placeProps(propBudget);
     this.placeTerminals(terminalTarget);
-    const corpse = this.placeCorpse();
     this.placeCover();
     this.placeFloorLoot();
     const enemies = this.placeEnemies();
     const hazards = this.placeHazards();
+    const corpse = this.placeCorpse(enemies, hazards);
 
     return {
       props: this.props,
@@ -219,18 +219,47 @@ class Planner {
     return false;
   }
 
-  private placeCorpse(): Cell | null {
+  private placeCorpse(enemies: readonly EnemySpawn[], hazards: { vents: VentSpawn[]; gates: GateSpawn[] }): Cell | null {
     if (this.dungeon.floor >= CORPSE_FLOORS) return null;
     const terminal = this.terminals[0];
     if (!terminal) return null;
 
+    const taken = new Set<string>();
+    for (const cell of [...this.props, ...this.terminals, ...this.loot, ...enemies, ...hazards.vents, ...hazards.gates]) {
+      taken.add(`${cell.x},${cell.y}`);
+    }
+    taken.add(`${Math.round(this.level.spawnX)},${Math.round(this.level.spawnY)}`);
+
+    const open = (x: number, y: number): boolean => this.level.cellAt(x, y) === 'floor';
+    const exposed = (x: number, y: number): boolean => {
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) if (!open(x + dx, y + dy)) return false;
+      }
+      return true;
+    };
+    const free = (x: number, y: number): boolean => !taken.has(`${x},${y}`) && !this.isExit(x, y);
+
+    const terminalRoom = this.dungeon.rooms.find((room) => inRoom(room, terminal));
+    const rooms = [...(terminalRoom ? [terminalRoom] : []), ...this.dungeon.rooms.filter((room) => room !== terminalRoom)];
+    for (const room of rooms) {
+      let best: Cell | null = null;
+      let bestDistance = Number.POSITIVE_INFINITY;
+      for (let y = room.y + 1; y < room.y + room.height - 1; y += 1) {
+        for (let x = room.x + 1; x < room.x + room.width - 1; x += 1) {
+          if (!free(x, y) || !exposed(x, y)) continue;
+          const distance = Math.hypot(x - terminal.x, y - terminal.y);
+          if (distance >= bestDistance) continue;
+          bestDistance = distance;
+          best = { x, y };
+        }
+      }
+      if (best) return best;
+    }
+
     for (const [dx, dy] of CORPSE_NEIGHBORS) {
       const x = terminal.x + dx;
       const y = terminal.y + dy;
-      if (!this.level.isWalkable(x, y)) continue;
-      if (x === this.level.spawnX && y === this.level.spawnY) continue;
-      if (this.isExit(x, y)) continue;
-      return { x, y };
+      if (this.level.isWalkable(x, y) && free(x, y)) return { x, y };
     }
     return null;
   }

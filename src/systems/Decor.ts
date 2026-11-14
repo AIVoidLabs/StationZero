@@ -1,6 +1,6 @@
-import type { GameObjects, Scene } from 'phaser';
+import { BlendModes, type GameObjects, type Scene } from 'phaser';
 import { DEAD_FRAME_COUNT, PROPS_FLOOR_KEY } from '../assets/manifest';
-import { DEPTH_FLOOR, FLOOR_COUNT, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
+import { DEPTH_FLOOR, FLOOR_COUNT, LOG_REACH_TILES, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import { gridVectorToWorld } from '../utils/iso';
 import { createRng } from '../utils/random';
 import type { Dungeon, DungeonExit } from './DungeonGen';
@@ -8,8 +8,13 @@ import type { BarrelCell } from './Barrels';
 import type { Level } from './Level';
 import type { TerminalCell } from './LogFeed';
 import type { OccluderSpec } from './Occlusion';
+import { runFlags } from './RunFlags';
 
 const DECAL_SEED = 0xdecaf;
+const HALO_COLOR = 0xffd060;
+const HALO_RANGE_TILES = LOG_REACH_TILES + 1.6;
+const HALO_MAX_ALPHA = 0.9;
+const HALO_FADE_PER_SECOND = 3.2;
 const MAX_DECALS = 12;
 const DECALS_PER_FLOOR = 2;
 const PROP_FRAMES = {
@@ -43,6 +48,8 @@ export class Decor {
   private readonly terminalCells: TerminalCell[] = [];
   private readonly barrelCells: BarrelCell[] = [];
   private corpse: { x: number; y: number } | null = null;
+  private halo: GameObjects.Ellipse | null = null;
+  private haloAlpha = 0;
   private readonly exit: DungeonExit | null;
   private readonly decalTarget: number;
   private readonly floorIndex: number;
@@ -87,13 +94,29 @@ export class Decor {
     return this.barrelCells;
   }
 
+  update(playerX: number, playerY: number, delta: number, time: number): void {
+    const halo = this.halo;
+    const corpse = this.corpse;
+    if (!halo || !corpse) return;
+    const near =
+      !runFlags.hasSecret(this.floorIndex) &&
+      Math.hypot(playerX - corpse.x, playerY - corpse.y) <= HALO_RANGE_TILES;
+    const step = (delta / 1000) * HALO_FADE_PER_SECOND;
+    this.haloAlpha = near ? Math.min(1, this.haloAlpha + step) : Math.max(0, this.haloAlpha - step);
+    const pulse = 0.78 + 0.22 * Math.sin(time / 280);
+    halo.setAlpha(this.haloAlpha * HALO_MAX_ALPHA * pulse);
+    halo.setScale(1 + 0.06 * Math.sin(time / 420));
+  }
+
   destroy(): void {
+    this.halo?.destroy();
     for (const image of this.images) image.destroy();
     this.images.length = 0;
     this.propOccluders.length = 0;
     this.terminalCells.length = 0;
     this.barrelCells.length = 0;
     this.corpse = null;
+    this.halo = null;
   }
 
   private addThemeProp(gridX: number, gridY: number): void {
@@ -113,6 +136,13 @@ export class Decor {
       .setOrigin(0.5, FLOOR_PROP_BASE_ORIGIN_Y)
       .setDepth(DEPTH_FLOOR + CORPSE_DEPTH_OFFSET);
     this.images.push(image);
+
+    this.halo = this.scene.add
+      .ellipse(iso.x, iso.y, 76, 38, HALO_COLOR, 0.35)
+      .setStrokeStyle(2, HALO_COLOR, 1)
+      .setAlpha(0)
+      .setDepth(DEPTH_FLOOR + CORPSE_DEPTH_OFFSET - 1)
+      .setBlendMode(BlendModes.ADD);
   }
 
   private addProp(gridX: number, gridY: number, kind: PropKind): void {
