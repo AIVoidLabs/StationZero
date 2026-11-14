@@ -45,6 +45,7 @@ Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previe
 
 - **Projection:** dimetric 2:1 (tile 64×32, wall height 46); depth-sorted by iso Y; walls near the player fade out.
 - **Floors:** eleven hand-baked 35×35 grid levels (`src/data/levels/floor-*.json`), 6–7 rooms each, spawn and a far-away hatch (sealed on the last floor). Materials: steel, concrete, grate; decals and props (barrel, crate, terminal, pipe) add clutter; props block movement.
+- **Enemy placement:** every room except the one holding the spawn gets at least one enemy; the rest are spread over the larger rooms. On boss floors (B9, B11) the generator reserves an 11x9 boss room and only accepts a layout where it is the room farthest from the spawn, so the boss waits in the last room with a couple of guards.
 - **Cover:** rooms 6x5 and larger get 2-3 crate blocks (some two tiles long) inside them. They block movement, sight and bullets, and placement is checked so the floor stays connected.
 - **Explosive barrels:** red barrels (2-3 per cover room, one in most smaller rooms, plus random ones; none next to a terminal) explode when any bullet hits them, the Exile's or an enemy's. The blast reaches 2.2 tiles: 3 damage to every enemy (armour ignored), 2 to the Exile, and it sets off barrels nearby after a short delay. The barrel leaves a scorch and frees its cell.
 - **Visibility:** a light map darkens everything except the player's light and the lantern cone; dying drone flares and shots briefly light the room. Walls occlude drone vision.
@@ -52,7 +53,7 @@ Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previe
 
 ## 5. Enemies — rogue maintenance drones
 
-- 2 HP, hover with a bob, hostile since WARDEN rebuilt them. Four on B1, rising to six by B7 (see the floor table).
+- 2 HP, hover with a bob, hostile since WARDEN rebuilt them. Six on B1, rising to nine by B7 (see the floor table).
 - **States:** idle/patrol → chase → search → return/disengage. Sight: 7.5 tiles in a 120° cone, plus 1.8 tiles of peripheral awareness; sight scales up with depth (+30% at B11).
 - **Rules:** need line of sight; chase leashes (max 7 s / 11 tiles), search for 2.6 s, then return home. No infinite pursuit.
 - **Attack:** a red flash wind-up (0.45 s), then a red bullet (4.5 tiles/s, slower than the player), 1 damage; fire cooldown ~2.4 s, shorter deeper. They also sidestep player shots (50% chance) and deal contact damage in melee.
@@ -81,17 +82,17 @@ WARDEN is not a character on screen; it is a **director**.
 
 | Floor | Name | Hostiles | Notes |
 | --- | --- | --- | --- |
-| B1 | INTAKE | 4 | Teaches movement, click-to-walk, terminals, loot; Hale's recording (WARDEN's old name) |
-| B2 | CELL BLOCK | 4 | Voss: patrol loop; first dark corners |
-| B3 | INFIRMARY | 4 | Lund: WARDEN reads pulse and voice |
-| B4 | DRILL 3 | 5 | Dray: drones are rebuilt miners; steam vents |
-| B5 | PUMP STATION | 5 | Sato: cooling lines |
-| B6 | FOUNDRY | 5 + tank | Brandt: rear seam; first robot tank |
-| B7 | ARCHIVE | 6 | Pell: FILE 0; laser grids |
-| B8 | POWER GRID | 6 + tank | Moreau: backup feed |
-| B9 | DRONE FOUNDRY | 5 + boss | Iyer: first instruction; mid boss, the Assembler |
-| B10 | COMMS ARRAY | 6 + tank | Kessler: how to end it |
-| B11 | WARDEN CORE | 5 + boss | WARDEN's terminal; final boss, the WARDEN core; killing it ends the run |
+| B1 | INTAKE | 6 | Teaches movement, click-to-walk, terminals, loot; Hale's recording (WARDEN's old name) |
+| B2 | CELL BLOCK | 7 | Voss: patrol loop; first dark corners |
+| B3 | INFIRMARY | 7 | Lund: WARDEN reads pulse and voice |
+| B4 | DRILL 3 | 8 | Dray: drones are rebuilt miners; steam vents |
+| B5 | PUMP STATION | 8 | Sato: cooling lines |
+| B6 | FOUNDRY | 8 + tank | Brandt: rear seam; first robot tank |
+| B7 | ARCHIVE | 9 | Pell: FILE 0; laser grids |
+| B8 | POWER GRID | 9 + tank | Moreau: backup feed |
+| B9 | DRONE FOUNDRY | 6 + boss | Iyer: first instruction; mid boss, the Assembler |
+| B10 | COMMS ARRAY | 9 + tank | Kessler: how to end it |
+| B11 | WARDEN CORE | 6 + boss | WARDEN's terminal; final boss, the WARDEN core; killing it ends the run |
 
 - **Secrets:** each recording on B1-B10 ends with a "take" choice that grants a permanent upgrade for the rest of the run (kept in saves). The hatch is unaffected: it still opens when every hostile is dead. A `SECRETS n/10` counter sits under the vitals panel.
 

@@ -1,4 +1,5 @@
 import { DUNGEON_HEIGHT, DUNGEON_SEED, DUNGEON_WIDTH, FLOOR_COUNT } from '../data/config';
+import { bossForFloor } from '../data/enemies';
 import { createRng } from '../utils/random';
 
 export type FloorStyle = 0 | 1 | 2;
@@ -60,7 +61,9 @@ function buildProfile(floor: number): FloorProfile {
 
 const ROOM_PLACEMENT_ATTEMPTS = 40;
 const ROOM_ATTEMPT_LIMIT = 500;
-const MAX_SEED_ATTEMPTS = 24;
+const MAX_SEED_ATTEMPTS = 80;
+const BOSS_ROOM_WIDTH = 11;
+const BOSS_ROOM_HEIGHT = 9;
 const EXTRA_LINK_DISTANCE = 14;
 const EXIT_MIN_DISTANCE = 10;
 const WALL = '#';
@@ -271,6 +274,21 @@ function countReachable(cells: readonly (readonly string[])[], start: Point): nu
   return seen.size;
 }
 
+function farthestRoom(rooms: readonly Room[], spawnRoom: Room, spawn: Point): Room | null {
+  let farthest: Room | null = null;
+  let farthestDistance = -1;
+  for (const room of rooms) {
+    if (room === spawnRoom) continue;
+    const center = roomCenter(room);
+    const distance = Math.abs(center.x - spawn.x) + Math.abs(center.y - spawn.y);
+    if (distance > farthestDistance) {
+      farthestDistance = distance;
+      farthest = room;
+    }
+  }
+  return farthest;
+}
+
 function chooseExit(
   cells: readonly (readonly string[])[],
   rooms: readonly Room[],
@@ -324,6 +342,13 @@ function attemptDungeon(seed: number, floor: number): Dungeon | null {
   if (!hall) return null;
   rooms.push(hall);
 
+  let bossRoom: Room | null = null;
+  if (bossForFloor(floor) !== null) {
+    bossRoom = placeRoom(rng, rooms, BOSS_ROOM_WIDTH, BOSS_ROOM_HEIGHT, 2);
+    if (!bossRoom) return null;
+    rooms.push(bossRoom);
+  }
+
   let placements = 0;
   while (rooms.length < profile.roomCount && placements < ROOM_ATTEMPT_LIMIT) {
     placements += 1;
@@ -344,7 +369,7 @@ function attemptDungeon(seed: number, floor: number): Dungeon | null {
   addPillars(cells, hall);
 
   const spawnRoom = rooms
-    .filter((room) => room !== hall)
+    .filter((room) => room !== hall && room !== bossRoom)
     .reduce<Room | null>(
       (smallest, room) =>
         smallest === null || roomArea(room) < roomArea(smallest) ? room : smallest,
@@ -356,6 +381,8 @@ function attemptDungeon(seed: number, floor: number): Dungeon | null {
   const spawnRow = cells[spawn.y];
   if (!spawnRow) return null;
   spawnRow[spawn.x] = SPAWN;
+
+  if (bossRoom && farthestRoom(rooms, spawnRoom, spawn) !== bossRoom) return null;
 
   const exit = chooseExit(cells, rooms, spawnRoom, spawn, floor);
   if (floor < FLOOR_COUNT - 1 && exit === null) return null;

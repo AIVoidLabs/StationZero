@@ -13,45 +13,13 @@ import { Projectiles } from './Projectiles';
 import { runStats } from './RunStats';
 
 const COMBAT_SEED = 0x0d20e;
-
-interface SpawnCandidate {
-  readonly room: Room;
-  readonly centerX: number;
-  readonly centerY: number;
-  readonly distance: number;
-}
+const ENEMY_SPACING = 2.5;
 
 function roomCenter(room: Room): { readonly x: number; readonly y: number } {
   return {
     x: room.x + Math.floor(room.width / 2),
     y: room.y + Math.floor(room.height / 2),
   };
-}
-
-function findSpawn(
-  level: Level,
-  room: Room,
-  centerX: number,
-  centerY: number,
-  exit: DungeonExit | null,
-  taken: ReadonlySet<string>,
-): { readonly x: number; readonly y: number } | null {
-  let best: { readonly x: number; readonly y: number } | null = null;
-  let bestDistance = Number.POSITIVE_INFINITY;
-
-  for (let y = room.y; y < room.y + room.height; y += 1) {
-    for (let x = room.x; x < room.x + room.width; x += 1) {
-      if (!level.isWalkable(x, y)) continue;
-      if (exit !== null && x === exit.x && y === exit.y) continue;
-      if (taken.has(`${x},${y}`)) continue;
-      const distance = (x - centerX) ** 2 + (y - centerY) ** 2;
-      if (distance >= bestDistance) continue;
-      bestDistance = distance;
-      best = { x, y };
-    }
-  }
-
-  return best;
 }
 
 export class Combat {
@@ -82,45 +50,49 @@ export class Combat {
     this.projectiles = new Projectiles(scene, level, player, () => this.drones);
     const rng = createRng(dungeon.seed ^ COMBAT_SEED);
 
-    const candidates: SpawnCandidate[] = dungeon.rooms
+    const spawnCell = { x: Math.round(level.spawnX), y: Math.round(level.spawnY) };
+    const inRoom = (room: Room, cell: { x: number; y: number }): boolean =>
+      cell.x >= room.x && cell.x < room.x + room.width && cell.y >= room.y && cell.y < room.y + room.height;
+    const ranked = dungeon.rooms
+      .filter((room) => !inRoom(room, spawnCell))
       .map((room) => {
         const center = roomCenter(room);
         return {
           room,
-          centerX: center.x,
-          centerY: center.y,
-          distance: Math.abs(center.x - level.spawnX) + Math.abs(center.y - level.spawnY),
+          area: room.width * room.height,
+          distance: Math.abs(center.x - spawnCell.x) + Math.abs(center.y - spawnCell.y),
         };
       })
       .sort((a, b) => b.distance - a.distance);
+    const rooms = ranked.length > 0 ? ranked : dungeon.rooms.map((room) => ({ room, area: room.width * room.height, distance: 0 }));
+    const bySize = [...rooms].sort((a, b) => b.area - a.area);
 
-    const distant = candidates.filter((candidate) => candidate.distance >= DRONE_MIN_SPAWN_DISTANCE);
-    const pool = distant.length > 0 ? distant : candidates;
-    const droneCount = droneCountForFloor(dungeon.floor);
+    const plan: { room: Room; kind: EnemyKind }[] = [];
+    const bossKind = bossForFloor(dungeon.floor);
+    const bossRoom = bossKind ? rooms[0]?.room : undefined;
+    if (bossKind && bossRoom) plan.push({ room: bossRoom, kind: bossKind });
+
+    const droneTotal = droneCountForFloor(dungeon.floor);
+    const droneCounts = new Map<Room, number>();
+    for (const entry of rooms.slice(0, droneTotal)) droneCounts.set(entry.room, 1);
+    for (let extra = droneTotal - droneCounts.size, index = 0; extra > 0 && bySize.length > 0; extra -= 1, index += 1) {
+      const entry = bySize[index % bySize.length];
+      if (entry) droneCounts.set(entry.room, (droneCounts.get(entry.room) ?? 0) + 1);
+    }
+    for (const [room, count] of droneCounts) {
+      for (let index = 0; index < count; index += 1) plan.push({ room, kind: 'drone' });
+    }
+
+    const tankRooms = bySize.filter((entry) => entry.room !== bossRoom).slice(0, tankCountForFloor(dungeon.floor));
+    for (const entry of tankRooms) plan.push({ room: entry.room, kind: 'tank' });
 
     const taken = new Set<string>();
-    const boss = bossForFloor(dungeon.floor);
-    const kinds: EnemyKind[] = [
-      ...(boss ? [boss] : []),
-      ...Array.from({ length: droneCount }, (): EnemyKind => 'drone'),
-      ...Array.from({ length: tankCountForFloor(dungeon.floor) }, (): EnemyKind => 'tank'),
-    ];
-
-    for (const [index, kind] of kinds.entries()) {
-      if (pool.length === 0) break;
-      const candidate = pool[index % pool.length];
-      if (!candidate) continue;
-
-      const spawn = findSpawn(
-        level,
-        candidate.room,
-        candidate.centerX,
-        candidate.centerY,
-        dungeon.exit,
-        taken,
-      );
+    const placed: { x: number; y: number }[] = [];
+    for (const { room, kind } of plan) {
+      const spawn = this.pickSpawn(room, dungeon.exit, taken, placed, spawnCell, rng);
       if (!spawn) continue;
       taken.add(`${spawn.x},${spawn.y}`);
+      placed.push(spawn);
 
       this.drones.push(
         new Drone(
@@ -136,6 +108,31 @@ export class Combat {
         ),
       );
     }
+  }
+
+  private pickSpawn(
+    room: Room,
+    exit: DungeonExit | null,
+    taken: ReadonlySet<string>,
+    placed: readonly { x: number; y: number }[],
+    start: { x: number; y: number },
+    rng: () => number,
+  ): { readonly x: number; readonly y: number } | null {
+    const spread: { x: number; y: number }[] = [];
+    const loose: { x: number; y: number }[] = [];
+    for (let y = room.y; y < room.y + room.height; y += 1) {
+      for (let x = room.x; x < room.x + room.width; x += 1) {
+        if (!this.level.isWalkable(x, y)) continue;
+        if (exit !== null && x === exit.x && y === exit.y) continue;
+        if (taken.has(`${x},${y}`)) continue;
+        loose.push({ x, y });
+        const farFromStart = Math.hypot(x - start.x, y - start.y) >= DRONE_MIN_SPAWN_DISTANCE;
+        const apart = placed.every((other) => Math.hypot(other.x - x, other.y - y) >= ENEMY_SPACING);
+        if (farFromStart && apart) spread.push({ x, y });
+      }
+    }
+    const pool = spread.length > 0 ? spread : loose;
+    return pool[Math.floor(rng() * pool.length)] ?? null;
   }
 
   get roster(): readonly Drone[] {
