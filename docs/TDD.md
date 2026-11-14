@@ -382,7 +382,7 @@ Tüm düşman türleri **tek bir sınıf** (`Drone`) ve **veri tablosuyla** ([sr
 | `tank` | 2 | 3 | tek mermi (shell), 3800 ms, menzil 7 | ağır, yavaş dönüş (`turnMs` 900), önden zırhlı |
 | `assembler` | 6 | 3 | 3'lü yelpaze, 3000 ms, menzil 8 | boss; her 11 sn drone çağırır (en çok 2); ölçek 1.7 |
 | `crusher` / `dynamo` / `matriarch` | 7 / 8 / 8 | 4 / 3 / 2 | shell / 3'lü yelpaze / zehir yelpazesi | boss prototipleri (6.6a) |
-| `warden` | 9 | 4 | 5'li yelpaze, 3200 ms, menzil 11 | boss; hareketsiz (`speed 0`), uykuda başlar; 10 sn'de bir çağrı |
+| `warden` | 12 | 5 | 5'li yelpaze, 2600 ms, menzil 11 | boss; hareketsiz (`speed 0`), uykuda başlar; 8 sn'de bir çağrı (en çok 3) ve yakındayken şok halkası |
 
 Kat sayısına bağlı sayılar (`droneCountForFloor`, `tankCountForFloor`, `bossForFloor`) aynı dosyadadır; drone sayısı ve can ölçeklemesi `difficulty.ts`'ten gelir (bkz. 8.8). Tank sayıları tablodadır: B6, B8, B10'da birer tane.
 
