@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Station Zero - Level Designer</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { height: 100%; background: #0b0b0b; color: #d7c9b3; font: 12px/1.35 monospace; overflow: hidden; }
+      #layout { display: grid; grid-template-columns: 200px 1fr 270px; grid-template-rows: 44px 1fr; height: 100vh; }
+      #topbar { grid-column: 1 / 4; display: flex; gap: 8px; align-items: center; padding: 0 10px; border-bottom: 1px solid #3a2f1f; background: #120f0a; overflow-x: auto; white-space: nowrap; }
+      #topbar strong { color: #d9a441; margin-right: 8px; }
+      #left, #right { overflow-y: auto; background: #100d09; padding: 8px; }
+      #left { border-right: 1px solid #3a2f1f; }
+      #right { border-left: 1px solid #3a2f1f; }
+      #stage { position: relative; overflow: hidden; }
+      h2 { color: #d9a441; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin: 10px 0 4px; }
+      button { display: block; width: 100%; text-align: left; background: #1a140c; color: #d7c9b3; border: 1px solid #3a2f1f; padding: 4px 7px; margin-bottom: 3px; font: inherit; cursor: pointer; }
+      #topbar button { width: auto; margin: 0; }
+      button:hover:not(:disabled) { border-color: #d9a441; }
+      button:disabled { opacity: 0.4; cursor: default; }
+      button.active { background: #3a2a10; border-color: #ffd27a; color: #ffd27a; }
+      button.problem { color: #ff8a7a; border-color: #5a2a22; }
+      .ok { color: #8fe8ae; }
+      p.problem { color: #ff8a7a; margin-bottom: 4px; }
+      .hint { color: #9a8f7c; margin-bottom: 8px; }
+      .field { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 4px; }
+      .inline { display: inline-flex; align-items: center; gap: 4px; }
+      input, select { background: #0b0906; color: #d7c9b3; border: 1px solid #3a2f1f; font: inherit; padding: 2px 4px; }
+      input[type='number'] { width: 90px; }
+      .status { color: #9a8f7c; margin-left: auto; }
+    </style>
+  </head>
+  <body>
+    <div id="layout">
+      <div id="topbar"></div>
+      <aside id="left"><div id="floors"></div><div id="tools"></div></aside>
+      <div id="stage"></div>
+      <aside id="right"><div id="inspector"></div><div id="problems"></div></aside>
+    </div>
+    <script type="module" src="/src/editor/main.ts"></script>
+  </body>
+</html>

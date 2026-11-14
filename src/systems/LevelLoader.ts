@@ -4,6 +4,7 @@ import {
   FLOOR_SEED_STRIDE,
 } from '../data/config';
 import { ENEMY_SPECS, type EnemyKind } from '../data/enemies';
+import { DRAFT_KEY_PREFIX, draftLevelRequested } from '../utils/devflags';
 import type {
   EnemySpawn,
   GateAxis,
@@ -254,7 +255,7 @@ function parseEntities(value: unknown, floor: number, rows: readonly string[]): 
   return { props, terminals, corpse, loot, enemies, hazards: { vents, gates } };
 }
 
-function parseDungeon(input: unknown, expectedFloor: number): Dungeon {
+export function parseLevelJson(input: unknown, expectedFloor: number): Dungeon {
   if (!isRecord(input)) fail(expectedFloor, 'root must be an object');
 
   const declaredFloor = readInteger(input, 'floor', expectedFloor);
@@ -325,6 +326,15 @@ export function loadDungeon(floor: number): Dungeon {
     throw new Error(`Level floor ${floor} is outside 0..${FLOOR_COUNT - 1}`);
   }
 
+  if (draftLevelRequested()) {
+    try {
+      const draft = window.localStorage.getItem(`${DRAFT_KEY_PREFIX}${floor}`);
+      if (draft) return parseLevelJson(JSON.parse(draft) as unknown, floor);
+    } catch {
+      /* fall back to the bundled level */
+    }
+  }
+
   const cached = cache.get(floor);
   if (cached) return cached;
 
@@ -333,7 +343,7 @@ export function loadDungeon(floor: number): Dungeon {
     throw new Error(`No level file registered for floor ${floor}`);
   }
 
-  const dungeon = parseDungeon(raw, floor);
+  const dungeon = parseLevelJson(raw, floor);
   cache.set(floor, dungeon);
   return dungeon;
 }

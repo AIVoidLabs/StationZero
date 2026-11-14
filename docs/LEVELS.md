@@ -32,3 +32,5 @@ Boss floors (B9, B11) hold exactly one `assembler` / `warden`; the warden starts
 
 `LevelPlan.ts` is the single place that decides where things go; `Decor`, `LootSystem`, `Combat` and `Hazards` only
 create objects from the JSON.
+
+A visual editor is described in [EDITOR.md](EDITOR.md). `"locked": true` in a floor file makes `levels:bake` skip it.

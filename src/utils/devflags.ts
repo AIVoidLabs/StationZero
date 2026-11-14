@@ -15,3 +15,10 @@ export function devStartFloor(): number | null {
   const value = Number.parseInt(raw, 10);
   return Number.isFinite(value) ? value : null;
 }
+
+export const DRAFT_KEY_PREFIX = 'station-zero:draft-';
+
+export function draftLevelRequested(): boolean {
+  if (!IS_DEV || typeof window === 'undefined') return false;
+  return params().get('level') === 'draft';
+}

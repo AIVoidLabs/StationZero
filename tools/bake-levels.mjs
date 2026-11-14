@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createServer } from 'vite';
 
 const server = await createServer({
@@ -17,6 +17,13 @@ try {
   await mkdir('src/data/levels', { recursive: true });
 
   for (let floor = 0; floor < FLOOR_COUNT; floor += 1) {
+    const path = `src/data/levels/floor-${floor}.json`;
+    const existing = await readFile(path, 'utf8').then((text) => JSON.parse(text)).catch(() => null);
+    if (existing && existing.locked === true) {
+      console.log(`floor-${floor}.json  locked, skipped`);
+      continue;
+    }
+
     const seed = DUNGEON_SEED + floor * FLOOR_SEED_STRIDE;
     const dungeon = generateDungeon(seed, floor);
     const rows = dungeon.rows.map((row) => row.split(''));
@@ -42,7 +49,7 @@ try {
     };
 
     await writeFile(
-      `src/data/levels/floor-${floor}.json`,
+      path,
       `${JSON.stringify(level, null, 2)}\n`,
       'utf8',
     );
