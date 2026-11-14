@@ -328,8 +328,7 @@
       }
     ],
     "hazards": {
-      "vents": [],
-      "gates": []
+      "vents": []
     }
   }
 }

@@ -56,7 +56,7 @@ try {
 
     const e = level.entities;
     const exit = dungeon.exit ? `${dungeon.exit.x},${dungeon.exit.y}` : 'sealed';
-    console.log(`floor-${floor}.json  rooms=${dungeon.rooms.length}  spawn=${dungeon.spawnX},${dungeon.spawnY}  exit=${exit}  enemies=${e.enemies.length} loot=${e.loot.length} props=${e.props.length} terminals=${e.terminals.length} vents=${e.hazards.vents.length} gates=${e.hazards.gates.length}`);
+    console.log(`floor-${floor}.json  rooms=${dungeon.rooms.length}  spawn=${dungeon.spawnX},${dungeon.spawnY}  exit=${exit}  enemies=${e.enemies.length} loot=${e.loot.length} props=${e.props.length} terminals=${e.terminals.length} vents=${e.hazards.vents.length}`);
   }
 } finally {
   await server.close();

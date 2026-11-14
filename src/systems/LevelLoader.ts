@@ -7,8 +7,6 @@ import { ENEMY_SPECS, type EnemyKind } from '../data/enemies';
 import { DRAFT_KEY_PREFIX, draftLevelRequested } from '../utils/devflags';
 import type {
   EnemySpawn,
-  GateAxis,
-  GateSpawn,
   GridPoint,
   LevelEntities,
   LootSpawn,
@@ -245,14 +243,7 @@ function parseEntities(value: unknown, floor: number, rows: readonly string[]): 
     const { x, y, record } = readPoint(raw, floor, `entities.hazards.vents[${index}]`, rows);
     return { x, y, phaseMs: readInteger(record, 'phaseMs', floor) };
   });
-  const gates: GateSpawn[] = readList(hazardRaw, 'gates', floor, 'entities.hazards').map((raw, index) => {
-    const { x, y, record } = readPoint(raw, floor, `entities.hazards.gates[${index}]`, rows);
-    const axis: GateAxis | null = record.axis === 'x' ? 'x' : record.axis === 'y' ? 'y' : null;
-    if (!axis) fail(floor, `\`entities.hazards.gates[${index}].axis\` must be x or y`);
-    return { x, y, axis, phaseMs: readInteger(record, 'phaseMs', floor) };
-  });
-
-  return { props, terminals, corpse, loot, enemies, hazards: { vents, gates } };
+  return { props, terminals, corpse, loot, enemies, hazards: { vents } };
 }
 
 export function parseLevelJson(input: unknown, expectedFloor: number): Dungeon {

@@ -19,7 +19,7 @@ happy, press **Download JSON**, copy `floor-N.json` into `src/data/levels/`, and
 | Room | 6 | Drag a rectangle to add a room (style 0-2). "Carve floor" digs it out. |
 | Erase | 7 | Removes the entity on a cell. |
 | Spawn, Exit hatch | | One each. The last floor has no exit. |
-| Enemies, items, props, terminal, the dead, steam vent, laser gate | | Click a floor cell to place; adjust seed, phase, amount or axis in the inspector. |
+| Enemies, items, props, terminal, the dead, steam vent | | Click a floor cell to place; adjust seed, phase or amount in the inspector. |
 
 Pan: right or middle mouse drag, or Space + drag. Zoom: wheel. Undo / redo: Ctrl+Z / Ctrl+Shift+Z.
 

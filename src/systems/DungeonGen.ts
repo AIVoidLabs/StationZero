@@ -37,7 +37,7 @@ export const EMPTY_ENTITIES: LevelEntities = {
   corpse: null,
   loot: [],
   enemies: [],
-  hazards: { vents: [], gates: [] },
+  hazards: { vents: [] },
 };
 
 interface Point {

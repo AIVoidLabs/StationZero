@@ -2,7 +2,6 @@ import type { EnemyKind } from './enemies';
 
 export type PropKind = 'barrel' | 'crate' | 'pipe' | 'theme';
 export type LootKindName = 'ammo' | 'stim';
-export type GateAxis = 'x' | 'y';
 
 export interface GridPoint {
   readonly x: number;
@@ -27,14 +26,8 @@ export interface VentSpawn extends GridPoint {
   readonly phaseMs: number;
 }
 
-export interface GateSpawn extends GridPoint {
-  readonly axis: GateAxis;
-  readonly phaseMs: number;
-}
-
 export interface HazardSpawns {
   readonly vents: readonly VentSpawn[];
-  readonly gates: readonly GateSpawn[];
 }
 
 export interface LevelEntities {

@@ -1,12 +1,6 @@
 import { BlendModes, type GameObjects, type Scene } from 'phaser';
-import { DEPTH_FLOOR, DEPTH_VFX, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
+import { DEPTH_FLOOR, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import {
-  LASER_ALERT,
-  LASER_CYCLE_MS,
-  LASER_DAMAGE,
-  LASER_HALF_WIDTH,
-  LASER_IDLE_MS,
-  LASER_WARN_MS,
   STEAM_CYCLE_MS,
   STEAM_DAMAGE,
   STEAM_ENEMY_COOLDOWN_MS,
@@ -15,20 +9,17 @@ import {
   STEAM_WARN_MS,
 } from '../data/hazards';
 import { ENEMY_SPECS } from '../data/enemies';
-import type { GateSpawn, VentSpawn } from '../data/levelTypes';
+import type { VentSpawn } from '../data/levelTypes';
 import type { Drone } from '../entities/enemies/Drone';
 import type { Player } from '../entities/Player';
 import { gridVectorToWorld } from '../utils/iso';
 import type { Dungeon } from './DungeonGen';
 import type { LightSource } from './LightMap';
-import { runFlags } from './RunFlags';
 import { distanceGain, sfx } from './Sfx';
 
 const PUFF_INTERVAL_MS = 110;
-const BEAM_HEIGHT_PX = 16;
 
 type Phase = 'idle' | 'warn' | 'active';
-type Axis = 'x' | 'y';
 
 interface Cell {
   readonly x: number;
@@ -45,16 +36,6 @@ interface Vent {
   nextPuffAt: number;
 }
 
-interface Gate {
-  readonly cell: Cell;
-  readonly axis: Axis;
-  readonly phaseMs: number;
-  readonly beam: GameObjects.Line;
-  readonly posts: readonly GameObjects.Arc[];
-  state: Phase;
-  alerted: boolean;
-}
-
 function phaseAt(time: number, offset: number, cycle: number, idle: number, warn: number): Phase {
   const at = (time + offset) % cycle;
   if (at < idle) return 'idle';
@@ -66,7 +47,6 @@ export class Hazards {
   private readonly player: Player;
   private readonly getEnemies: () => readonly Drone[];
   private readonly vents: Vent[] = [];
-  private readonly gates: Gate[] = [];
 
   constructor(
     scene: Scene,
@@ -78,16 +58,11 @@ export class Hazards {
     this.player = player;
     this.getEnemies = getEnemies;
 
-    for (const gate of dungeon.entities.hazards.gates) this.gates.push(this.buildGate(gate));
     for (const vent of dungeon.entities.hazards.vents) this.vents.push(this.buildVent(vent));
   }
 
   get ventCells(): readonly Cell[] {
     return this.vents.map((vent) => vent.cell);
-  }
-
-  get gateCells(): readonly Cell[] {
-    return this.gates.map((gate) => gate.cell);
   }
 
   update(): void {
@@ -96,7 +71,6 @@ export class Hazards {
     const alive = !this.player.isDeadState;
 
     for (const vent of this.vents) this.updateVent(vent, now, at, alive);
-    for (const gate of this.gates) this.updateGate(gate, now, at, alive);
   }
 
   emitLights(emit: (light: LightSource) => void): void {
@@ -105,17 +79,6 @@ export class Hazards {
       const world = gridVectorToWorld(vent.cell.x, vent.cell.y, TILE_WIDTH, TILE_HEIGHT);
       emit({ x: world.x, y: world.y - 6, radius: vent.state === 'active' ? 70 : 40, intensity: 0.45, tint: 'ember' });
     }
-    for (const gate of this.gates) {
-      if (gate.state === 'idle') continue;
-      const world = gridVectorToWorld(gate.cell.x, gate.cell.y, TILE_WIDTH, TILE_HEIGHT);
-      emit({
-        x: world.x,
-        y: world.y - BEAM_HEIGHT_PX,
-        radius: gate.state === 'active' ? 90 : 45,
-        intensity: gate.state === 'active' ? 0.8 : 0.3,
-        tint: 'red',
-      });
-    }
   }
 
   destroy(): void {
@@ -123,12 +86,7 @@ export class Hazards {
       vent.grate.destroy();
       vent.glow.destroy();
     }
-    for (const gate of this.gates) {
-      gate.beam.destroy();
-      for (const post of gate.posts) post.destroy();
-    }
     this.vents.length = 0;
-    this.gates.length = 0;
   }
 
   private buildVent(spawn: VentSpawn): Vent {
@@ -147,33 +105,6 @@ export class Hazards {
       enemyHurt: new Map(),
       state: 'idle',
       nextPuffAt: 0,
-    };
-  }
-
-  private buildGate(spawn: GateSpawn): Gate {
-    const cell = { x: spawn.x, y: spawn.y, axis: spawn.axis };
-    const half = 0.5;
-    const from = cell.axis === 'x' ? { x: cell.x, y: cell.y - half } : { x: cell.x - half, y: cell.y };
-    const to = cell.axis === 'x' ? { x: cell.x, y: cell.y + half } : { x: cell.x + half, y: cell.y };
-    const a = gridVectorToWorld(from.x, from.y, TILE_WIDTH, TILE_HEIGHT);
-    const b = gridVectorToWorld(to.x, to.y, TILE_WIDTH, TILE_HEIGHT);
-    const beam = this.scene.add
-      .line(0, 0, a.x, a.y - BEAM_HEIGHT_PX, b.x, b.y - BEAM_HEIGHT_PX, 0xff3322, 0)
-      .setOrigin(0, 0)
-      .setLineWidth(3)
-      .setDepth(DEPTH_VFX - 10)
-      .setBlendMode(BlendModes.ADD);
-    const posts = [a, b].map((point) =>
-      this.scene.add.circle(point.x, point.y - BEAM_HEIGHT_PX, 3, 0x6a1a14, 1).setDepth(DEPTH_VFX - 11),
-    );
-    return {
-      cell,
-      axis: cell.axis,
-      phaseMs: spawn.phaseMs,
-      beam,
-      posts,
-      state: 'idle',
-      alerted: false,
     };
   }
 
@@ -207,35 +138,6 @@ export class Hazards {
       if (now - last < STEAM_ENEMY_COOLDOWN_MS) continue;
       vent.enemyHurt.set(enemy, now);
       enemy.takeDamage(STEAM_DAMAGE);
-    }
-  }
-
-  private updateGate(gate: Gate, now: number, at: { x: number; y: number }, alive: boolean): void {
-    const state = phaseAt(now, gate.phaseMs, LASER_CYCLE_MS, LASER_IDLE_MS, LASER_WARN_MS);
-    const gain = distanceGain(gate.cell.x, gate.cell.y, at.x, at.y);
-
-    if (state !== gate.state) {
-      if (state === 'warn') sfx.play('laser', gain * 0.4);
-      if (state === 'active') {
-        sfx.play('laser', gain);
-        gate.alerted = false;
-      }
-      gate.state = state;
-    }
-
-    if (state === 'active') gate.beam.setAlpha(1);
-    else if (state === 'warn') gate.beam.setAlpha(Math.floor(now / 60) % 2 === 0 ? 0.35 : 0);
-    else gate.beam.setAlpha(0);
-
-    if (state !== 'active' || !alive) return;
-    const along = gate.axis === 'x' ? at.x - gate.cell.x : at.y - gate.cell.y;
-    const across = gate.axis === 'x' ? at.y - gate.cell.y : at.x - gate.cell.x;
-    if (Math.abs(along) > LASER_HALF_WIDTH || Math.abs(across) > 0.6) return;
-
-    const hit = this.player.takeDamage(LASER_DAMAGE, now, { x: at.x - gate.cell.x, y: at.y - gate.cell.y });
-    if (hit && !gate.alerted) {
-      gate.alerted = true;
-      runFlags.addAlert(LASER_ALERT);
     }
   }
 

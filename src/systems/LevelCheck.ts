@@ -91,10 +91,6 @@ export function checkLevel(dungeon: Dungeon): LevelProblem[] {
     const other = blockers.get(key(vent));
     if (other) add(`vents[${index}] is inside ${other}`, vent);
   });
-  e.hazards.gates.forEach((gate, index) => {
-    const other = blockers.get(key(gate));
-    if (other) add(`gates[${index}] is inside ${other}`, gate);
-  });
 
   const corpse = e.corpse;
   if (corpse) {

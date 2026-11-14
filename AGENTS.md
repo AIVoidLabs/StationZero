@@ -20,7 +20,7 @@ Welcome, AI Agent! You are helping build **Station Zero**, a 2D isometric retro-
 - **Location:** `Penal Colony-Null` - A subterranean penal-mining colony that has been completely cut off from the surface.
 - **Time & Style:** Late 70s - early 80s retro-futurism. Think rusted steel, bare concrete, flickering fluorescents, analog readouts and cold industrial lighting.
 - **Protagonist:** An unnamed `Exile`, the eleventh person sent down by the humans above. A convict with nothing to lose and one order: kill WARDEN.
-- **Threats:** Rogue maintenance drones, traps (steam vents, laser grids), robot tanks, Bosses and the ever-present `WARDEN AI`.
+- **Threats:** Rogue maintenance drones, traps (steam vents), robot tanks, Bosses and the ever-present `WARDEN AI`.
 - **Tone:** Dark, claustrophobic, oppressive and melancholic. Bleak, but stubbornly tense.
 
 ### Lore

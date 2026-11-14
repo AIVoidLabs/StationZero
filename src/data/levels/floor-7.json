@@ -337,6 +337,11 @@
     "hazards": {
       "vents": [
         {
+          "x": 25,
+          "y": 13,
+          "phaseMs": 1481
+        },
+        {
           "x": 28,
           "y": 27,
           "phaseMs": 4135
@@ -352,27 +357,14 @@
           "phaseMs": 5141
         },
         {
-          "x": 8,
-          "y": 10,
-          "phaseMs": 2858
-        },
-        {
           "x": 2,
           "y": 28,
-          "phaseMs": 825
+          "phaseMs": 2858
         },
         {
           "x": 21,
           "y": 7,
-          "phaseMs": 832
-        }
-      ],
-      "gates": [
-        {
-          "x": 25,
-          "y": 13,
-          "axis": "y",
-          "phaseMs": 968
+          "phaseMs": 825
         }
       ]
     }

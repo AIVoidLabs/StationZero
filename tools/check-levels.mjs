@@ -18,7 +18,7 @@ try {
     const e = dungeon.entities;
     const exit = summary.exit ? `${summary.exit.x},${summary.exit.y}` : 'sealed';
     console.log(
-      `floor-${summary.floor}.json  ${summary.width}x${summary.height}  rooms=${summary.rooms}  spawn=${summary.spawnX},${summary.spawnY}  exit=${exit}  enemies=${e.enemies.length} loot=${e.loot.length} props=${e.props.length} vents=${e.hazards.vents.length} gates=${e.hazards.gates.length}`,
+      `floor-${summary.floor}.json  ${summary.width}x${summary.height}  rooms=${summary.rooms}  spawn=${summary.spawnX},${summary.spawnY}  exit=${exit}  enemies=${e.enemies.length} loot=${e.loot.length} props=${e.props.length} vents=${e.hazards.vents.length}`,
     );
     for (const problem of problems) {
       const at = problem.at ? ` (${problem.at.x},${problem.at.y})` : '';

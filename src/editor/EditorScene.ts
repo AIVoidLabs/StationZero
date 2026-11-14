@@ -310,9 +310,6 @@ export class EditorScene extends Scene {
     } else if (tool === 'vent') {
       e.vents.push({ x: cell.x, y: cell.y, phaseMs: phase(5200) });
       selection = { type: 'vent', index: e.vents.length - 1 };
-    } else if (tool.startsWith('gate:')) {
-      e.gates.push({ x: cell.x, y: cell.y, axis: tool.slice(5) as 'x' | 'y', phaseMs: phase(3400) });
-      selection = { type: 'gate', index: e.gates.length - 1 };
     }
     state.selection = selection;
     state.changed();
@@ -419,16 +416,6 @@ export class EditorScene extends Scene {
       g.fillStyle(0xff8a3a, 0.7);
       g.fillEllipse(iso.x, iso.y, 22, 11);
     }
-    for (const gate of doc.entities.gates) {
-      const half = 0.5;
-      const from = gate.axis === 'x' ? { x: gate.x, y: gate.y - half } : { x: gate.x - half, y: gate.y };
-      const to = gate.axis === 'x' ? { x: gate.x, y: gate.y + half } : { x: gate.x + half, y: gate.y };
-      const a = gridVectorToWorld(from.x, from.y, TILE_WIDTH, TILE_HEIGHT);
-      const b = gridVectorToWorld(to.x, to.y, TILE_WIDTH, TILE_HEIGHT);
-      g.lineStyle(3, 0xff3322, 0.9);
-      g.lineBetween(a.x, a.y - 10, b.x, b.y - 10);
-    }
-
     if (selection && selection.type !== 'room') {
       const point = entityPoint(doc, selection);
       if (point) {

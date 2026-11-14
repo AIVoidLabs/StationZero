@@ -35,9 +35,7 @@ export type ToolId =
   | 'enemy:tank'
   | 'enemy:assembler'
   | 'enemy:warden'
-  | 'vent'
-  | 'gate:x'
-  | 'gate:y';
+  | 'vent';
 
 const HISTORY_LIMIT = 200;
 const EDITOR_KEY_PREFIX = 'station-zero:editor-';

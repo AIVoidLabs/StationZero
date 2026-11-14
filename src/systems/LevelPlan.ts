@@ -5,15 +5,11 @@ import {
   HAZARD_LOOT_CLEARANCE,
   HAZARD_MIN_SEPARATION,
   HAZARD_SPAWN_CLEARANCE,
-  LASER_CYCLE_MS,
   STEAM_CYCLE_MS,
-  laserCount,
   steamCount,
 } from '../data/hazards';
 import type {
   EnemySpawn,
-  GateAxis,
-  GateSpawn,
   GridPoint,
   LevelEntities,
   LootSpawn,
@@ -67,10 +63,6 @@ const STEAM_CORRIDOR_SHARE = 0.6;
 const SPAWN_CLEARANCE_SQ = HAZARD_SPAWN_CLEARANCE * HAZARD_SPAWN_CLEARANCE;
 
 interface Cell extends GridPoint {}
-
-interface CorridorCell extends Cell {
-  readonly axis: GateAxis;
-}
 
 function shuffle<T>(items: T[], rng: () => number): T[] {
   for (let index = items.length - 1; index > 0; index -= 1) {
@@ -219,13 +211,13 @@ class Planner {
     return false;
   }
 
-  private placeCorpse(enemies: readonly EnemySpawn[], hazards: { vents: VentSpawn[]; gates: GateSpawn[] }): Cell | null {
+  private placeCorpse(enemies: readonly EnemySpawn[], hazards: { vents: VentSpawn[] }): Cell | null {
     if (this.dungeon.floor >= CORPSE_FLOORS) return null;
     const terminal = this.terminals[0];
     if (!terminal) return null;
 
     const taken = new Set<string>();
-    for (const cell of [...this.props, ...this.terminals, ...this.loot, ...enemies, ...hazards.vents, ...hazards.gates]) {
+    for (const cell of [...this.props, ...this.terminals, ...this.loot, ...enemies, ...hazards.vents]) {
       taken.add(`${cell.x},${cell.y}`);
     }
     taken.add(`${Math.round(this.level.spawnX)},${Math.round(this.level.spawnY)}`);
@@ -498,7 +490,7 @@ class Planner {
     return pool[Math.floor(rng() * pool.length)] ?? null;
   }
 
-  private placeHazards(): { vents: VentSpawn[]; gates: GateSpawn[] } {
+  private placeHazards(): { vents: VentSpawn[] } {
     const dungeon = this.dungeon;
     const rng = createRng(dungeon.seed ^ HAZARD_SEED);
     const { corridor, open } = this.collectCandidates();
@@ -506,7 +498,6 @@ class Planner {
     shuffle(open, rng);
 
     const placed: Cell[] = [];
-    const lasers = this.take(corridor, laserCount(dungeon.floor), placed);
     const steamTotal = steamCount(dungeon.floor);
     const steamCorridor = Math.ceil(steamTotal * STEAM_CORRIDOR_SHARE);
     const steam: Cell[] = [
@@ -515,20 +506,14 @@ class Planner {
     ];
     if (steam.length < steamTotal) steam.push(...this.take(corridor, steamTotal - steam.length, placed));
 
-    const gates = lasers.map((cell): GateSpawn => ({
-      x: cell.x,
-      y: cell.y,
-      axis: cell.axis,
-      phaseMs: Math.floor(rng() * LASER_CYCLE_MS),
-    }));
     const vents = steam.map((cell): VentSpawn => ({ x: cell.x, y: cell.y, phaseMs: Math.floor(rng() * STEAM_CYCLE_MS) }));
-    return { vents, gates };
+    return { vents };
   }
 
-  private collectCandidates(): { corridor: CorridorCell[]; open: Cell[] } {
+  private collectCandidates(): { corridor: Cell[]; open: Cell[] } {
     const dungeon = this.dungeon;
     const level = this.level;
-    const corridor: CorridorCell[] = [];
+    const corridor: Cell[] = [];
     const open: Cell[] = [];
     const roomCells = new Set<string>();
     for (const room of dungeon.rooms) {
@@ -549,8 +534,7 @@ class Planner {
         const south = level.isWalkable(x, y + 1);
         const west = level.isWalkable(x - 1, y);
         const east = level.isWalkable(x + 1, y);
-        if (west && east && !north && !south) corridor.push({ x, y, axis: 'x' });
-        else if (north && south && !west && !east) corridor.push({ x, y, axis: 'y' });
+        if ((west && east && !north && !south) || (north && south && !west && !east)) corridor.push({ x, y });
         else if (north && south && west && east && roomCells.has(`${x},${y}`)) open.push({ x, y });
       }
     }

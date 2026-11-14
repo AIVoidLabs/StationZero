@@ -52,11 +52,7 @@ const TOOL_GROUPS: readonly { readonly title: string; readonly tools: readonly T
   },
   {
     title: 'Hazards',
-    tools: [
-      { id: 'vent', label: 'Steam vent' },
-      { id: 'gate:x', label: 'Laser gate (x)' },
-      { id: 'gate:y', label: 'Laser gate (y)' },
-    ],
+    tools: [{ id: 'vent', label: 'Steam vent' }],
   },
 ];
 
@@ -329,15 +325,6 @@ function renderInspector(root: HTMLElement, state: EditorState): void {
       root.append(numberField('Phase (ms)', vent.phaseMs, (value) => edit(() => (vent.phaseMs = value))));
       break;
     }
-    case 'gate': {
-      const gate = e.gates[selection.index];
-      if (!gate) break;
-      root.append(
-        selectField('Axis', gate.axis, ['x', 'y'], (value) => edit(() => (gate.axis = value as typeof gate.axis))),
-        numberField('Phase (ms)', gate.phaseMs, (value) => edit(() => (gate.phaseMs = value))),
-      );
-      break;
-    }
     case 'room': {
       const room = doc.rooms[selection.index];
       if (!room) break;
@@ -376,8 +363,7 @@ function describe(doc: EditorDoc, selection: Selection): string {
     : selection.type === 'corpse' ? e.corpse
     : selection.type === 'loot' ? e.loot[selection.index]
     : selection.type === 'enemy' ? e.enemies[selection.index]
-    : selection.type === 'vent' ? e.vents[selection.index]
-    : e.gates[selection.index];
+    : e.vents[selection.index];
   return `${selection.type} at ${point ? `${point.x},${point.y}` : '?'}`;
 }
 

@@ -507,10 +507,6 @@ export class Game extends Scene {
       if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 4) hints.trigger('steam', t('hint.steam'));
     }
 
-    for (const cell of this.hazards?.gateCells ?? []) {
-      if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 5) hints.trigger('laser', t('hint.laser'));
-    }
-
     for (const item of this.loot?.pickups ?? []) {
       if (!item.isCollected && Math.hypot(item.gridX - grid.x, item.gridY - grid.y) < 3) {
         hints.trigger('loot', t('hint.loot'));

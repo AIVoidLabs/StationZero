@@ -63,7 +63,6 @@ Input: WASD/arrows (rebindable), hold Space to fire at the target in front of th
 ### Hazards and the robot tank
 
 - **Steam vent** (from B4): a floor grate on a 5.2 s cycle: quiet 3.0 s, hissing warning 0.8 s, blast 1.4 s. The blast deals 1 damage within 0.85 tiles to the Exile and to enemies. Placed in corridors and room interiors, never near spawn, exit or loot.
-- **Laser grid** (from B7): a beam across a one-tile corridor on a 3.4 s cycle: off 1.7 s, flickering warning 0.5 s, on 1.2 s. Touching it deals 1 damage and raises WARDEN alert by 1.
 - **Armour** (tank and bosses): the front plate has its own HP. Head-on hits chip it down (3 for the tank); once it breaks the enemy is open from every side. Flanking hits skip the plate entirely.
 - **Assembler** (B9 mid boss): 6 HP, 3 armour, slow tank body. Fires a fan of 3 shells and calls a drone every 11 s (up to 2 alive). Summoned drones give no loot or score and die with it.
 - **WARDEN core** (B11 final boss): 9 HP, 4 armour, immobile. It sleeps (dark, inactive) until the Exile comes within 6 tiles or hits it. Turns slowly. Fires a fan of 5 shells and calls drones every 10 s (up to 2 alive). Killing it ends the run.
@@ -77,7 +76,7 @@ WARDEN is not a character on screen; it is a **director**.
 - **Announcements:** a short line when you arrive and when the floor is cleared, in text and a synthetic voice (see [SCENARIO.md](SCENARIO.md)).
 - **Escalation per floor (B1→B11):** vision radius ×1→0.65, lantern ×1→0.68, ambience pitch −3% per floor, drone awareness ×1→1.3.
 - **Difficulty formula (`src/data/difficulty.ts`, d = floor index):** drones `round(11 + 0.55·d)` (boss floors ×0.8); non-boss enemy HP ×`1 + 0.08·d`; fire cooldown ×`max(0.7, 1 − 0.03·d)` (and −5% per alert); enemy ammo drops scale with the HP multiplier. Counts are baked into the floor JSON: change the numbers, then `npm run levels:bake`.
-- **Alert** (0–4, raised by laser hits): each point adds +12% to depth pressure and +10% awareness on top of the floor baseline.
+- **Alert** (0–4, currently never raised): each point adds +12% to depth pressure and +10% awareness on top of the floor baseline.
 
 ## 7. Progression and structure
 
@@ -89,7 +88,7 @@ WARDEN is not a character on screen; it is a **director**.
 | B4 | DRILL 3 | 8 | Dray: drones are rebuilt miners; steam vents |
 | B5 | PUMP STATION | 8 | Sato: cooling lines |
 | B6 | FOUNDRY | 8 + tank | Brandt: rear seam; first robot tank |
-| B7 | ARCHIVE | 9 | Pell: FILE 0; laser grids |
+| B7 | ARCHIVE | 9 | Pell: FILE 0 |
 | B8 | POWER GRID | 9 + tank | Moreau: backup feed |
 | B9 | DRONE FOUNDRY | 6 + boss | Iyer: first instruction; mid boss, the Assembler |
 | B10 | COMMS ARRAY | 9 + tank | Kessler: how to end it |
