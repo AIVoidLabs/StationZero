@@ -1,4 +1,4 @@
-// Dev-only "human-like" playtest bot. Open a page with ?debug&depth=N, then:
+// Dev-only "human-like" playtest bot. Open a page with ?debug&depth=N&cutscenes=0, then:
 //   eval(await (await fetch('/tools/playtest-human.js')).text());
 //   await __human.boot(); __human.run(40000)
 // It steps the game manually (no rendering). Unlike playtest-bot.js it does not know the map or enemy positions:

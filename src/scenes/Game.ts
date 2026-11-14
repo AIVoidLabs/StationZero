@@ -51,7 +51,7 @@ import { ENEMY_SPECS } from '../data/enemies';
 import { SECRET_COUNT } from '../data/secrets';
 import { descentCutscene } from '../data/cutscenes';
 import { sfx } from '../systems/Sfx';
-import { isDebugMode, devStartFloor } from '../utils/devflags';
+import { cutscenesDisabledByFlag, isDebugMode, devStartFloor } from '../utils/devflags';
 import { isDevStart } from '../utils/devstart';
 import { settings } from '../systems/Settings';
 import { gridVectorToWorld } from '../utils/iso';
@@ -586,7 +586,7 @@ export class Game extends Scene {
     this.cameras.main.fadeOut(700, 2, 2, 2);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.stop('HudScene');
-      if (outcome === 'survived' && settings.data.cutscenes) {
+      if (outcome === 'survived' && settings.data.cutscenes && !cutscenesDisabledByFlag()) {
         const id = 'end_defy';
         this.scene.start('Cutscene', { id, next: { scene: 'End', data: { outcome } } });
         return;
@@ -740,7 +740,7 @@ export class Game extends Scene {
     const health = this.player?.getHealth();
     this.cameras.main.fadeOut(DESCENT_FADE_MS, 2, 2, 2);
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      const cutscene = settings.data.cutscenes ? descentCutscene(nextFloor) : null;
+      const cutscene = settings.data.cutscenes && !cutscenesDisabledByFlag() ? descentCutscene(nextFloor) : null;
       const next = { floor: nextFloor, hp: health?.hp, ammo: health?.ammo };
       if (cutscene) {
         this.scene.stop('HudScene');

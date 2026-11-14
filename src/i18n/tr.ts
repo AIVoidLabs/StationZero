@@ -29,6 +29,8 @@ export const tr: Record<StringKey, string> = {
   'records.killsShort': 'Ö',
   'records.footer': 'ESC GERİ',
 
+  'credits.skip': 'ENTER / ESC İLE GEÇ',
+  'end.continue': 'DEVAM',
   'credits.title': 'EMEĞİ GEÇENLER',
   'credits.footer': 'TEKERLEK / OKLAR KAYDIR  -  ESC GERİ',
   'credits.developer': 'GELİŞTİRİCİ',

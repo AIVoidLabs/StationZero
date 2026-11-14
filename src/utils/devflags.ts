@@ -22,3 +22,8 @@ export function draftLevelRequested(): boolean {
   if (!IS_DEV || typeof window === 'undefined') return false;
   return params().get('level') === 'draft';
 }
+
+export function cutscenesDisabledByFlag(): boolean {
+  if (!IS_DEV || typeof window === 'undefined') return false;
+  return params().get('cutscenes') === '0';
+}

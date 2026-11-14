@@ -9,6 +9,7 @@ import { Pause } from './scenes/Pause';
 import { End } from './scenes/End';
 import { Intro } from './scenes/Intro';
 import { SecretScene } from './scenes/Secret';
+import { Credits } from './scenes/Credits';
 import { Cutscene } from './scenes/Cutscene';
 import { isDebugMode } from './utils/devflags';
 
@@ -24,7 +25,7 @@ const config: Phaser.Types.Core.GameConfig = {
     mode: Scale.ScaleModes.FIT,
     autoCenter: Scale.Center.CENTER_BOTH,
   },
-  scene: [Boot, Preload, Menu, Cutscene, Intro, Game, HudScene, Pause, SecretScene, End],
+  scene: [Boot, Preload, Menu, Cutscene, Intro, Game, HudScene, Pause, SecretScene, End, Credits],
 };
 
 const game = new PhaserGame(config);

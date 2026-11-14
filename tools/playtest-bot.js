@@ -1,4 +1,4 @@
-// Dev-only playtest bot. Load it in a page opened with ?debug&depth=0:
+// Dev-only playtest bot. Load it in a page opened with ?debug&depth=0&cutscenes=0:
 //   eval(await (await fetch('/tools/playtest-bot.js')).text());
 //   await __bot.boot(); __bot.run(4000, 2000)
 // It steps the game manually (no rendering), plays with a naive fight-everything policy and logs progress to

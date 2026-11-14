@@ -64,10 +64,15 @@ export class End extends Scene {
       title: () => t('end.report'),
       bodyLeft: true,
       body: () => lines,
-      items: [
-        { label: () => t('end.tryAgain'), onSelect: () => this.leave('Game') },
-        { label: () => t('end.mainMenu'), onSelect: () => this.leave('Menu') },
-      ],
+      items: survived
+        ? [
+            { label: () => t('end.continue'), onSelect: () => this.leave('Credits') },
+            { label: () => t('end.mainMenu'), onSelect: () => this.leave('Menu') },
+          ]
+        : [
+            { label: () => t('end.tryAgain'), onSelect: () => this.leave('Game') },
+            { label: () => t('end.mainMenu'), onSelect: () => this.leave('Menu') },
+          ],
       footer: ' ',
     });
 
@@ -76,16 +81,18 @@ export class End extends Scene {
     });
   }
 
-  private leave(target: 'Game' | 'Menu'): void {
+  private leave(target: 'Game' | 'Menu' | 'Credits'): void {
     if (this.leaving) return;
     this.leaving = true;
     this.cameras.main.fadeOut(450, 2, 2, 2);
     this.cameras.main.once('camerafadeoutcomplete', () => {
-      music.stop(0.3);
+      if (target !== 'Credits') music.stop(0.3);
       if (target === 'Game') {
         runStats.reset();
         runFlags.reset();
         this.scene.start('Game', { floor: 0 });
+      } else if (target === 'Credits') {
+        this.scene.start('Credits');
       } else {
         this.scene.start('Menu');
       }

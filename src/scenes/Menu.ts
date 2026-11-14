@@ -11,6 +11,7 @@ import { runFlags } from '../systems/RunFlags';
 import { saveGame } from '../systems/SaveGame';
 import { settings } from '../systems/Settings';
 import { sfx } from '../systems/Sfx';
+import { cutscenesDisabledByFlag } from '../utils/devflags';
 
 export function recordsPage(ctrl: MenuController): MenuPage {
   return {
@@ -153,7 +154,7 @@ export class Menu extends Scene {
       runStats.reset();
       runFlags.reset();
       saveGame.clear();
-      if (settings.data.cutscenes) this.scene.start('Cutscene', { id: 'intro', next: { scene: 'Intro' } });
+      if (settings.data.cutscenes && !cutscenesDisabledByFlag()) this.scene.start('Cutscene', { id: 'intro', next: { scene: 'Intro' } });
       else this.scene.start('Intro');
     });
   }

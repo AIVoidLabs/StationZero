@@ -28,6 +28,8 @@ export const en = {
   'records.footer': 'ESC BACK',
 
   'credits.title': 'CREDITS',
+  'credits.skip': 'ENTER / ESC TO SKIP',
+  'end.continue': 'CONTINUE',
   'credits.footer': 'WHEEL / ARROWS SCROLL  -  ESC BACK',
   'credits.developer': 'DEVELOPER',
   'credits.studio': 'STUDIO',
