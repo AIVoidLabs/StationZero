@@ -25,6 +25,9 @@ You are the **Exile**, the eleventh prisoner sent down into **Penal Colony-Null*
 ### What it is
 A tense isometric shooter built around **exploration, a pistol with limited ammo, and knowing when not to fight**. Dark corridors, a lantern that barely reaches, drones that see you through line of sight, and one boss on every floor.
 
+### Gameplay
+GIFs in `docs/gifs/` (`combat.gif`, `dodge.gif`, `trap.gif`). The HTML description (`docs/ITCH_DESCRIPTION.html`) embeds them from the repository's raw GitHub URLs, so they show only once pushed. Upload them in the itch.io editor and swap the URLs if you prefer to host them on itch.
+
 ### Features
 - **Eleven floors**, B1 Intake down to B11 WARDEN Core, each darker than the last
 - **A boss on every floor**: the Crusher charges at you, the Dynamo sends out shock rings, the Matriarch spits poison and calls spiders, the Assembler builds drones, and WARDEN waits at the bottom
@@ -53,6 +56,7 @@ All keys can be rebound in Settings. Green pickups heal (and cure poison), amber
 - Headphones recommended.
 - Progress is saved in your browser's local storage on this device.
 - Feedback and bug reports welcome in the comments. Please mention the version shown in the bottom-right of the main menu (v0.1.0).
+- Source code: https://github.com/AIVoidLabs/StationZero
 
 ## Screenshots (upload in this order, 960x540 originals from `docs/screenshots/`)
 1. `gameplay.png` (exploration, the dead and a terminal)
