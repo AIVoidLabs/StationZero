@@ -94,20 +94,24 @@ export class Combat {
       taken.add(`${spawn.x},${spawn.y}`);
       placed.push(spawn);
 
-      this.drones.push(
-        new Drone(
-          scene,
-          level,
-          player,
-          depth,
-          spawn.x,
-          spawn.y,
-          Math.floor(rng() * 0xffffff),
-          this.projectiles,
-          kind,
-        ),
+      const unit = new Drone(
+        scene,
+        level,
+        player,
+        depth,
+        spawn.x,
+        spawn.y,
+        Math.floor(rng() * 0xffffff),
+        this.projectiles,
+        kind,
       );
+      if (kind === 'warden') unit.sleep();
+      this.drones.push(unit);
     }
+  }
+
+  wakeBoss(): void {
+    for (const unit of this.drones) if (unit.isDormant) unit.wake();
   }
 
   private pickSpawn(

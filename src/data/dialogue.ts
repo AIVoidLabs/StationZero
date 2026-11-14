@@ -6,7 +6,8 @@ export type Effect =
   | { readonly type: 'reveal'; readonly radius: number }
   | { readonly type: 'cache'; readonly kind: 'stim' | 'ammo' }
   | { readonly type: 'lore'; readonly id: string }
-  | { readonly type: 'secret'; readonly floor: number };
+  | { readonly type: 'secret'; readonly floor: number }
+  | { readonly type: 'wake' };
 
 export type Speaker =
   | 'hale'
@@ -374,7 +375,7 @@ export const DIALOGUES: readonly DialogueScript[] = [
         speaker: 'warden',
         line: 'term.b11.n4',
         choices: [
-          { text: 'term.b11.c4a', next: null },
+          { text: 'term.b11.c4a', next: null, effects: [{ type: 'wake' }] },
         ],
       },
     },

@@ -865,6 +865,9 @@ export class Game extends Scene {
       case 'secret':
         this.collectSecret(effect.floor);
         break;
+      case 'wake':
+        this.combat?.wakeBoss();
+        break;
       case 'cache':
         if (player) {
           const grid = player.gridPosition;

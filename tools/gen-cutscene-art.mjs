@@ -406,6 +406,7 @@ function coreScene(options) {
     body += `<path d="M ${20 + i * 33} ${LOW_H} Q ${50 + i * 24} ${90} ${cx} ${cy + 20}" fill="none" stroke="#10161a" stroke-width="2"/>`;
   }
   body += `<polygon points="${cx - 8},${cy + 28} ${cx + 8},${cy + 28} ${cx + 46},${LOW_H} ${cx - 46},${LOW_H}" fill="${options.beam}" opacity="0.16"/>`;
+  if (options.extra) body += options.extra;
   body += scanlines();
   const defs = radial('core', cx, cy, 28, [[0, options.center, 1], [0.6, options.mid, 1], [1, options.edge, 1]]);
   return { body, defs };
@@ -427,22 +428,26 @@ async function descentCore() {
 }
 
 async function endComply() {
-  const scene = coreScene({ ring: '#4a6c7a', pupil: '#ffffff', center: '#ffffff', mid: '#9ad0e8', edge: '#1c3a48', beam: '#9ad0e8', crack: false });
+  let marks = '';
+  for (let i = 0; i < 10; i += 1) marks += `<rect x="${58 + i * 12.5}" y="7" width="1.4" height="9" fill="#6a5a4a"/>`;
+  marks += `<path d="M171,16 q3,-8 6,0" fill="none" stroke="#d9a441" stroke-width="1.3"/>`;
+  const scene = coreScene({ ring: '#3a3a3e', pupil: '#7a4a2a', center: '#5a3a2a', mid: '#2a1a18', edge: '#0e0a0a', beam: '#8a7a5a', crack: false, extra: marks });
   const exile = await sprite(path.join(V2, 'player.png'), 0);
   const figure = await scaled(exile, 2.4);
   return finish(
     svg(scene.body, scene.defs),
     [{ input: figure, left: 214, top: 146 }],
     [
-      { x: 240, y: 92, r: 260, color: 'rgb(150,210,235)', a: 0.5 },
-      { x: 240, y: 190, r: 90, color: 'rgb(200,235,255)', a: 0.4 },
+      { x: 240, y: 92, r: 220, color: 'rgb(200,150,90)', a: 0.3 },
+      { x: 240, y: 200, r: 80, color: 'rgb(217,164,65)', a: 0.3 },
     ],
-    0.75,
+    0.82,
   );
 }
 
 async function endDefy() {
-  const scene = coreScene({ ring: '#7a2c14', pupil: '#ffcf8a', center: '#ffd9a0', mid: '#e05a2a', edge: '#4a1008', beam: '#ff7a3a', crack: true });
+  const shaft = `<polygon points="${105},0 ${135},0 ${160},${LOW_H} ${80},${LOW_H}" fill="#cfe0f0" opacity="0.14"/>`;
+  const scene = coreScene({ ring: '#3a2a28', pupil: '#120a0a', center: '#2a1a18', mid: '#1a0e0c', edge: '#0a0606', beam: '#cfe0f0', crack: true, extra: shaft });
   const aim = await sharp(path.join(V2, 'player_aim.png'))
     .extract({ left: 1 * 32, top: 0, width: 32, height: 48 })
     .png()
@@ -452,10 +457,10 @@ async function endDefy() {
     svg(scene.body, scene.defs),
     [{ input: figure, left: 214, top: 146 }],
     [
-      { x: 240, y: 92, r: 260, color: 'rgb(255,110,50)', a: 0.5 },
-      { x: 250, y: 160, r: 60, color: 'rgb(255,240,200)', a: 0.5 },
+      { x: 240, y: 0, r: 320, color: 'rgb(190,215,240)', a: 0.5 },
+      { x: 250, y: 160, r: 60, color: 'rgb(255,240,200)', a: 0.3 },
     ],
-    0.78,
+    0.8,
   );
 }
 

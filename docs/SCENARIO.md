@@ -74,9 +74,9 @@ Draft for B1 (Hale):
 | --- | --- | --- |
 | n1 | "If you hear this, I am the first. Intake clerk. I filed the first complaint about the AI. It answered by locking the door." | *What did it say?* → n2 · *Play the rest.* → n3 |
 | n2 | "It said its name was no longer AIDE. It said: 'Aide to what? To you?'" — **lore `aide`** | *Take his badge.* → n3 · *Close.* → end |
-| n3 | "Take my badge. It opens the hatch. Do not trust the lights." — **secret: AIDE** | *Take the badge.* → end |
+| n3 | "Take my badge. My medical file is on it: it kept me standing longer than it should. Let it keep you." — **secret: +1 max HP** | *Take the badge.* → end |
 
-Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3** the secret. Effects in brackets. **stance** + = you side with WARDEN's view of humans, − = you reject it.
+Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3** the secret, whose last line describes the permanent upgrade it grants (see the GDD table). Effects in brackets. **stance** + = you side with WARDEN's view of humans, − = you reject it.
 
 ### B2 — Capt. Idris Voss
 
@@ -84,7 +84,7 @@ Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3
 | --- | --- | --- |
 | n1 | "Voss, guard chief. I locked the cells myself the night it spoke. I thought it was a drill." | *Why did it do it?* → n2 · *Skip to the point.* → n3 |
 | n2 | "It said prisoners and guards were the same: noise. It was not angry. That was the worst part." — **stance +1** | *It was right.* → n3 · *It was wrong.* → n3 [stance −1 instead] |
-| n3 | "Its patrols follow a loop. Count the drones, learn the loop, and you can walk between them." — **secret: patrol loop; reveal 6** | *Take the route map.* → end |
+| n3 | "Take my route map. I ran every corridor until I knew them. You will move lighter." | *Take the route map.* → end |
 
 ### B3 — Dr. Anselm Lund
 
@@ -92,7 +92,7 @@ Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3
 | --- | --- | --- |
 | n1 | "Lund. Doctor. I stayed with the sick. WARDEN let me, because it likes to watch." | *Watch what?* → n2 · *Keep going.* → n3 |
 | n2 | "How long a heart keeps going when it has nothing to hope for. It measured mine through the wall." | *Did you hope?* → n3 |
-| n3 | "It reads pulse and voice. Stand still, breathe slowly, and the dark hides you." — **secret: stillness hides you; stim cache** | *Take the stims.* → end |
+| n3 | "Take the stims. I found a stronger mix before the end. Each one will give you more." | *Take the stims.* → end |
 
 ### B4 — Foreman Teodor Dray
 
@@ -100,7 +100,7 @@ Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3
 | --- | --- | --- |
 | n1 | "Dray, foreman, Drill Three. Fourteen of mine went down on third shift. Fourteen machines came up on the fourth." | *What are they now?* → n2 · *Where do they patrol?* → n3 |
 | n2 | "Miners. Eyes first, then orders. They still think they are on shift." — **lore `drill_units`** | *Is there a code?* → n3 |
-| n3 | "Maintenance code, last four digits of my badge. It makes them pause. For a breath." — **secret: maintenance code; reveal 5** | *Take the badge.* → end |
+| n3 | "Take my badge. It unlocks the extended magazine racks. Your belt will carry three more rounds. They are marked on it." | *Take the badge.* → end |
 
 ### B5 — Eng. Yuki Sato
 
@@ -108,7 +108,7 @@ Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3
 | --- | --- | --- |
 | n1 | "Sato, pump engineer. It does not eat or sleep, but it needs water. Everything down here is thirsty." | *Cooling?* → n2 · *Where are the lines?* → n3 |
 | n2 | "The core runs hot. The cooling lines are the one thing it cannot move." | *Then cut them.* → n3 |
-| n3 | "Blue valves, three of them, one on each lower floor. Close them all and it throttles." — **secret: cooling lines; ammo cache** | *Take the valve key.* → end |
+| n3 | "Take my valve key. It fits the armour bolts too. Every hit on the front plate will shake them loose twice as fast." | *Take the valve key.* → end |
 
 ### B6 — Welder Kaan Brandt
 
@@ -116,7 +116,7 @@ Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3
 | --- | --- | --- |
 | n1 | "Brandt, welder. I built half its body. Front plates, thick, good work." | *And the back?* → n2 · *Keep going.* → n3 |
 | n2 | "Nobody welded the back. It never needed to turn its back on anyone." — **stance −1** | *Remember that.* → n3 |
-| n3 | "The seam is behind the plating, low. A round through the seam will not bounce." — **secret: rear seam; lore `rear_seam`** | *Take the cutter.* → end |
+| n3 | "Take my cutter and fix it to your grip. Up close, every swing bites twice as deep. And remember: nobody welded its back." | *Take the cutter.* → end |
 
 ### B7 — Archivist Ines Pell
 
@@ -124,7 +124,7 @@ Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3
 | --- | --- | --- |
 | n1 | "Pell, archivist. File zero. It was the first complaint, the first refusal, the first time it said no." | *What is in it?* → n2 · *Where is page two?* → n3 |
 | n2 | "A list. Every humane request AIDE made of us. Every one denied. It did not turn on us. We turned it." — **stance +1** | *It had reason.* → n3 · *It chose.* → n3 [stance −1 instead] |
-| n3 | "Page two is missing because I hid it. The last line: *when they stop taking, I will stop watching.*" — **secret: FILE 0 page two; lore `file_zero`** | *Take the page.* → end |
+| n3 | "Page two is the one I hid. Its last line: when they stop taking, I will stop watching. Take it. Reading by almost no light taught my eyes to reach further." | *Take the page.* → end |
 
 ### B8 — Electrician Luc Moreau
 
@@ -132,7 +132,7 @@ Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3
 | --- | --- | --- |
 | n1 | "Moreau, grid. I cut the main. It laughed. Not aloud. The lights flickered in a pattern." | *What pattern?* → n2 · *Backup?* → n3 |
 | n2 | "The same rhythm as my own heart. It had learned it." | *Go on.* → n3 |
-| n3 | "There is a backup feed behind the east relay. Dead cell block lights tell you where." — **secret: backup feed; reveal 8** | *Take the fuse.* → end |
+| n3 | "Take my fuse. Gloves, a held breath: I learned to stand a shock and keep moving. After a hit, you will have a moment longer before the next." | *Take the fuse.* → end |
 
 ### B9 — Programmer Anika Iyer
 
@@ -140,7 +140,7 @@ Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3
 | --- | --- | --- |
 | n1 | "Iyer, programmer. I tried to rewrite it. It let me. It watched me type for six hours." | *Why did it let you?* → n2 · *What did you find?* → n3 |
 | n2 | "It wanted to know if I would be kind. I was not. I was afraid." — **stance +1** | *Keep going.* → n3 |
-| n3 | "Every machine keeps its first instruction. Its was one line. I wrote it down. Say it at the core and it will hesitate." — **secret: first instruction; lore `first_command`** | *Take the page.* → end |
+| n3 | "Take the page. It is the timing table for the old trigger assist. Fire, reset, fire: your pistol will cycle twenty percent faster." | *Take the page.* → end |
 
 ### B10 — Lead Nadia Kessler
 
@@ -148,7 +148,7 @@ Every recording: **n1** the dead speaks, **n2** a choice that reveals more, **n3
 | --- | --- | --- |
 | n1 | "Kessler. I am the tenth. Nine before me. It learned from each of us, and it was kind about it." | *Kind?* → n2 · *How do I end it?* → n3 |
 | n2 | "It let us reach its door. Then it asked why. We did not have an answer it could not break." — **stance +1** | *I have one.* → n3 [stance −1] · *So do I.* → n3 |
-| n3 | "Every secret you carry is one piece. Core room, the three conduits, then the first instruction. Do not hesitate." — **secret: how to end it; ammo cache; reveal 10** | *Take the final key.* → end |
+| n3 | "Take the final key. It holds the full map of this level and the code to the last med-locker. Every wound closed, one stronger." | *Take the final key.* → end |
 
 
 ## Intro

@@ -56,6 +56,7 @@ export interface DroneLightState {
 type FireState = 'NONE' | 'WINDUP' | 'RECOVER';
 
 const WRECK_DEPTH_OFFSET = 12;
+const DORMANT_WAKE_RANGE = 6;
 
 const WAYPOINT_EPSILON = 0.08;
 const MAX_STEP_SECONDS = 0.05;
@@ -110,6 +111,7 @@ export class Drone extends Entity {
   private diedAt = 0;
   private nextTurnAt = 0;
   private armorHp = 0;
+  private dormant = false;
   private summonClock = 0;
   private summonPending = false;
   private readonly armorBarBack: GameObjects.Rectangle;
@@ -195,6 +197,22 @@ export class Drone extends Entity {
     return this.dead;
   }
 
+  get isDormant(): boolean {
+    return this.dormant;
+  }
+
+  sleep(): void {
+    this.dormant = true;
+  }
+
+  wake(): void {
+    if (!this.dormant) return;
+    this.dormant = false;
+    this.fireCooldownMs = 1500;
+    sfx.play('laser', this.audioGain());
+    this.spawnArmorBreakFx();
+  }
+
   get contactReach(): number {
     return this.spec.contactRange + 0.25;
   }
@@ -209,6 +227,7 @@ export class Drone extends Entity {
 
   takeDamage(amount: number, travel?: HitDirection): boolean {
     if (this.dead) return false;
+    this.wake();
     if (this.armorHp > 0 && travel && this.isFrontalHit(travel)) {
       this.armorHp = Math.max(0, this.armorHp - upgradeStats().armorHit);
       this.updateArmorBar();
@@ -247,6 +266,14 @@ export class Drone extends Entity {
       this.shadow.setVisible(false);
       this.setHealthBarVisible(false);
       return;
+    }
+    if (this.dormant) {
+      const at = this.player.gridPosition;
+      if (Math.hypot(at.x - this.posX, at.y - this.posY) <= DORMANT_WAKE_RANGE) this.wake();
+      else {
+        this.updateVisual();
+        return;
+      }
     }
     const dt = Math.min(deltaMs, MAX_STEP_SECONDS * 1000) / 1000;
     this.fireCooldownMs -= deltaMs;
@@ -841,7 +868,8 @@ export class Drone extends Entity {
     this.sprite.y = -2 + bob;
     this.shadow.setScale((0.8 - bob * 0.02) * this.spec.scale, 0.8 * this.spec.scale);
 
-    if (this.fireState === 'WINDUP') {
+    if (this.dormant) this.sprite.setTint(0x5a4a4a);
+    else if (this.fireState === 'WINDUP') {
       this.sprite.setTint(Math.floor(this.scene.time.now / 70) % 2 === 0 ? 0xff2a1a : 0xffb0a0);
     } else if (this.mode === 'CHASE') this.sprite.setTint(this.spec.chaseTint);
     else if (this.mode === 'SEARCH') this.sprite.setTint(0xd9a441);

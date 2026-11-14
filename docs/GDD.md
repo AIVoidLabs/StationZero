@@ -66,7 +66,7 @@ Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previe
 - **Laser grid** (from B7): a beam across a one-tile corridor on a 3.4 s cycle: off 1.7 s, flickering warning 0.5 s, on 1.2 s. Touching it deals 1 damage and raises WARDEN alert by 1.
 - **Armour** (tank and bosses): the front plate has its own HP. Head-on hits chip it down (3 for the tank); once it breaks the enemy is open from every side. Flanking hits skip the plate entirely.
 - **Assembler** (B9 mid boss): 6 HP, 3 armour, slow tank body. Fires a fan of 3 shells and calls a drone every 11 s (up to 2 alive). Summoned drones give no loot or score and die with it.
-- **WARDEN core** (B11 final boss): 9 HP, 4 armour, immobile. Turns slowly. Fires a fan of 5 shells and calls drones every 10 s (up to 2 alive). Killing it ends the run.
+- **WARDEN core** (B11 final boss): 9 HP, 4 armour, immobile. It sleeps (dark, inactive) until the Exile finishes its terminal conversation, comes within 6 tiles, or hits it. Turns slowly. Fires a fan of 5 shells and calls drones every 10 s (up to 2 alive). Killing it ends the run.
 - **Robot tank** (from B6, rare): 2 HP, slow, turns slowly (one facing change per 0.9 s). Its front armour (a 37 degree cone) deflects shots; shots from the sides and rear, melee from behind, and hazards hurt it. Fires a heavy shell (1 damage, slow) after a 1.1 s wind-up; crushes in melee for 1.
 
 ## 6. WARDEN — the director
