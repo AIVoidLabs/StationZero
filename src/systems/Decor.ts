@@ -1,5 +1,6 @@
 import type { GameObjects, Scene } from 'phaser';
-import { DEPTH_FLOOR, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
+import { DEAD_FRAME_COUNT, PROPS_FLOOR_KEY } from '../assets/manifest';
+import { DEPTH_FLOOR, FLOOR_COUNT, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import { gridVectorToWorld } from '../utils/iso';
 import { createRng } from '../utils/random';
 import type { Dungeon, DungeonExit, Room } from './DungeonGen';
@@ -29,6 +30,19 @@ const PROP_SCALE: Record<keyof typeof PROP_FRAMES, number> = {
   pipe: 0.5,
 };
 const DECAL_FRAMES: readonly number[] = [0, 1];
+const THEME_PROP_CHANCE = 0.6;
+const FLOOR_PROP_BASE_ORIGIN_Y = 40 / 48;
+const CORPSE_DEPTH_OFFSET = 4;
+const CORPSE_NEIGHBORS: readonly (readonly [number, number])[] = [
+  [1, 0],
+  [0, 1],
+  [-1, 0],
+  [0, -1],
+  [1, 1],
+  [-1, 1],
+  [1, -1],
+  [-1, -1],
+];
 
 type PropKind = keyof typeof PROP_FRAMES;
 
@@ -47,12 +61,14 @@ export class Decor {
   private readonly terminalTarget: number;
   private readonly propBudget: number;
   private readonly decalTarget: number;
+  private readonly floorIndex: number;
   private propCount = 0;
 
   constructor(scene: Scene, level: Level, dungeon: Dungeon) {
     this.scene = scene;
     this.level = level;
     this.exit = dungeon.exit;
+    this.floorIndex = dungeon.floor;
     this.terminalTarget = Math.max(1, MIN_TERMINALS - dungeon.floor);
 
     const propTarget = Math.min(
@@ -64,6 +80,7 @@ export class Decor {
 
     this.placeProps(dungeon);
     this.placeTerminals(dungeon);
+    this.placeCorpse();
     this.placeDecals(dungeon);
   }
 
@@ -100,8 +117,12 @@ export class Decor {
         const cell = candidates.splice(candidateIndex, 1)[0];
         if (!cell) continue;
 
-        const kind = RANDOM_PROP_KINDS[Math.floor(rng() * RANDOM_PROP_KINDS.length)] ?? 'barrel';
-        this.addProp(cell.x, cell.y, kind);
+        if (rng() < THEME_PROP_CHANCE) {
+          this.addThemeProp(cell.x, cell.y);
+        } else {
+          const kind = RANDOM_PROP_KINDS[Math.floor(rng() * RANDOM_PROP_KINDS.length)] ?? 'barrel';
+          this.addProp(cell.x, cell.y, kind);
+        }
         this.level.blockCell(cell.x, cell.y);
         this.propCount += 1;
       }
@@ -172,13 +193,51 @@ export class Decor {
     return false;
   }
 
-  private addProp(gridX: number, gridY: number, kind: PropKind): void {
+  private addThemeProp(gridX: number, gridY: number): void {
     const iso = gridVectorToWorld(gridX, gridY, TILE_WIDTH, TILE_HEIGHT);
     const image = this.scene.add
-      .image(iso.x, iso.y, 'props', PROP_FRAMES[kind])
-      .setOrigin(0.5, 1)
-      .setScale(PROP_SCALE[kind])
+      .image(iso.x, iso.y, PROPS_FLOOR_KEY, DEAD_FRAME_COUNT + this.floorIndex)
+      .setOrigin(0.5, FLOOR_PROP_BASE_ORIGIN_Y)
       .setDepth(iso.y);
+    this.images.push(image);
+    this.propOccluders.push({ sprite: image, baseY: iso.y });
+  }
+
+  private placeCorpse(): void {
+    if (this.floorIndex >= DEAD_FRAME_COUNT) return;
+    const terminal = this.terminalCells[0];
+    if (!terminal) return;
+
+    for (const [dx, dy] of CORPSE_NEIGHBORS) {
+      const x = terminal.x + dx;
+      const y = terminal.y + dy;
+      if (!this.level.isWalkable(x, y)) continue;
+      if (x === this.level.spawnX && y === this.level.spawnY) continue;
+      if (this.exit !== null && x === this.exit.x && y === this.exit.y) continue;
+
+      const iso = gridVectorToWorld(x, y, TILE_WIDTH, TILE_HEIGHT);
+      const image = this.scene.add
+        .image(iso.x, iso.y, PROPS_FLOOR_KEY, this.floorIndex)
+        .setOrigin(0.5, FLOOR_PROP_BASE_ORIGIN_Y)
+        .setDepth(DEPTH_FLOOR + CORPSE_DEPTH_OFFSET);
+      this.images.push(image);
+      return;
+    }
+  }
+
+  private addProp(gridX: number, gridY: number, kind: PropKind): void {
+    const iso = gridVectorToWorld(gridX, gridY, TILE_WIDTH, TILE_HEIGHT);
+    const image =
+      kind === 'terminal'
+        ? this.scene.add
+            .image(iso.x, iso.y, PROPS_FLOOR_KEY, DEAD_FRAME_COUNT + FLOOR_COUNT)
+            .setOrigin(0.5, FLOOR_PROP_BASE_ORIGIN_Y)
+            .setDepth(iso.y)
+        : this.scene.add
+            .image(iso.x, iso.y, 'props', PROP_FRAMES[kind])
+            .setOrigin(0.5, 1)
+            .setScale(PROP_SCALE[kind])
+            .setDepth(iso.y);
     this.images.push(image);
     this.propOccluders.push({ sprite: image, baseY: iso.y });
     if (kind === 'terminal') this.terminalCells.push({ x: gridX, y: gridY });

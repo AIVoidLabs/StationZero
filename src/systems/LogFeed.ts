@@ -1,6 +1,6 @@
 import type { GameObjects, Scene } from 'phaser';
-import { LOG_REACH_TILES, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
-import { floorLogs } from '../data/logs';
+import { FLOOR_COUNT, LOG_REACH_TILES, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
+import { floorLogs, LOGS_PER_FLOOR } from '../data/logs';
 import { t, type StringKey } from '../i18n';
 import { gridVectorToWorld } from '../utils/iso';
 
@@ -14,8 +14,8 @@ const FADE_PER_SECOND = 3.2;
 
 export function logKeyFor(cell: TerminalCell, floor: number): StringKey {
   const hash = ((cell.x * 73856093) ^ (cell.y * 19349663)) >>> 0;
-  const index = (hash % 4) + 1;
-  return `log.b${Math.max(1, Math.min(4, floor + 1))}.${index}` as StringKey;
+  const index = (hash % LOGS_PER_FLOOR) + 1;
+  return `log.b${Math.max(1, Math.min(FLOOR_COUNT, floor + 1))}.${index}` as StringKey;
 }
 
 function logFor(cell: TerminalCell, floor: number): string {

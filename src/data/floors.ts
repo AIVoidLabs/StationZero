@@ -1,4 +1,5 @@
-import { t } from '../i18n';
+import { t, type StringKey } from '../i18n';
+import { FLOOR_COUNT } from './config';
 
 export interface FloorInfo {
   readonly code: string;
@@ -6,18 +7,11 @@ export interface FloorInfo {
   readonly tagline: string;
 }
 
-export const FLOOR_COUNT_INFO = 4;
-
 export function floorInfo(floor: number): FloorInfo {
-  const index = Math.max(0, Math.min(FLOOR_COUNT_INFO - 1, floor)) + 1;
-  switch (index) {
-    case 1:
-      return { code: 'B1', name: t('floor.b1.name'), tagline: t('floor.b1.tagline') };
-    case 2:
-      return { code: 'B2', name: t('floor.b2.name'), tagline: t('floor.b2.tagline') };
-    case 3:
-      return { code: 'B3', name: t('floor.b3.name'), tagline: t('floor.b3.tagline') };
-    default:
-      return { code: 'B4', name: t('floor.b4.name'), tagline: t('floor.b4.tagline') };
-  }
+  const number = Math.max(0, Math.min(FLOOR_COUNT - 1, floor)) + 1;
+  return {
+    code: `B${number}`,
+    name: t(`floor.b${number}.name` as StringKey),
+    tagline: t(`floor.b${number}.tagline` as StringKey),
+  };
 }

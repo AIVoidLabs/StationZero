@@ -343,7 +343,16 @@ export class Player extends Entity {
     this.stepDistance -= FOOTSTEP_DISTANCE;
     this.stepSide = 1 - this.stepSide;
     const material = this.level.materialAt(Math.round(this.gridPosX), Math.round(this.gridPosY));
-    const name = material === 'grate' ? 'stepGrate' : material === 'concrete' ? 'stepConcrete' : 'stepSteel';
+    const name =
+      material === 'grate'
+        ? 'stepGrate'
+        : material === 'concrete'
+          ? 'stepConcrete'
+          : material === 'tile'
+            ? 'stepTile'
+            : material === 'water'
+              ? 'stepWater'
+              : 'stepSteel';
     const pitch = (this.stepSide === 0 ? 0.94 : 1.04) + (Math.random() - 0.5) * 0.08;
     sfx.play(name, 0.55, pitch);
   }

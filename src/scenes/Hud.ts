@@ -21,10 +21,10 @@ const AMBER = 0xd9a441;
 const ORANGE = 0xff7a4a;
 const RED = 0xc8321e;
 const CYAN = 0x3ab4d2;
-const SEG_WIDTH = 36;
+const SEG_WIDTH = 25;
 const SEG_HEIGHT = 16;
-const SEG_PITCH = 40;
-const SEG_SKEW = 6;
+const SEG_PITCH = 28;
+const SEG_SKEW = 4;
 const HP_X = 14;
 const HP_Y = 26;
 const HP_W = 262;
@@ -339,8 +339,8 @@ export class HudScene extends Scene {
   }
 
   private hpColor(hp: number): number {
-    if (hp >= 3) return GREEN;
-    if (hp === 2) return AMBER;
+    if (hp >= PLAYER_MAX_HP * 0.6) return GREEN;
+    if (hp > PLAYER_MAX_HP * 0.3) return AMBER;
     return RED;
   }
 

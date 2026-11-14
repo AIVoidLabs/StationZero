@@ -20,7 +20,7 @@ export const DUNGEON_WIDTH = 27;
 export const DUNGEON_HEIGHT = 27;
 export const DUNGEON_SEED = 240731;
 
-export const FLOOR_COUNT = 4;
+export const FLOOR_COUNT = 11;
 export const FLOOR_SEED_STRIDE = 8191;
 export const DESCENT_DWELL_MS = 900;
 export const DESCENT_FADE_MS = 420;
@@ -58,6 +58,7 @@ export const DRONE_WIDTH = 40;
 export const DRONE_HEIGHT = 40;
 export const DRONE_COUNT = 2;
 export const DRONE_EXTRA_FROM_FLOOR = 2;
+export const DRONE_SECOND_EXTRA_FROM_FLOOR = 6;
 export const DRONE_SPEED = 105;
 export const DRONE_CHASE_SPEED = 128;
 export const DRONE_RETURN_SPEED = 140;
@@ -81,7 +82,7 @@ export const DRONE_DISENGAGE_SIGHT_SCALE = 0.55;
 export const DRONE_MIN_SPAWN_DISTANCE = 11;
 
 // Combat
-export const PLAYER_MAX_HP = 4;
+export const PLAYER_MAX_HP = 6;
 export const PLAYER_IFRAMES_MS = 600;
 
 // Pistol
@@ -129,11 +130,13 @@ export const DRONE_CONTACT_COOLDOWN_MS = 800;
 export const DRONE_CONTACT_DAMAGE_RANGE = 1.25;
 
 export const LOOT_PICKUP_RANGE = 0.62;
-export const LOOT_DROP_CHANCE = 0.55;
+export const LOOT_DROP_CHANCE = 0.3;
+export const LOOT_DROP_DEPTH_STEP = 0.03;
+export const LOOT_DROP_CHANCE_MIN = 0.15;
 export const LOOT_AMMO_AMOUNT = 4;
-export const FLOOR_LOOT_BASE = 5;
-export const FLOOR_LOOT_MIN = 2;
-export const LOOT_HEAL_AMOUNT = 1;
+export const FLOOR_LOOT_BASE = 3;
+export const FLOOR_LOOT_MIN = 1;
+export const LOOT_HEAL_AMOUNT = 2;
 
 export const DEPTH_MAX_BAND = FLOOR_COUNT - 1;
 export const DEPTH_LIGHT_MIN_SCALE = 0.65;

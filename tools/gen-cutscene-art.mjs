@@ -105,28 +105,25 @@ async function introShaft() {
   );
 }
 
-async function introCell() {
+async function introNames() {
   let body = `<rect width="${LOW_W}" height="${LOW_H}" fill="#07090b"/>`;
-  body += `<rect x="0" y="0" width="${LOW_W}" height="86" fill="#141b1e"/>`;
-  for (let x = 0; x < LOW_W; x += 40) body += `<rect x="${x}" y="0" width="1" height="86" fill="#0a0e10"/>`;
-  body += `<polygon points="0,86 ${LOW_W},86 ${LOW_W},${LOW_H} 0,${LOW_H}" fill="#0e1417"/>`;
-  for (let i = 0; i < 9; i += 1) body += `<rect x="${176 + i * 6}" y="0" width="1.4" height="86" fill="#2a3338"/>`;
-  body += `<rect x="40" y="82" width="120" height="14" fill="#2b2a24"/>`;
-  body += `<rect x="40" y="96" width="120" height="3" fill="#15130f"/>`;
-  body += `<rect x="46" y="99" width="4" height="12" fill="#15130f"/><rect x="150" y="99" width="4" height="12" fill="#15130f"/>`;
-  body += `<rect x="4" y="6" width="26" height="4" fill="#a02418"/>`;
+  body += `<rect x="40" y="10" width="160" height="116" fill="#10161a" stroke="#2a3438" stroke-width="1.2"/>`;
+  body += `<rect x="40" y="10" width="160" height="10" fill="#1a2328"/>`;
+  for (let i = 0; i < 10; i += 1) {
+    const y = 28 + i * 8.6;
+    const w = 40 + ((i * 29) % 44);
+    body += `<line x1="52" y1="${y}" x2="${52 + w}" y2="${y}" stroke="#7a8c92" stroke-width="1.5"/>`;
+    body += `<line x1="52" y1="${y}" x2="${52 + w}" y2="${y}" stroke="#3a464a" stroke-width="0.5" stroke-dasharray="1 2" transform="translate(0 1.4)"/>`;
+    body += `<line x1="${52 + w + 6}" y1="${y - 2}" x2="${52 + w + 12}" y2="${y + 2}" stroke="#a02a22" stroke-width="1.2"/>`;
+    body += `<line x1="${52 + w + 12}" y1="${y - 2}" x2="${52 + w + 6}" y2="${y + 2}" stroke="#a02a22" stroke-width="1.2"/>`;
+  }
+  const y11 = 28 + 10 * 8.6;
+  body += `<path d="M52,${y11} q6,-5 12,0 t12,0 t12,0 t12,0 t10,-1" fill="none" stroke="#d9a441" stroke-width="1.6"/>`;
   body += scanlines();
-  const player = await sprite(path.join(V2, 'player.png'), 4);
-  const lying = await scaled(player, 3.4, 90);
-  return finish(
-    svg(body),
-    [{ input: lying, left: 118, top: 90 }],
-    [
-      { x: 34, y: 14, r: 150, color: 'rgb(255,50,30)', a: 0.5 },
-      { x: 240, y: 150, r: 120, color: 'rgb(150,200,225)', a: 0.15 },
-    ],
-    0.78,
-  );
+  return finish(svg(body), [], [
+    { x: 240, y: 40, r: 230, color: 'rgb(170,200,210)', a: 0.32 },
+    { x: 260, y: 230, r: 80, color: 'rgb(217,164,65)', a: 0.35 },
+  ], 0.78);
 }
 
 async function introEye() {
@@ -228,6 +225,169 @@ async function descentDrill() {
   );
 }
 
+async function descentInfirmary() {
+  let body = `<rect width="${LOW_W}" height="${LOW_H}" fill="#050809"/>`;
+  body += `<polygon points="0,0 120,52 120,84 0,135" fill="#0c1618"/>`;
+  body += `<polygon points="${LOW_W},0 120,52 120,84 ${LOW_W},135" fill="#0a1214"/>`;
+  body += `<polygon points="0,135 120,84 ${LOW_W},135" fill="#10201f"/>`;
+  body += `<polygon points="0,0 120,52 ${LOW_W},0" fill="#070d0e"/>`;
+  for (let i = 0; i < 5; i += 1) {
+    const t = i / 5;
+    const x = 6 + t * 84;
+    const size = 1 - t * 0.7;
+    const top = 70 + t * 22;
+    body += `<polygon points="${x},${top} ${x + 46 * size},${top + 12 * size} ${x + 46 * size},${top + 24 * size} ${x},${top + 12 * size}" fill="#cfe0e0"/>`;
+    body += `<polygon points="${x},${top + 12 * size} ${x + 46 * size},${top + 24 * size} ${x + 46 * size},${top + 34 * size} ${x},${top + 22 * size}" fill="#6a8c92"/>`;
+    body += `<rect x="${x + 2}" y="${top + 2}" width="${10 * size}" height="${5 * size}" fill="#f2fafa"/>`;
+    body += `<rect x="${130 + i * 20}" y="${4 + i * 5}" width="${16 - i * 3}" height="2" fill="#8fe8ee"/>`;
+  }
+  body += scanlines();
+  return finish(svg(body), [], [
+    { x: 300, y: 30, r: 230, color: 'rgb(120,230,240)', a: 0.4 },
+    { x: 120, y: 180, r: 140, color: 'rgb(90,200,220)', a: 0.25 },
+  ], 0.8);
+}
+
+async function descentPump() {
+  let body = `<rect width="${LOW_W}" height="${LOW_H}" fill="#06060c"/>`;
+  body += `<rect y="86" width="${LOW_W}" height="49" fill="#0e0c1c"/>`;
+  for (let i = 0; i < 6; i += 1) {
+    const y = 90 + i * 8;
+    body += `<line x1="0" y1="${y}" x2="${LOW_W}" y2="${y}" stroke="#4a3a8a" stroke-width="0.6" opacity="${0.6 - i * 0.07}" stroke-dasharray="${6 + i * 2} ${4 + i}"/>`;
+  }
+  body += `<rect x="0" y="22" width="${LOW_W}" height="14" fill="#1b2236" stroke="#05060c"/>`;
+  body += `<rect x="0" y="44" width="${LOW_W}" height="10" fill="#161c2c" stroke="#05060c"/>`;
+  for (let i = 0; i < 6; i += 1) body += `<rect x="${12 + i * 42}" y="20" width="4" height="18" fill="#2a3452"/>`;
+  const cx = 150;
+  const cy = 62;
+  body += `<circle cx="${cx}" cy="${cy}" r="24" fill="none" stroke="#6a52c8" stroke-width="4"/>`;
+  for (let i = 0; i < 4; i += 1) body += `<line x1="${cx}" y1="${cy}" x2="${cx + Math.cos(i * 1.57) * 24}" y2="${cy + Math.sin(i * 1.57) * 24}" stroke="#6a52c8" stroke-width="2"/>`;
+  body += `<circle cx="${cx}" cy="${cy}" r="4" fill="#150f2a"/>`;
+  for (let i = 0; i < 9; i += 1) body += `<rect x="${20 + (i * 53) % 200}" y="${38 + (i * 17) % 40}" width="1.2" height="3" fill="#9a88ee" opacity="0.8"/>`;
+  body += scanlines();
+  return finish(svg(body), [], [
+    { x: 300, y: 120, r: 200, color: 'rgb(130,100,255)', a: 0.45 },
+    { x: 150, y: 220, r: 140, color: 'rgb(110,90,230)', a: 0.3 },
+  ], 0.8);
+}
+
+async function descentFoundry() {
+  let body = `<rect width="${LOW_W}" height="${LOW_H}" fill="#080505"/>`;
+  body += `<rect y="104" width="${LOW_W}" height="31" fill="#140c0a"/>`;
+  body += `<polygon points="70,22 170,22 184,104 56,104" fill="#2a1814" stroke="#050303" stroke-width="1.6"/>`;
+  body += `<polygon points="84,40 156,40 166,104 74,104" fill="#ff6a1a"/>`;
+  body += `<polygon points="96,56 144,56 150,104 90,104" fill="#ffb040"/>`;
+  body += `<polygon points="108,74 132,74 134,104 106,104" fill="#fff0b0"/>`;
+  for (let i = 0; i < 6; i += 1) body += `<rect x="${24 + i * 4}" y="${10 + i * 12}" width="2" height="${60 - i * 8}" fill="#1a0f0c"/>`;
+  body += `<line x1="30" y1="0" x2="30" y2="48" stroke="#2a1d18" stroke-width="2"/>`;
+  body += `<polygon points="22,48 38,48 34,62 26,62" fill="#3a2418"/>`;
+  for (let i = 0; i < 26; i += 1) body += `<rect x="${80 + (i * 47) % 90}" y="${10 + (i * 29) % 80}" width="1.4" height="1.4" fill="#ffc060"/>`;
+  body += scanlines();
+  return finish(svg(body), [], [
+    { x: 240, y: 100, r: 260, color: 'rgb(255,130,40)', a: 0.6 },
+    { x: 240, y: 200, r: 160, color: 'rgb(255,90,20)', a: 0.4 },
+  ], 0.8);
+}
+
+async function descentArchive() {
+  let body = `<rect width="${LOW_W}" height="${LOW_H}" fill="#040806"/>`;
+  body += `<polygon points="0,135 120,76 ${LOW_W},135" fill="#0a1612"/>`;
+  const spines = ['#3a6a5a', '#8a4a3a', '#a89a50', '#4a6a7a'];
+  for (let side = 0; side < 2; side += 1) {
+    for (let i = 0; i < 5; i += 1) {
+      const t = i / 5;
+      const x = side === 0 ? 4 + t * 78 : LOW_W - 4 - t * 78 - 30 * (1 - t * 0.6);
+      const w = 30 * (1 - t * 0.6);
+      const top = 12 + t * 26;
+      const bottom = 124 - t * 30;
+      body += `<rect x="${x}" y="${top}" width="${w}" height="${bottom - top}" fill="#0c1814" stroke="#1e3a32" stroke-width="0.8"/>`;
+      for (let r = 0; r < 5; r += 1) {
+        const y = top + 4 + r * ((bottom - top - 8) / 5);
+        body += `<line x1="${x}" y1="${y}" x2="${x + w}" y2="${y}" stroke="#1e3a32" stroke-width="0.6"/>`;
+        for (let k = 0; k < 6; k += 1) body += `<rect x="${x + 2 + k * (w / 6.6)}" y="${y - 6 * (1 - t * 0.4)}" width="${w / 9}" height="${5.5 * (1 - t * 0.4)}" fill="${spines[(i + k + r) % 4]}" opacity="0.8"/>`;
+      }
+    }
+  }
+  body += `<rect x="108" y="58" width="26" height="20" fill="#06100c" stroke="#2a5a4a"/>`;
+  body += `<rect x="111" y="61" width="20" height="14" fill="#2ee8a0"/>`;
+  for (let i = 0; i < 4; i += 1) body += `<line x1="113" y1="${64 + i * 3}" x2="${126 - (i % 2) * 4}" y2="${64 + i * 3}" stroke="#06100c" stroke-width="0.8"/>`;
+  body += scanlines();
+  return finish(svg(body), [], [
+    { x: 250, y: 150, r: 200, color: 'rgb(60,240,170)', a: 0.42 },
+    { x: 100, y: 120, r: 120, color: 'rgb(40,200,150)', a: 0.2 },
+  ], 0.82);
+}
+
+async function descentPower() {
+  let body = `<rect width="${LOW_W}" height="${LOW_H}" fill="#04050a"/>`;
+  body += `<rect y="108" width="${LOW_W}" height="27" fill="#0a0c14"/>`;
+  body += `<polygon points="84,40 156,40 164,108 76,108" fill="#10151f" stroke="#04050a" stroke-width="1.6"/>`;
+  for (let i = 0; i < 3; i += 1) {
+    const x = 96 + i * 24;
+    body += `<rect x="${x}" y="22" width="8" height="18" fill="#d8c040"/>`;
+    body += `<rect x="${x - 2}" y="20" width="12" height="3" fill="#f4e480"/>`;
+  }
+  const arcs = [[100, 22, 40, 6], [124, 22, 120, 4], [148, 22, 196, 10]];
+  for (const [x, y, ex, ey] of arcs) {
+    let pts = `${x},${y}`;
+    for (let k = 1; k < 7; k += 1) pts += ` ${x + (ex - x) * (k / 7) + ((k * 13) % 9 - 4)},${y + (ey - y) * (k / 7) + ((k * 7) % 9 - 4)}`;
+    body += `<polyline points="${pts} ${ex},${ey}" fill="none" stroke="#9ac8ff" stroke-width="1.2"/>`;
+    body += `<polyline points="${pts} ${ex},${ey}" fill="none" stroke="#e8f4ff" stroke-width="0.5"/>`;
+  }
+  for (let i = 0; i < 5; i += 1) body += `<rect x="${92 + i * 12}" y="${70 + (i % 2) * 10}" width="5" height="12" fill="#1c2436"/>`;
+  body += `<rect x="86" y="96" width="68" height="4" fill="#d8c040" opacity="0.7"/>`;
+  body += scanlines();
+  return finish(svg(body), [], [
+    { x: 240, y: 60, r: 240, color: 'rgb(110,160,255)', a: 0.5 },
+    { x: 240, y: 200, r: 130, color: 'rgb(220,200,80)', a: 0.2 },
+  ], 0.82);
+}
+
+async function descentDroneFoundry() {
+  let body = `<rect width="${LOW_W}" height="${LOW_H}" fill="#070705"/>`;
+  body += `<polygon points="0,135 60,78 ${LOW_W},70 ${LOW_W},135" fill="#14140e"/>`;
+  body += `<polygon points="0,106 ${LOW_W},62 ${LOW_W},78 0,122" fill="#2a2a22" stroke="#050503"/>`;
+  for (let i = 0; i < 8; i += 1) body += `<rect x="${i * 30}" y="${106 - i * 5.4}" width="14" height="4" fill="#d6a820" opacity="0.65"/>`;
+  for (let i = 0; i < 5; i += 1) {
+    const x = 30 + i * 42;
+    const y = 96 - i * 8;
+    const r = 11 - i * 0.9;
+    body += `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 0.7}" fill="${i < 3 ? '#4a5254' : '#2a3032'}" stroke="#050503"/>`;
+    if (i >= 3) body += `<ellipse cx="${x + r * 0.25}" cy="${y - 1}" rx="${r * 0.25}" ry="${r * 0.2}" fill="#f0a830"/>`;
+  }
+  body += `<line x1="150" y1="0" x2="150" y2="44" stroke="#3a3a30" stroke-width="3"/>`;
+  body += `<polygon points="138,44 162,44 156,62 144,62" fill="#4a4a3e" stroke="#050503"/>`;
+  body += `<rect x="146" y="62" width="8" height="12" fill="#f4c430"/>`;
+  for (let i = 0; i < 12; i += 1) body += `<rect x="${140 + (i * 7) % 22}" y="${72 + (i * 5) % 20}" width="1.3" height="1.3" fill="#ffd060"/>`;
+  body += scanlines();
+  return finish(svg(body), [], [
+    { x: 300, y: 70, r: 230, color: 'rgb(255,210,70)', a: 0.45 },
+    { x: 100, y: 190, r: 130, color: 'rgb(220,170,40)', a: 0.25 },
+  ], 0.8);
+}
+
+async function descentComms() {
+  let body = `<rect width="${LOW_W}" height="${LOW_H}" fill="#04070c"/>`;
+  body += `<rect y="106" width="${LOW_W}" height="29" fill="#0a0e16"/>`;
+  body += `<rect x="30" y="16" width="90" height="82" fill="#0a1018" stroke="#1e3248"/>`;
+  for (let i = 0; i < 10; i += 1) {
+    const y = 24 + i * 7;
+    body += `<line x1="38" y1="${y}" x2="${60 + ((i * 17) % 40)}" y2="${y}" stroke="#7ac8f0" stroke-width="1.2"/>`;
+  }
+  body += `<line x1="38" y1="94" x2="80" y2="94" stroke="#3a4a5a" stroke-width="1.2" stroke-dasharray="2 2"/>`;
+  body += `<circle cx="180" cy="70" r="32" fill="none" stroke="#5a7898" stroke-width="3"/>`;
+  body += `<ellipse cx="180" cy="70" rx="32" ry="10" fill="#101a26" stroke="#5a7898" stroke-width="1.4" transform="rotate(-24 180 70)"/>`;
+  body += `<line x1="180" y1="70" x2="196" y2="34" stroke="#8aa8c8" stroke-width="2"/>`;
+  body += `<circle cx="196" cy="33" r="2.4" fill="#e03a30"/>`;
+  body += `<line x1="180" y1="70" x2="180" y2="108" stroke="#3a4a5c" stroke-width="5"/>`;
+  for (let i = 0; i < 18; i += 1) body += `<rect x="${130 + (i * 19) % 100}" y="${14 + (i * 31) % 80}" width="1.2" height="1.2" fill="#a8d8ff" opacity="0.7"/>`;
+  body += scanlines();
+  return finish(svg(body), [], [
+    { x: 150, y: 120, r: 220, color: 'rgb(100,170,240)', a: 0.42 },
+    { x: 400, y: 120, r: 140, color: 'rgb(90,150,220)', a: 0.3 },
+  ], 0.8);
+}
+
 function coreScene(options) {
   let body = `<rect width="${LOW_W}" height="${LOW_H}" fill="#050407"/>`;
   const cx = 120;
@@ -305,12 +465,19 @@ async function main() {
   void DIRS;
   const panels = {
     intro_1: await introShaft(),
-    intro_2: await introCell(),
-    intro_3: await introEye(),
-    intro_4: await introHatch(),
+    intro_2: await introNames(),
+    intro_3: await introHatch(),
+    intro_4: await introEye(),
     descent_b2: await descentCells(),
     descent_b3: await descentDrill(),
     descent_b4: await descentCore(),
+    descent_infirmary: await descentInfirmary(),
+    descent_pump: await descentPump(),
+    descent_foundry: await descentFoundry(),
+    descent_archive: await descentArchive(),
+    descent_power: await descentPower(),
+    descent_dronefoundry: await descentDroneFoundry(),
+    descent_comms: await descentComms(),
     end_comply: await endComply(),
     end_defy: await endDefy(),
   };

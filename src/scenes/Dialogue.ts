@@ -117,6 +117,8 @@ export class DialogueScene extends Scene {
       items: node.choices.map((choice, index) => ({
         label: () => `${index + 1}. ${t(choice.text as StringKey)}`,
         onSelect: () => {
+          const game = this.scene.get('Game') as Game;
+          for (const effect of choice.effects ?? []) game.applyDialogueEffect(effect);
           if (choice.next === null) this.finish();
           else this.goTo(choice.next);
         },

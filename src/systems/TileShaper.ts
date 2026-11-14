@@ -1,6 +1,6 @@
 import type { Scene } from 'phaser';
-import { TILES_V2_KEY } from '../assets/manifest';
-import { TILE_HEIGHT, TILE_WIDTH, WALL_HEIGHT } from '../data/config';
+import { tilesKeyForFloor } from '../assets/manifest';
+import { FLOOR_COUNT, TILE_HEIGHT, TILE_WIDTH, WALL_HEIGHT } from '../data/config';
 
 export const TILE_FRAMES = {
   floorA: 'floor_a',
@@ -52,11 +52,14 @@ const TILE_SPECS: readonly TileSpec[] = [
 ];
 
 export function registerTilesV2(scene: Scene): void {
-  if (!scene.textures.exists(TILES_V2_KEY)) return;
-  const texture = scene.textures.get(TILES_V2_KEY);
-  for (const spec of TILE_SPECS) {
-    if (texture.has(spec.frame)) continue;
-    const height = spec.floor ? TILE_HEIGHT : WALL_IMAGE_HEIGHT;
-    texture.add(spec.frame, 0, spec.x, spec.y, TILE_WIDTH, height);
+  for (let floor = 0; floor < FLOOR_COUNT; floor += 1) {
+    const key = tilesKeyForFloor(floor);
+    if (!scene.textures.exists(key)) continue;
+    const texture = scene.textures.get(key);
+    for (const spec of TILE_SPECS) {
+      if (texture.has(spec.frame)) continue;
+      const height = spec.floor ? TILE_HEIGHT : WALL_IMAGE_HEIGHT;
+      texture.add(spec.frame, 0, spec.x, spec.y, TILE_WIDTH, height);
+    }
   }
 }

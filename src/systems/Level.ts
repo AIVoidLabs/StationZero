@@ -1,5 +1,5 @@
 import type { GameObjects, Scene } from 'phaser';
-import { TILES_V2_KEY } from '../assets/manifest';
+import { tilesKeyForFloor } from '../assets/manifest';
 import { DEPTH_FLOOR, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import { cartesianToIso } from '../utils/iso';
 import type { Dungeon, FloorStyle } from './DungeonGen';
@@ -7,7 +7,10 @@ import { TILE_FRAMES, type TileFrame } from './TileShaper';
 
 export type CellKind = 'floor' | 'wall';
 
-export type FloorMaterial = 'steel' | 'concrete' | 'grate';
+export type FloorMaterial = 'steel' | 'concrete' | 'grate' | 'tile' | 'water';
+
+const TILE_FLOOR = 2;
+const WATER_FLOOR = 4;
 
 export interface CameraBounds {
   readonly x: number;
@@ -103,6 +106,7 @@ export class Level {
   }
 
   render(scene: Scene): void {
+    const tilesKey = tilesKeyForFloor(this.floor);
     for (let gridY = 0; gridY < this.height; gridY += 1) {
       for (let gridX = 0; gridX < this.width; gridX += 1) {
         const iso = cartesianToIso(gridX, gridY, TILE_WIDTH, TILE_HEIGHT);
@@ -111,7 +115,7 @@ export class Level {
           if (!this.touchesFloor(gridX, gridY)) continue;
           const frame = this.wallFrame(gridX, gridY);
           const wall = scene.add
-            .image(iso.isoX, iso.isoY + TILE_HEIGHT / 2, TILES_V2_KEY, frame)
+            .image(iso.isoX, iso.isoY + TILE_HEIGHT / 2, tilesKey, frame)
             .setOrigin(0.5, 1)
             .setDepth(iso.isoY);
           this.walls.push(wall);
@@ -119,7 +123,7 @@ export class Level {
         }
 
         scene.add
-          .image(iso.isoX, iso.isoY, TILES_V2_KEY, this.floorKey(gridX, gridY))
+          .image(iso.isoX, iso.isoY, tilesKey, this.floorKey(gridX, gridY))
           .setDepth(DEPTH_FLOOR);
       }
     }
@@ -148,6 +152,8 @@ export class Level {
   materialAt(gridX: number, gridY: number): FloorMaterial {
     const frame = this.floorKey(gridX, gridY);
     if (frame === TILE_FRAMES.grate) return 'grate';
+    if (this.floor === TILE_FLOOR) return 'tile';
+    if (this.floor === WATER_FLOOR) return 'water';
     if (frame === TILE_FRAMES.floorB) return 'concrete';
     return 'steel';
   }
@@ -155,7 +161,7 @@ export class Level {
   private floorKey(gridX: number, gridY: number): TileFrame {
     const style = this.styles[gridY]?.[gridX] ?? 0;
     const variant = this.hash(gridX, gridY) % 100;
-    const wear = this.floor * 4;
+    const wear = Math.min(this.floor, 5) * 3;
 
     if (style === 1) {
       if (variant < 3 + wear) return TILE_FRAMES.grate;

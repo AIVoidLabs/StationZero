@@ -22,21 +22,30 @@ function readTable(file) {
 const TABLES = { en: readTable('src/i18n/en.ts'), tr: readTable('src/i18n/tr.ts') };
 
 function isVoiceKey(key) {
-  return /^(warden|exile|log)\./.test(key) || /^term\.b\d\.n\d$/.test(key);
+  return /^(warden|exile|log)\./.test(key) || /^term\.b\d+\.n\d$/.test(key);
 }
+
+const RECORDING_SPEAKERS = ['hale', 'voss', 'lund', 'dray', 'sato', 'brandt', 'pell', 'moreau', 'iyer', 'kessler'];
 
 function speakerFor(key) {
   if (key.startsWith('warden.')) return 'warden';
   if (key.startsWith('exile.')) return 'exile';
   if (key.startsWith('log.')) return 'log';
-  if (key === 'term.b3.n6') return 'warden';
-  if (key.startsWith('term.b1.')) return 'clerk';
-  if (key.startsWith('term.b2.')) return 'ross';
-  if (key.startsWith('term.b3.')) return 'foreman';
+  const floor = /^term\.b(\d+)\./.exec(key);
+  if (floor) return RECORDING_SPEAKERS[Number(floor[1]) - 1] ?? 'warden';
   return 'warden';
 }
 
 const hiss = (level) => `[a][n]amix=inputs=2:duration=first:weights=1 ${level}`;
+
+function recording(enVoice, enPitch, trVoice, trRate, trPitch, noise, vibrato) {
+  return {
+    en: { engine: 'flite', voice: enVoice, pitch: enPitch },
+    tr: { engine: 'espeak', voice: trVoice, rate: trRate, pitch: trPitch, pitchShift: 1 },
+    chain: `vibrato=f=${vibrato}:d=0.12,highpass=f=210,lowpass=f=3300,acrusher=bits=8:mix=0.45:mode=lin:aa=0,volume=1.5`,
+    noise,
+  };
+}
 
 const SPEAKERS = {
   warden: {
@@ -50,23 +59,16 @@ const SPEAKERS = {
     tr: { engine: 'espeak', voice: 'tr+whisper', rate: 118, pitch: 58, pitchShift: 1 },
     chain: 'highpass=f=150,lowpass=f=4300,aecho=0.5:0.5:70|140:0.25|0.12,volume=1.9,alimiter=limit=0.85',
   },
-  clerk: {
-    en: { engine: 'flite', voice: 'kal', pitch: 1 },
-    tr: { engine: 'espeak', voice: 'tr+m3', rate: 150, pitch: 42, pitchShift: 1 },
-    chain: 'highpass=f=300,lowpass=f=3000,acrusher=bits=7:mix=0.6:mode=lin:aa=0,aecho=0.8:0.4:12:0.3,volume=1.5,alimiter=limit=0.9',
-  },
-  ross: {
-    en: { engine: 'flite', voice: 'rms', pitch: 0.96 },
-    tr: { engine: 'espeak', voice: 'tr+m2', rate: 138, pitch: 34, pitchShift: 1 },
-    chain: 'vibrato=f=4.5:d=0.18,highpass=f=200,lowpass=f=3400,acrusher=bits=8:mix=0.5:mode=lin:aa=0,volume=1.5',
-    noise: 0.2,
-  },
-  foreman: {
-    en: { engine: 'flite', voice: 'awb', pitch: 0.9 },
-    tr: { engine: 'espeak', voice: 'tr+m4', rate: 132, pitch: 28, pitchShift: 1 },
-    chain: 'vibrato=f=3.5:d=0.1,highpass=f=220,lowpass=f=3200,acrusher=bits=8:mix=0.4:mode=lin:aa=0,volume=1.5',
-    noise: 0.16,
-  },
+  hale: recording('kal', 1.05, 'tr+f1', 145, 55, 0.14, 4),
+  voss: recording('rms', 0.9, 'tr+m6', 135, 30, 0.18, 3.6),
+  lund: recording('slt', 0.92, 'tr+f2', 125, 45, 0.2, 4.2),
+  dray: recording('awb', 0.95, 'tr+m4', 132, 28, 0.16, 3.5),
+  sato: recording('slt', 1.05, 'tr+f3', 140, 52, 0.16, 4.4),
+  brandt: recording('rms', 0.85, 'tr+m7', 128, 26, 0.22, 3.4),
+  pell: recording('awb', 1.05, 'tr+f4', 120, 48, 0.14, 4.1),
+  moreau: recording('kal', 0.9, 'tr+m5', 135, 32, 0.2, 3.8),
+  iyer: recording('slt', 1.0, 'tr+f5', 135, 58, 0.18, 4.6),
+  kessler: recording('rms', 1.0, 'tr+f1', 132, 42, 0.12, 4),
   log: {
     en: { engine: 'flite', voice: 'kal', pitch: 1 },
     tr: { engine: 'espeak', voice: 'tr+m5', rate: 150, pitch: 40, pitchShift: 1 },

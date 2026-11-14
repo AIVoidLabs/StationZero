@@ -5,6 +5,11 @@ export type SfxName =
   | 'pistol'
   | 'melee'
   | 'droneShot'
+  | 'shell'
+  | 'deflect'
+  | 'armorBreak'
+  | 'steam'
+  | 'laser'
   | 'playerHurt'
   | 'droneHit'
   | 'droneDeath'
@@ -14,6 +19,8 @@ export type SfxName =
   | 'stepSteel'
   | 'stepConcrete'
   | 'stepGrate'
+  | 'stepTile'
+  | 'stepWater'
   | 'heartbeat'
   | 'uiMove'
   | 'uiClick';
@@ -139,6 +146,30 @@ class SfxEngine {
         tone('square', 760, 140, 0.24, 0.16);
         noise(0.16, 0.18, 'highpass', 2500, 1200);
         break;
+      case 'shell':
+        tone('sawtooth', 220, 60, 0.5, 0.5);
+        tone('sine', 90, 36, 0.45, 0.8);
+        noise(0.3, 0.45, 'lowpass', 1800, 220);
+        break;
+      case 'deflect':
+        tone('triangle', 3200, 1800, 0.12, 0.35);
+        tone('square', 1700, 900, 0.07, 0.2);
+        noise(0.05, 0.3, 'highpass', 4500, 3000);
+        break;
+      case 'armorBreak':
+        noise(0.3, 0.8, 'bandpass', 2600, 900);
+        tone('square', 900, 200, 0.22, 0.4);
+        tone('sawtooth', 300, 70, 0.3, 0.45);
+        break;
+      case 'steam':
+        noise(0.9, 0.55, 'highpass', 3000, 1400);
+        noise(0.9, 0.25, 'bandpass', 900, 500);
+        break;
+      case 'laser':
+        tone('sawtooth', 900, 1500, 0.35, 0.22);
+        tone('square', 120, 118, 0.35, 0.18);
+        noise(0.2, 0.18, 'highpass', 5200, 3800);
+        break;
       case 'playerHurt':
         tone('sine', 120, 50, 0.28, 0.95);
         tone('sawtooth', 320, 85, 0.22, 0.25);
@@ -187,6 +218,16 @@ class SfxEngine {
         noise(0.05, 0.45, 'bandpass', 3200, 2000, 0.045);
         tone('square', 860, 500, 0.05, 0.16, 0.045);
         tone('sine', 2300, 2100, 0.14, 0.09, 0.02);
+        break;
+      case 'stepTile':
+        noise(0.05, 0.55, 'bandpass', 3400, 2400);
+        tone('triangle', 520, 300, 0.06, 0.38);
+        tone('sine', 2100, 1900, 0.1, 0.08, 0.01);
+        break;
+      case 'stepWater':
+        noise(0.16, 0.7, 'lowpass', 1500, 500);
+        noise(0.09, 0.5, 'highpass', 3600, 2200, 0.04);
+        tone('sine', 220, 120, 0.12, 0.3);
         break;
       case 'heartbeat':
         tone('sine', 62, 38, 0.16, 0.9);

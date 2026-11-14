@@ -21,7 +21,7 @@ import { createCanvasContext, refreshCanvasTexture } from '../utils/canvas';
 import { gridVectorToWorld } from '../utils/iso';
 import type { Level } from './Level';
 
-export type ProjectileOwner = 'player' | 'drone';
+export type ProjectileOwner = 'player' | 'drone' | 'shell';
 
 export interface ProjectileView {
   readonly owner: ProjectileOwner;
@@ -64,12 +64,40 @@ const STREAK_HEIGHT = 6;
 const STREAK_KEYS: Record<ProjectileOwner, string> = {
   player: 'bullet_streak_player',
   drone: 'bullet_streak_drone',
+  shell: 'bullet_streak_shell',
 };
 const STREAK_COLORS: Record<ProjectileOwner, readonly [string, string, string]> = {
   player: ['255, 244, 210', '255, 190, 96', '217, 164, 65'],
   drone: ['255, 236, 224', '255, 48, 30', '140, 18, 10'],
+  shell: ['255, 240, 200', '255, 120, 30', '150, 50, 10'],
 };
-const SPARK_COLORS: Record<ProjectileOwner, number> = { player: 0xffb060, drone: 0xff3a22 };
+const SPARK_COLORS: Record<ProjectileOwner, number> = { player: 0xffb060, drone: 0xff3a22, shell: 0xff8a2a };
+
+interface ProjectileStats {
+  readonly speed: number;
+  readonly damage: number;
+  readonly hitRadius: number;
+  readonly range: number;
+  readonly length: number;
+}
+
+const PROJECTILE_STATS: Record<ProjectileOwner, ProjectileStats> = {
+  player: {
+    speed: PLAYER_BULLET_SPEED,
+    damage: PISTOL_DAMAGE,
+    hitRadius: PLAYER_BULLET_HIT_RADIUS,
+    range: PLAYER_BULLET_RANGE,
+    length: PLAYER_BULLET_LENGTH,
+  },
+  drone: {
+    speed: DRONE_BULLET_SPEED,
+    damage: DRONE_BULLET_DAMAGE,
+    hitRadius: DRONE_BULLET_HIT_RADIUS,
+    range: DRONE_BULLET_RANGE,
+    length: DRONE_BULLET_LENGTH,
+  },
+  shell: { speed: 5, damage: 1, hitRadius: 0.62, range: 10, length: 34 },
+};
 const SUBSTEP_TILES = 0.2;
 const FLARE_MS = 110;
 const FLARE_RADIUS_PX = 70;
@@ -106,6 +134,7 @@ export class Projectiles {
     this.getDrones = getDrones;
     buildStreak(scene, 'player');
     buildStreak(scene, 'drone');
+    buildStreak(scene, 'shell');
   }
 
   get active(): readonly ProjectileView[] {
@@ -124,14 +153,13 @@ export class Projectiles {
     const fromX = gridX + dirX * 0.35;
     const fromY = gridY + dirY * 0.35;
 
-    const isPlayer = owner === 'player';
+    const stats = PROJECTILE_STATS[owner];
     const image = this.scene.add
       .image(0, 0, STREAK_KEYS[owner])
       .setOrigin(1, 0.5)
       .setDepth(DEPTH_VFX + 1)
       .setBlendMode(BlendModes.ADD);
-    const streak = isPlayer ? PLAYER_BULLET_LENGTH : DRONE_BULLET_LENGTH;
-    image.setScale(streak / STREAK_WIDTH, 1);
+    image.setScale(stats.length / STREAK_WIDTH, 1);
     const screen = gridVectorToWorld(dirX, dirY, TILE_WIDTH, TILE_HEIGHT);
     image.setRotation(Math.atan2(screen.y, screen.x));
 
@@ -141,10 +169,10 @@ export class Projectiles {
       y: fromY,
       dirX,
       dirY,
-      speed: isPlayer ? PLAYER_BULLET_SPEED : DRONE_BULLET_SPEED,
-      damage: isPlayer ? PISTOL_DAMAGE : DRONE_BULLET_DAMAGE,
-      hitRadius: isPlayer ? PLAYER_BULLET_HIT_RADIUS : DRONE_BULLET_HIT_RADIUS,
-      remaining: isPlayer ? PLAYER_BULLET_RANGE : DRONE_BULLET_RANGE,
+      speed: stats.speed,
+      damage: stats.damage,
+      hitRadius: stats.hitRadius,
+      remaining: stats.range,
       image,
     };
     this.placeImage(bullet);
@@ -218,7 +246,7 @@ export class Projectiles {
         if (drone.isDead) continue;
         const at = drone.gridPosition;
         if (segmentDistance(at.x, at.y, fromX, fromY, bullet.x, bullet.y) > bullet.hitRadius) continue;
-        drone.takeDamage(bullet.damage);
+        drone.takeDamage(bullet.damage, { x: bullet.dirX, y: bullet.dirY });
         this.impact(bullet, at.x, at.y);
         return true;
       }

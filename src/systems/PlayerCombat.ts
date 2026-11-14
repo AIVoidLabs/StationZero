@@ -97,7 +97,9 @@ export class PlayerCombat {
     this.aimAt(target);
     sfx.play('melee');
     this.player.startAttackCooldown(timeNow, MELEE_COOLDOWN_MS);
-    target.takeDamage(MELEE_DAMAGE);
+    const from = this.player.gridPosition;
+    const to = target.gridPosition;
+    target.takeDamage(MELEE_DAMAGE, { x: to.x - from.x, y: to.y - from.y });
     this.spawnImpact(target.x, target.y - DRONE_HEIGHT * 0.45);
     return true;
   }

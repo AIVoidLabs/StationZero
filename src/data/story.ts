@@ -1,11 +1,16 @@
+import { FLOOR_COUNT } from './config';
 import { t, type StringKey } from '../i18n';
 
+function floorNumber(floor: number): number {
+  return Math.max(1, Math.min(FLOOR_COUNT, floor + 1));
+}
+
 export function arrivalLine(floor: number): StringKey {
-  return `warden.b${Math.max(1, Math.min(4, floor + 1))}_arrival` as StringKey;
+  return `warden.b${floorNumber(floor)}_arrival` as StringKey;
 }
 
 export function clearLine(floor: number): StringKey {
-  return `warden.b${Math.max(1, Math.min(4, floor + 1))}_clear` as StringKey;
+  return `warden.b${floorNumber(floor)}_clear` as StringKey;
 }
 
 export function introLines(): string[] {

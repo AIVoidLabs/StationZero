@@ -5,6 +5,8 @@ import {
   FLOOR_LOOT_MIN,
   LOOT_AMMO_AMOUNT,
   LOOT_DROP_CHANCE,
+  LOOT_DROP_CHANCE_MIN,
+  LOOT_DROP_DEPTH_STEP,
   LOOT_HEAL_AMOUNT,
   LOOT_PICKUP_RANGE,
   TILE_HEIGHT,
@@ -37,6 +39,7 @@ export class LootSystem {
   private readonly player: Player;
   private readonly rng: () => number;
   private readonly items: LootPickup[] = [];
+  private readonly dropChance: number;
   private guaranteedDrop = true;
   private hoverLabel: GameObjects.Text | null = null;
   private hovered: LootPickup | null = null;
@@ -46,6 +49,7 @@ export class LootSystem {
     this.level = level;
     this.player = player;
     this.rng = createRng(dungeon.seed ^ LOOT_SEED);
+    this.dropChance = Math.max(LOOT_DROP_CHANCE_MIN, LOOT_DROP_CHANCE - dungeon.floor * LOOT_DROP_DEPTH_STEP);
     this.placeFloorLoot(dungeon);
   }
 
@@ -57,8 +61,11 @@ export class LootSystem {
     const cell = this.freeCellNear(Math.round(gridX), Math.round(gridY));
     if (!cell) return null;
 
-    if (!this.guaranteedDrop && this.rng() > LOOT_DROP_CHANCE) return null;
-    this.guaranteedDrop = false;
+    const state = this.player.getHealth();
+    const needsSupplies = state.hp < state.maxHp || state.ammo < state.maxAmmo;
+    const guaranteed = this.guaranteedDrop && needsSupplies;
+    if (!guaranteed && this.rng() > this.dropChance) return null;
+    if (guaranteed) this.guaranteedDrop = false;
 
     return this.spawn(cell.x, cell.y, this.pickKind());
   }
@@ -230,7 +237,7 @@ export class LootSystem {
 
   private placeFloorLoot(dungeon: Dungeon): void {
     const rng = createRng(dungeon.seed ^ FLOOR_LOOT_SEED);
-    const target = Math.max(FLOOR_LOOT_MIN, FLOOR_LOOT_BASE - dungeon.floor);
+    const target = Math.max(FLOOR_LOOT_MIN, Math.round(FLOOR_LOOT_BASE - dungeon.floor / 2));
     const roomCells: Cell[] = [];
     const deadEnds: Cell[] = [];
 

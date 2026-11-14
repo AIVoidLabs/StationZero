@@ -1,30 +1,19 @@
 import type { GameObjects, Scene } from 'phaser';
-import {
-  DRONE_DEAD_V2_KEY,
-  DRONE_FRAME,
-  DRONE_V2_SPRITE_KEY,
-  type Direction,
-} from '../../assets/manifest';
+import { DRONE_FRAME, type Direction } from '../../assets/manifest';
 import {
   DRONE_CHASE_LEASH,
   DRONE_CHASE_MAX_MS,
-  DRONE_CHASE_SPEED,
-  DRONE_CONTACT_RANGE,
   DRONE_DISENGAGE_GRACE_MS,
   DRONE_DISENGAGE_SIGHT_SCALE,
-  DRONE_FOOTPRINT,
-  DRONE_HEIGHT,
   DRONE_IDLE_MAX_MS,
   DRONE_IDLE_MIN_MS,
   DRONE_LOSE_SIGHT_MS,
   DRONE_PATROL_RADIUS,
   DRONE_PERIPHERAL_RANGE,
   DRONE_REPATH_MS,
-  DRONE_RETURN_SPEED,
   DRONE_SCAN_MS,
   DRONE_SEARCH_MS,
   DRONE_SIGHT_RANGE,
-  DRONE_SPEED,
   DRONE_VIEW_COSINE,
   TILE_HEIGHT,
   TILE_WIDTH,
@@ -42,12 +31,8 @@ import {
   DRONE_DODGE_SENSE_TILES,
   DRONE_DODGE_SPEED,
   DRONE_FIRE_COOLDOWN_MIN_SCALE,
-  DRONE_FIRE_COOLDOWN_MS,
-  DRONE_FIRE_RANGE,
-  DRONE_FIRE_RECOVER_MS,
-  DRONE_FIRE_WINDUP_MS,
-  DRONE_MAX_HP,
 } from '../../data/config';
+import { ENEMY_SPECS, TANK_FRONT_COS, type EnemyKind, type EnemySpec } from '../../data/enemies';
 import type { Projectiles } from '../../systems/Projectiles';
 import { distanceGain, sfx } from '../../systems/Sfx';
 import { DIRECTION_VECTOR, DIRECTIONS, facingForGridStep } from '../../utils/facing';
@@ -73,11 +58,16 @@ const WRECK_DEPTH_OFFSET = 12;
 
 const WAYPOINT_EPSILON = 0.08;
 const MAX_STEP_SECONDS = 0.05;
-const HEALTH_BAR_WIDTH = 24;
 const HEALTH_BAR_HEIGHT = 3;
-const HEALTH_BAR_Y = -DRONE_HEIGHT - 6;
+
+export interface HitDirection {
+  readonly x: number;
+  readonly y: number;
+}
 
 export class Drone extends Entity {
+  readonly kind: EnemyKind;
+  private readonly spec: EnemySpec;
   private readonly level: Level;
   private readonly player: Player;
   private readonly depthManager: DepthManager;
@@ -117,6 +107,12 @@ export class Drone extends Entity {
   private dodgeDirY = 0;
   private dodgeCooldownMs = 0;
   private diedAt = 0;
+  private nextTurnAt = 0;
+  private armorHp = 0;
+  private summonClock = 0;
+  private summonPending = false;
+  private readonly armorBarBack: GameObjects.Rectangle;
+  private readonly armorBarFill: GameObjects.Rectangle;
 
   constructor(
     scene: Scene,
@@ -127,10 +123,13 @@ export class Drone extends Entity {
     homeY: number,
     seed: number,
     projectiles: Projectiles | null = null,
+    kind: EnemyKind = 'drone',
   ) {
     const iso = gridVectorToWorld(homeX, homeY, TILE_WIDTH, TILE_HEIGHT);
     super(scene, iso.x, iso.y, { gridX: homeX, gridY: homeY, isoX: iso.x, isoY: iso.y });
 
+    this.kind = kind;
+    this.spec = ENEMY_SPECS[kind];
     this.level = level;
     this.player = player;
     this.depthManager = depth;
@@ -146,22 +145,34 @@ export class Drone extends Entity {
     this.bobPhase = this.rng() * Math.PI * 2;
     this.idleMs = DRONE_IDLE_MIN_MS + this.rng() * (DRONE_IDLE_MAX_MS - DRONE_IDLE_MIN_MS);
 
-    this.hp = DRONE_MAX_HP;
-    this.maxHp = DRONE_MAX_HP;
+    this.hp = this.spec.maxHp;
+    this.maxHp = this.spec.maxHp;
+    this.armorHp = this.spec.armorHp;
     this.dead = false;
 
-    this.shadow = scene.add.image(0, 0, 'shadow').setOrigin(0.5, 0.5).setScale(0.8).setAlpha(0.65);
+    const scale = this.spec.scale;
+    const barWidth = this.spec.healthBarWidth;
+    const barY = -this.spec.height * scale - 6;
+    this.shadow = scene.add.image(0, 0, 'shadow').setOrigin(0.5, 0.5).setScale(0.8 * scale).setAlpha(0.65);
 
-    this.sprite = scene.add.image(0, 0, DRONE_V2_SPRITE_KEY, DRONE_FRAME[this.facing]);
+    this.sprite = scene.add.image(0, 0, this.spec.spriteKey, DRONE_FRAME[this.facing]);
     this.visualFrame = DRONE_FRAME[this.facing];
-    this.sprite.setOrigin(0.5, 1);
+    this.sprite.setOrigin(0.5, 1).setScale(scale);
     this.healthBarBack = scene.add
-      .rectangle(0, HEALTH_BAR_Y, HEALTH_BAR_WIDTH + 2, HEALTH_BAR_HEIGHT + 2, 0x0a0a0a, 0.9)
+      .rectangle(0, barY, barWidth + 2, HEALTH_BAR_HEIGHT + 2, 0x0a0a0a, 0.9)
       .setOrigin(0.5, 0.5);
     this.healthBarFill = scene.add
-      .rectangle(-HEALTH_BAR_WIDTH / 2, HEALTH_BAR_Y, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT, 0x6fae4f, 1)
+      .rectangle(-barWidth / 2, barY, barWidth, HEALTH_BAR_HEIGHT, 0x6fae4f, 1)
       .setOrigin(0, 0.5);
-    this.add([this.shadow, this.sprite, this.healthBarBack, this.healthBarFill]);
+    this.armorBarBack = scene.add
+      .rectangle(0, barY + HEALTH_BAR_HEIGHT + 3, barWidth + 2, HEALTH_BAR_HEIGHT + 1, 0x0a0a0a, 0.9)
+      .setOrigin(0.5, 0.5)
+      .setVisible(this.armorHp > 0);
+    this.armorBarFill = scene.add
+      .rectangle(-barWidth / 2, barY + HEALTH_BAR_HEIGHT + 3, barWidth, HEALTH_BAR_HEIGHT - 1, 0x7fb4dc, 1)
+      .setOrigin(0, 0.5)
+      .setVisible(this.armorHp > 0);
+    this.add([this.shadow, this.sprite, this.healthBarBack, this.healthBarFill, this.armorBarBack, this.armorBarFill]);
     this.updateHealthBar();
 
     this.setDepth(iso.y);
@@ -183,12 +194,32 @@ export class Drone extends Entity {
     return this.dead;
   }
 
+  get contactReach(): number {
+    return this.spec.contactRange + 0.25;
+  }
+
+  get contactDamage(): number {
+    return this.spec.contactDamage;
+  }
+
   get health(): { hp: number; maxHp: number } {
     return { hp: this.hp, maxHp: this.maxHp };
   }
 
-  takeDamage(amount: number): boolean {
+  takeDamage(amount: number, travel?: HitDirection): boolean {
     if (this.dead) return false;
+    if (this.armorHp > 0 && travel && this.isFrontalHit(travel)) {
+      this.armorHp -= 1;
+      this.updateArmorBar();
+      if (this.armorHp <= 0) {
+        sfx.play('armorBreak', this.audioGain());
+        this.spawnArmorBreakFx();
+      } else {
+        sfx.play('deflect', this.audioGain());
+        this.spawnDeflectFx();
+      }
+      return false;
+    }
     this.hp -= amount;
     if (this.hp <= 0) {
       this.hp = 0;
@@ -219,6 +250,13 @@ export class Drone extends Entity {
     const dt = Math.min(deltaMs, MAX_STEP_SECONDS * 1000) / 1000;
     this.fireCooldownMs -= deltaMs;
     this.dodgeCooldownMs -= deltaMs;
+    if (this.spec.summonMs > 0 && this.mode === 'CHASE') {
+      this.summonClock += deltaMs;
+      if (this.summonClock >= this.spec.summonMs) {
+        this.summonClock = 0;
+        this.summonPending = true;
+      }
+    }
     if (this.updateDodge(deltaMs, dt)) {
       this.syncTransform();
       this.updateVisual();
@@ -280,7 +318,7 @@ export class Drone extends Entity {
       return;
     }
 
-    this.followPath(dt, DRONE_SPEED);
+    this.followPath(dt, this.spec.speed);
   }
 
   private updateChase(deltaMs: number, dt: number): void {
@@ -312,7 +350,7 @@ export class Drone extends Entity {
     const distanceToPlayer = Math.hypot(target.gridX - this.posX, target.gridY - this.posY);
     if (this.updateFire(deltaMs, sees, distanceToPlayer)) return;
 
-    if (distanceToPlayer <= DRONE_CONTACT_RANGE) {
+    if (distanceToPlayer <= this.spec.contactRange) {
       this.path = [];
       this.faceToward(target.gridX - this.posX, target.gridY - this.posY);
       return;
@@ -323,7 +361,7 @@ export class Drone extends Entity {
       this.setPath(target.gridX, target.gridY);
     }
 
-    this.followPath(dt, DRONE_CHASE_SPEED);
+    this.followPath(dt, this.spec.chaseSpeed);
   }
 
   private updateSearch(dt: number): void {
@@ -335,7 +373,7 @@ export class Drone extends Entity {
     }
 
     if (this.path.length > 0) {
-      this.followPath(dt, DRONE_SPEED);
+      this.followPath(dt, this.spec.speed);
       return;
     }
 
@@ -360,7 +398,7 @@ export class Drone extends Entity {
       return;
     }
 
-    this.followPath(dt, DRONE_RETURN_SPEED);
+    this.followPath(dt, this.spec.returnSpeed);
   }
 
   private tryAggro(rangeScale: number): boolean {
@@ -527,7 +565,7 @@ export class Drone extends Entity {
   }
 
   private isBlocked(gridX: number, gridY: number): boolean {
-    const radius = DRONE_FOOTPRINT;
+    const radius = this.spec.footprint;
     const minX = Math.round(gridX - radius);
     const maxX = Math.round(gridX + radius);
     const minY = Math.round(gridY - radius);
@@ -574,10 +612,14 @@ export class Drone extends Entity {
         return false;
       }
       this.fireMs += deltaMs;
-      if (this.fireMs >= DRONE_FIRE_WINDUP_MS) {
+      if (this.fireMs >= this.spec.fireWindupMs) {
         const at = this.player.gridPosition;
-        this.projectiles.spawn('drone', this.posX, this.posY, at.x - this.posX, at.y - this.posY);
-        sfx.play('droneShot', this.audioGain());
+        const base = Math.atan2(at.y - this.posY, at.x - this.posX);
+        for (let shot = 0; shot < this.spec.fan; shot += 1) {
+          const angle = base + (shot - (this.spec.fan - 1) / 2) * this.spec.fanStep;
+          this.projectiles.spawn(this.spec.shot, this.posX, this.posY, Math.cos(angle), Math.sin(angle));
+        }
+        sfx.play(this.spec.shot === 'shell' ? 'shell' : 'droneShot', this.audioGain());
         this.fireState = 'RECOVER';
         this.fireMs = 0;
       }
@@ -586,16 +628,17 @@ export class Drone extends Entity {
 
     if (this.fireState === 'RECOVER') {
       this.fireMs += deltaMs;
-      if (this.fireMs >= DRONE_FIRE_RECOVER_MS) {
+      if (this.fireMs >= this.spec.fireRecoverMs) {
         this.fireState = 'NONE';
         const pressure = this.depthManager.pressure;
         const scale = 1 - (1 - DRONE_FIRE_COOLDOWN_MIN_SCALE) * pressure.t;
-        this.fireCooldownMs = DRONE_FIRE_COOLDOWN_MS * scale;
+        this.fireCooldownMs = this.spec.fireCooldownMs * scale;
       }
       return true;
     }
 
-    const inRange = distanceToPlayer > DRONE_CONTACT_RANGE + 0.4 && distanceToPlayer <= DRONE_FIRE_RANGE;
+    const inRange =
+      distanceToPlayer > this.spec.contactRange + 0.4 && distanceToPlayer <= this.spec.fireRange;
     if (sees && inRange && this.fireCooldownMs <= 0) {
       this.fireState = 'WINDUP';
       this.fireMs = 0;
@@ -612,7 +655,7 @@ export class Drone extends Entity {
       return true;
     }
 
-    if (this.projectiles === null || this.dodgeCooldownMs > 0) return false;
+    if (this.projectiles === null || !this.spec.dodges || this.dodgeCooldownMs > 0) return false;
     if (this.mode !== 'CHASE' && this.mode !== 'SEARCH') return false;
 
     for (const bullet of this.projectiles.active) {
@@ -653,7 +696,7 @@ export class Drone extends Entity {
     this.fireState = 'NONE';
     this.shadow.setVisible(false);
     this.sprite.clearTint();
-    this.sprite.setTexture(DRONE_DEAD_V2_KEY);
+    this.sprite.setTexture(this.spec.deadKey);
     this.sprite.setOrigin(0.5, 1);
     this.sprite.y = 0;
     this.sprite.setFlipX(this.rng() < 0.5);
@@ -700,7 +743,37 @@ export class Drone extends Entity {
 
   private faceToward(stepX: number, stepY: number): void {
     if (Math.abs(stepX) < 0.00001 && Math.abs(stepY) < 0.00001) return;
-    this.facing = facingForGridStep(stepX, stepY);
+    const next = facingForGridStep(stepX, stepY);
+    if (next === this.facing) return;
+    const now = this.scene.time.now;
+    if (now < this.nextTurnAt) return;
+    this.nextTurnAt = now + this.spec.turnMs;
+    this.facing = next;
+  }
+
+  private isFrontalHit(travel: HitDirection): boolean {
+    const length = Math.hypot(travel.x, travel.y);
+    if (length < 0.0001) return false;
+    const forward = DIRECTION_VECTOR[this.facing];
+    const dot = (-travel.x / length) * forward.x + (-travel.y / length) * forward.y;
+    return dot >= TANK_FRONT_COS;
+  }
+
+  private spawnDeflectFx(): void {
+    const spark = this.scene.add
+      .circle(this.x, this.y - 18 * this.spec.scale, 3, 0xe8f4ff, 0.95)
+      .setDepth(DEPTH_VFX + 1)
+      .setBlendMode(BlendModes.ADD);
+    this.scene.tweens.add({
+      targets: spark,
+      alpha: 0,
+      scaleX: 2.6,
+      scaleY: 2.6,
+      y: spark.y - 8,
+      duration: 180,
+      ease: 'Quad.easeOut',
+      onComplete: () => spark.destroy(),
+    });
   }
 
   private syncTransform(): void {
@@ -713,6 +786,41 @@ export class Drone extends Entity {
     this.setDepth(world.y);
   }
 
+  private updateArmorBar(): void {
+    const ratio = this.spec.armorHp > 0 ? Math.max(0, this.armorHp / this.spec.armorHp) : 0;
+    this.armorBarFill.setScale(ratio, 1);
+    const visible = this.armorHp > 0 && !this.dead;
+    this.armorBarBack.setVisible(visible);
+    this.armorBarFill.setVisible(visible);
+  }
+
+  private spawnArmorBreakFx(): void {
+    for (let index = 0; index < 8; index += 1) {
+      const angle = this.rng() * Math.PI * 2;
+      const spark = this.scene.add
+        .circle(this.x, this.y - 18 * this.spec.scale, 2, 0xcfe6ff, 1)
+        .setDepth(DEPTH_VFX + 1)
+        .setBlendMode(BlendModes.ADD);
+      this.scene.tweens.add({
+        targets: spark,
+        x: this.x + Math.cos(angle) * 22,
+        y: spark.y + Math.sin(angle) * 14,
+        alpha: 0,
+        duration: 320,
+        ease: 'Quad.easeOut',
+        onComplete: () => spark.destroy(),
+      });
+    }
+  }
+
+  get summonReady(): boolean {
+    return this.summonPending;
+  }
+
+  consumeSummon(): void {
+    this.summonPending = false;
+  }
+
   private updateHealthBar(): void {
     const ratio = this.maxHp > 0 ? Math.max(0, Math.min(1, this.hp / this.maxHp)) : 0;
     this.healthBarFill.setScale(ratio, 1);
@@ -721,17 +829,22 @@ export class Drone extends Entity {
   private setHealthBarVisible(visible: boolean): void {
     this.healthBarBack.setVisible(visible);
     this.healthBarFill.setVisible(visible);
+    if (!visible) {
+      this.armorBarBack.setVisible(false);
+      this.armorBarFill.setVisible(false);
+    }
   }
 
   private updateVisual(): void {
-    const bob = Math.sin(this.scene.time.now * 0.0035 + this.bobPhase) * 1.4;
+    const bob = Math.sin(this.scene.time.now * 0.0035 + this.bobPhase) * this.spec.bob;
     this.sprite.y = -2 + bob;
-    this.shadow.setScale(0.8 - bob * 0.02, 0.8);
+    this.shadow.setScale((0.8 - bob * 0.02) * this.spec.scale, 0.8 * this.spec.scale);
 
     if (this.fireState === 'WINDUP') {
       this.sprite.setTint(Math.floor(this.scene.time.now / 70) % 2 === 0 ? 0xff2a1a : 0xffb0a0);
-    } else if (this.mode === 'CHASE') this.sprite.setTint(0xff7a5a);
+    } else if (this.mode === 'CHASE') this.sprite.setTint(this.spec.chaseTint);
     else if (this.mode === 'SEARCH') this.sprite.setTint(0xd9a441);
+    else if (this.spec.idleTint !== null) this.sprite.setTint(this.spec.idleTint);
     else this.sprite.clearTint();
 
     this.applyFacingFrame();
@@ -741,7 +854,7 @@ export class Drone extends Entity {
     const frame = DRONE_FRAME[this.facing];
     if (this.visualFrame === frame) return;
     this.visualFrame = frame;
-    this.sprite.setTexture(DRONE_V2_SPRITE_KEY, frame);
+    this.sprite.setTexture(this.spec.spriteKey, frame);
   }
 
   destroy(fromScene?: boolean): void {

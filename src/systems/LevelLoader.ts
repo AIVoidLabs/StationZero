@@ -3,13 +3,14 @@ import {
   FLOOR_COUNT,
   FLOOR_SEED_STRIDE,
 } from '../data/config';
-import floor0 from '../data/levels/floor-0.json';
-import floor1 from '../data/levels/floor-1.json';
-import floor2 from '../data/levels/floor-2.json';
-import floor3 from '../data/levels/floor-3.json';
 import type { Dungeon, DungeonExit, FloorStyle, Room } from './DungeonGen';
 
-const RAW_LEVELS: readonly unknown[] = [floor0, floor1, floor2, floor3];
+const RAW_LEVELS: readonly unknown[] = Object.entries(
+  import.meta.glob('../data/levels/floor-*.json', { eager: true, import: 'default' }),
+)
+  .map(([path, data]): readonly [number, unknown] => [Number(/floor-(\d+)\.json$/.exec(path)?.[1] ?? -1), data])
+  .sort((a, b) => a[0] - b[0])
+  .map(([, data]) => data);
 
 const WALL = '#';
 const FLOOR = '.';

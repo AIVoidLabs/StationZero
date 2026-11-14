@@ -1,10 +1,23 @@
 import { en, type StringKey } from '../i18n/en';
 import type { Language } from '../systems/Settings';
 
-export type VoiceSpeaker = 'warden' | 'exile' | 'log' | 'clerk' | 'ross' | 'foreman';
+export type VoiceSpeaker =
+  | 'warden'
+  | 'exile'
+  | 'log'
+  | 'hale'
+  | 'voss'
+  | 'lund'
+  | 'dray'
+  | 'sato'
+  | 'brandt'
+  | 'pell'
+  | 'moreau'
+  | 'iyer'
+  | 'kessler';
 
 function isVoiceKey(key: string): boolean {
-  return /^(warden|exile|log)\./.test(key) || /^term\.b\d\.n\d$/.test(key);
+  return /^(warden|exile|log)\./.test(key) || /^term\.b\d+\.n\d$/.test(key);
 }
 
 export const VOICE_KEYS: readonly StringKey[] = (Object.keys(en) as StringKey[]).filter(isVoiceKey);

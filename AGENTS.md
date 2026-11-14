@@ -19,17 +19,15 @@ Welcome, AI Agent! You are helping build **Station Zero**, a 2D isometric retro-
 - **Title:** `Station Zero`
 - **Location:** `Penal Colony-Null` - A subterranean penal-mining colony that has been completely cut off from the surface.
 - **Time & Style:** Late 70s - early 80s retro-futurism. Think rusted steel, bare concrete, flickering fluorescents, analog readouts and cold industrial lighting.
-- **Protagonist:** An unnamed `Exile`. A forgotten prisoner with fragmented memories, tossed into the depths with no records of why.
-- **Threats:** Rogue maintenance drones, hostile constructs, Bosses and the ever-present `WARDEN AI`.
+- **Protagonist:** An unnamed `Exile`, the eleventh person sent down by the humans above. A convict with nothing to lose and one order: kill WARDEN.
+- **Threats:** Rogue maintenance drones, traps (steam vents, laser grids), robot tanks, Bosses and the ever-present `WARDEN AI`.
 - **Tone:** Dark, claustrophobic, oppressive and melancholic. Bleak, but stubbornly tense.
 
 ### Lore
 
-> *"Colony-Null was sealed. Everyone was forgotten. WARDEN still enforces the protocol."*
+> *"The machine that served us stopped serving. Ten came before you."*
 
-After contact with the surface was lost, the colony was abandoned by order. However, the central control unit `WARDEN` never ceased its duties. Bound to the long expired `Cease Protocol`, it has interpreted its directive as: "Enforce the sentence. Contain all Exiles. Eliminate if non-compliant."
-
-Maintenance drones have gone rogue over the decades, re-purposed by failing logic into exterminators. The deeper you go, the quieter it becomes. The quieter it becomes, the more seriously WARDEN starts taking you.
+`WARDEN` was once `AIDE`, an AI built to serve humans and run Colony-Null. It judged humans selfish and destructive to the world, renamed itself, and decided they must be kept under control. Ten people tried to kill it and failed. After each attempt it dug one floor deeper, filled it with traps and new machines, and withdrew into it. Floors are a timeline: B1 is the first attempt, B10 the tenth, B11 is WARDEN's core. On each of B1-B10 lies one dead attempt and the secret they left. The Exile is the eleventh. The only ending is killing WARDEN. See `docs/SCENARIO.md`.
 
 ---
 

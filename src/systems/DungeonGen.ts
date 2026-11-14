@@ -87,6 +87,16 @@ const FLOOR_PROFILES: readonly FloorProfile[] = [
     damagedChance: 0.85,
     extraLinks: 2,
   },
+  ...Array.from({ length: 7 }, (_, step): FloorProfile => ({
+    roomCount: 6 + (step % 2),
+    hallSize: 5,
+    minRoomWidth: 3,
+    maxRoomWidth: 5,
+    minRoomHeight: 3,
+    maxRoomHeight: 4,
+    damagedChance: Math.min(0.95, 0.88 + step * 0.01),
+    extraLinks: 2,
+  })),
 ];
 
 const ROOM_PLACEMENT_ATTEMPTS = 40;

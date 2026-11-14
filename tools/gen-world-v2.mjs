@@ -103,6 +103,7 @@ const FLOOR = {
   grateBase: [11, 14, 15],
   grateBar: [88, 58, 44],
   grateEdge: [104, 62, 44],
+  wet: [34, 46, 66],
 };
 
 function floorColor(kind, u, v, px, py) {
@@ -122,6 +123,17 @@ function floorColor(kind, u, v, px, py) {
   let base = kind === 'steel' ? FLOOR.steel : FLOOR.concrete;
   if (edge < 0.04) return FLOOR.steelSeam;
   if (edge < 0.075 && (u < 0.075 || v < 0.075)) return kind === 'steel' ? FLOOR.steelLine : add(base, 9);
+
+  if (PATTERN === 'tiles') {
+    if (Math.abs(u - 0.5) < 0.012 || Math.abs(v - 0.5) < 0.012) return mul(base, 0.72);
+    if (grain > 0.95) return add(base, 6);
+    return base;
+  }
+
+  if (PATTERN === 'wet') {
+    const puddle = Math.sin(u * 9 + Math.sin(v * 5) * 2) * Math.sin(v * 8 + u * 3);
+    if (puddle > 0.5) return puddle > 0.82 ? add(FLOOR.wet, 18) : FLOOR.wet;
+  }
 
   if (kind === 'steel') {
     for (const [cu, cv] of [
@@ -175,6 +187,8 @@ function floorTile(kind) {
   return img;
 }
 
+let PATTERN = 'plain';
+
 // ---------- walls ----------
 
 const WALL = {
@@ -191,6 +205,71 @@ const WALL = {
   cableCyan: [40, 92, 108],
   clamp: [96, 110, 110],
 };
+
+const DEFAULT_FLOOR = { ...FLOOR };
+const DEFAULT_WALL = { ...WALL };
+
+const THEMES = [
+  { name: 'intake' },
+  {
+    name: 'cellblock',
+    floor: { steel: [66, 60, 52], steelLine: [96, 86, 70], concrete: [74, 66, 54], grateBar: [150, 98, 40], grateEdge: [128, 84, 36] },
+    wall: { cap: [140, 124, 104], capEdge: [196, 178, 148], left: [76, 68, 58], right: [102, 90, 74], rust: [150, 84, 44], amber: [200, 142, 40] },
+  },
+  {
+    name: 'infirmary',
+    pattern: 'tiles',
+    floor: { steel: [150, 168, 170], steelSeam: [58, 76, 80], steelLine: [190, 204, 204], concrete: [130, 152, 154], grateBar: [80, 140, 150], grateEdge: [70, 120, 130] },
+    wall: { cap: [190, 214, 216], capEdge: [225, 240, 240], left: [96, 126, 132], right: [128, 160, 166], rust: [96, 150, 156], cableCyan: [70, 170, 190] },
+  },
+  {
+    name: 'drill',
+    floor: { steel: [78, 66, 50], concrete: [90, 76, 56], concreteCrack: [30, 24, 16], grateBar: [140, 96, 50], grateEdge: [120, 80, 40] },
+    wall: { cap: [140, 118, 86], capEdge: [190, 164, 120], left: [80, 66, 50], right: [108, 90, 66], rust: [160, 84, 40], amber: [210, 150, 40] },
+  },
+  {
+    name: 'pump',
+    pattern: 'wet',
+    floor: { steel: [44, 56, 70], steelLine: [66, 82, 108], concrete: [48, 56, 76], wet: [58, 48, 98], grateBar: [90, 70, 130], grateEdge: [76, 60, 112] },
+    wall: { cap: [96, 110, 150], capEdge: [146, 160, 204], left: [46, 58, 80], right: [64, 78, 104], rust: [96, 70, 140], cableCyan: [90, 80, 190] },
+  },
+  {
+    name: 'foundry',
+    floor: { steel: [78, 46, 38], steelLine: [118, 70, 52], concrete: [86, 54, 44], grateBar: [210, 110, 40], grateEdge: [160, 70, 30] },
+    wall: { cap: [150, 92, 70], capEdge: [210, 140, 100], left: [88, 48, 38], right: [122, 66, 50], rust: [170, 80, 36], amber: [232, 140, 36] },
+  },
+  {
+    name: 'archive',
+    floor: { steel: [34, 52, 48], steelLine: [60, 92, 84], concrete: [40, 60, 54], grateBar: [50, 140, 110], grateEdge: [40, 110, 90] },
+    wall: { cap: [80, 120, 110], capEdge: [130, 186, 170], left: [36, 58, 54], right: [52, 84, 78], rust: [56, 120, 96], cableCyan: [70, 190, 170] },
+  },
+  {
+    name: 'power',
+    floor: { steel: [30, 36, 50], steelLine: [52, 64, 92], concrete: [34, 40, 54], grateBar: [70, 110, 210], grateEdge: [50, 80, 160] },
+    wall: { cap: [70, 84, 120], capEdge: [120, 140, 200], left: [28, 34, 50], right: [44, 52, 74], rust: [60, 90, 170], amber: [214, 196, 60], cableCyan: [70, 130, 230] },
+  },
+  {
+    name: 'dronefoundry',
+    floor: { steel: [72, 72, 66], steelLine: [112, 108, 70], concrete: [80, 78, 66], grateBar: [200, 160, 30], grateEdge: [160, 124, 30] },
+    wall: { cap: [138, 132, 100], capEdge: [196, 188, 140], left: [76, 74, 64], right: [104, 100, 82], rust: [150, 110, 40], amber: [226, 176, 30] },
+  },
+  {
+    name: 'comms',
+    floor: { steel: [50, 64, 84], steelLine: [78, 98, 130], concrete: [54, 66, 88], grateBar: [90, 140, 210], grateEdge: [70, 110, 170] },
+    wall: { cap: [120, 148, 190], capEdge: [180, 206, 240], left: [56, 72, 98], right: [78, 98, 130], rust: [80, 120, 180], cableCyan: [100, 180, 250] },
+  },
+  {
+    name: 'core',
+    floor: { steel: [18, 20, 22], steelSeam: [8, 8, 10], steelLine: [60, 64, 68], concrete: [24, 26, 28], concreteCrack: [8, 8, 8], grateBar: [120, 20, 20], grateEdge: [90, 16, 16] },
+    wall: { cap: [70, 72, 76], capEdge: [150, 154, 160], left: [20, 22, 24], right: [34, 36, 40], rust: [110, 24, 24], cableRed: [160, 30, 30], amber: [150, 30, 30] },
+  },
+];
+
+function applyTheme(theme) {
+  Object.assign(FLOOR, DEFAULT_FLOOR, theme.floor ?? {});
+  Object.assign(WALL, DEFAULT_WALL, theme.wall ?? {});
+  PATTERN = theme.pattern ?? 'plain';
+}
 
 function wallFace(variant, s, t, base, px, py) {
   let c = base;
@@ -510,6 +589,159 @@ function droneFrame(yaw) {
   return img;
 }
 
+const TANK_W = 56;
+const TANK_H = 52;
+const TANK_CX = 28;
+const TANK_GROUND = 49.5;
+
+const TK = {
+  track: [28, 31, 31],
+  trackLight: [52, 58, 58],
+  hull: [74, 80, 76],
+  plate: [112, 120, 114],
+  turret: [90, 98, 94],
+  rust: [112, 56, 36],
+  barrel: [46, 52, 52],
+  lens: [217, 164, 65],
+  lensHot: [255, 244, 210],
+  dark: [12, 14, 14],
+  warn: [214, 170, 40],
+};
+
+function tankFrame(yaw) {
+  const img = new Image(TANK_W, TANK_H);
+  const theta = (yaw * Math.PI) / 180;
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+  const proj = (lx, ly, lz) => {
+    const wx = -lx * cos + lz * sin;
+    const wz = lx * sin + lz * cos;
+    return { x: TANK_CX + wx, y: TANK_GROUND - ly + wz * DRONE_TILT, depth: wz };
+  };
+  const prims = [];
+  const push = (depth, draw) => prims.push({ depth, draw });
+
+  for (const side of [-1, 1]) {
+    const a = proj(side * 12, 5, -11);
+    const b = proj(side * 12, 5, 11);
+    push(proj(side * 12, 5, 0).depth - 0.5, () => {
+      capsuleFill(img, a, b, 4.4, 4.4, TK.track);
+      for (let i = 0; i < 6; i += 1) {
+        const t = i / 5;
+        const wheel = proj(side * 12, 5, -9 + t * 18);
+        ellipseFill(img, wheel.x, wheel.y, 1.7, 1.5, TK.trackLight, false);
+      }
+    });
+  }
+
+  const hull = proj(0, 10, 0);
+  push(0, () => {
+    ellipseFill(img, hull.x, hull.y, 13.5, 7.6, TK.hull);
+    const deck = proj(0, 13.2, -1);
+    ellipseFill(img, deck.x, deck.y, 10.5, 4.4, add(TK.hull, 10));
+    const patch = proj(8, 9, 2);
+    if (patch.depth > -3) ellipseFill(img, patch.x, patch.y, 2.6, 1.8, TK.rust, false);
+    const patch2 = proj(-7, 12, -4);
+    if (patch2.depth > -2) ellipseFill(img, patch2.x, patch2.y, 2, 1.4, TK.rust, false);
+  });
+
+  if (cos > -0.2) {
+    const plate = proj(0, 10.5, 11.2);
+    push(0.8, () => {
+      const rx = 11 * Math.max(0.4, cos) + 1.2;
+      ellipseFill(img, plate.x, plate.y, rx, 5.6, TK.plate);
+      for (const dx of [-0.45, 0.45]) {
+        const stripe = proj(dx * 12, 8.2, 11.2);
+        ellipseFill(img, stripe.x, stripe.y, 1.2, 0.9, TK.warn, false);
+      }
+    });
+  } else {
+    const vent = proj(0, 12, -11);
+    push(0.8, () => {
+      for (let i = -1; i <= 1; i += 1) {
+        const y = Math.round(vent.y + i * 2);
+        for (let dx = -4; dx <= 4; dx += 1) img.set(Math.round(vent.x) + dx, y, TK.dark);
+      }
+    });
+  }
+
+  const turret = proj(0, 17, 0);
+  push(1, () => {
+    ellipseFill(img, turret.x, turret.y, 8.2, 5.6, TK.turret);
+    const cap = proj(0, 20.4, 0);
+    ellipseFill(img, cap.x, cap.y, 5.2, 2.6, add(TK.turret, 14));
+    const hatch = proj(-2, 21.5, -2);
+    ellipseFill(img, hatch.x, hatch.y, 1.8, 0.9, TK.dark, false);
+  });
+
+  const barrelBase = proj(0, 17.4, 3);
+  const barrelEnd = proj(0, 17.4, 19);
+  push(barrelEnd.depth + 0.4, () => {
+    capsuleFill(img, barrelBase, barrelEnd, 2.1, 1.7, TK.barrel);
+    ellipseFill(img, barrelEnd.x, barrelEnd.y, 1.9, 1.5, TK.dark, false);
+  });
+
+  if (cos > -0.2) {
+    const lens = proj(0, 18, 8);
+    push(barrelEnd.depth - 0.2, () => {
+      const rx = 2.6 * Math.max(0.4, cos);
+      ellipseFill(img, lens.x, lens.y, rx + 0.9, 2.6, TK.dark, false);
+      ellipseFill(img, lens.x, lens.y, rx, 1.8, TK.lens, false);
+      img.set(Math.floor(lens.x - rx * 0.3), Math.floor(lens.y - 1), TK.lensHot);
+    });
+  }
+
+  prims.sort((a, b) => a.depth - b.depth);
+  for (const prim of prims) prim.draw();
+  img.outline();
+  return img;
+}
+
+function tankWreck() {
+  const img = new Image(TANK_W, TANK_H);
+  ellipseFill(img, 28, 46, 22, 5.2, [14, 15, 15], false);
+  capsuleFill(img, { x: 14, y: 43 }, { x: 40, y: 43 }, 4.4, 4.4, TK.track);
+  ellipseFill(img, 27, 38, 14, 7.6, [52, 56, 54]);
+  ellipseFill(img, 26, 34, 8, 4.4, [64, 70, 68]);
+  capsuleFill(img, { x: 30, y: 38 }, { x: 50, y: 44 }, 2, 1.8, TK.barrel);
+  ellipseFill(img, 25, 33, 4, 1.6, [12, 12, 12], false);
+  for (const [x, y] of [[20, 36], [33, 40], [28, 30]]) ellipseFill(img, x, y, 2.4, 1.6, [104, 50, 34], false);
+  img.outline();
+  return img;
+}
+
+const WD_W = 64;
+const WD_H = 64;
+
+function wardenFrame(yaw, dead = false) {
+  const img = new Image(WD_W, WD_H);
+  const theta = (yaw * Math.PI) / 180;
+  isoBox(img, 32, 58, 20, 10, 9, dead ? [24, 26, 26] : [36, 40, 42]);
+  rect(img, 27, 30, 10, 22, dead ? [20, 22, 22] : [30, 34, 36]);
+  for (const side of [-1, 1]) {
+    capsuleFill(img, { x: 32 + side * 4, y: 48 }, { x: 32 + side * 17, y: 55 }, 1.6, 1.4, dead ? [20, 22, 22] : [46, 52, 54]);
+  }
+  ellipseFill(img, 32, 25, 20, 18.5, dead ? [18, 20, 20] : [26, 29, 31]);
+  ellipseFill(img, 32, 25, 15.5, 14, dead ? [34, 12, 10] : [78, 20, 18], false);
+  if (!dead) {
+    ellipseFill(img, 32, 25, 11.5, 10.2, [168, 32, 26], false);
+    const ox = Math.sin(theta) * 5.5;
+    const oy = -Math.cos(theta) * 2.6;
+    ellipseFill(img, 32 + ox, 25 + oy, 5.4, 5, [255, 214, 170], false);
+    ellipseFill(img, 32 + ox, 25 + oy, 2.4, 2.4, [40, 8, 6], false);
+    img.set(Math.floor(32 + ox - 2), Math.floor(25 + oy - 2), [255, 255, 240]);
+  } else {
+    ellipseFill(img, 32, 25, 8, 7, [10, 4, 4], false);
+    for (let i = 0; i < 9; i += 1) img.set(26 + i, 20 + ((i * 3) % 12), [60, 24, 20]);
+  }
+  for (const [sx, sy, ex, ey] of [[14, 14, 8, 5], [50, 14, 56, 5], [32, 7, 32, 0], [22, 9, 18, 1], [42, 9, 46, 1]]) {
+    capsuleFill(img, { x: sx, y: sy }, { x: ex, y: ey }, 1.3, 0.7, dead ? [24, 26, 26] : [52, 58, 60]);
+  }
+  for (const y of [36, 42]) rect(img, 27, y, 10, 1, dead ? [40, 14, 12] : [190, 40, 34]);
+  img.outline();
+  return propShadow(img, 22, 5.5, WD_W, WD_H);
+}
+
 function droneWreck() {
   const img = new Image(DRONE_W, DRONE_H);
   ellipseFill(img, 20, 34, 16.5, 4.6, [14, 15, 15], false);
@@ -648,6 +880,258 @@ function lootSheet() {
   return sheet;
 }
 
+// ---------- floor props and the ten dead ----------
+
+const PROP_FRAME_W = 48;
+const PROP_FRAME_H = 48;
+const PROP_BASE_X = 24;
+const PROP_BASE_Y = 40;
+
+function pointInPoly(x, y, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i, i += 1) {
+    const [xi, yi] = pts[i];
+    const [xj, yj] = pts[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+function fillPoly(img, pts, color) {
+  const minX = Math.floor(Math.min(...pts.map((p) => p[0])));
+  const maxX = Math.ceil(Math.max(...pts.map((p) => p[0])));
+  const minY = Math.floor(Math.min(...pts.map((p) => p[1])));
+  const maxY = Math.ceil(Math.max(...pts.map((p) => p[1])));
+  for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      if (pointInPoly(x + 0.5, y + 0.5, pts)) img.set(x, y, color);
+    }
+  }
+}
+
+function isoBox(img, cx, by, w, d, h, color) {
+  const top = [cx, by - h - d];
+  const right = [cx + w, by - h];
+  const bottomTop = [cx, by - h + d];
+  const left = [cx - w, by - h];
+  fillPoly(img, [left, bottomTop, [cx, by + d], [cx - w, by]], mul(color, 0.86));
+  fillPoly(img, [bottomTop, right, [cx + w, by], [cx, by + d]], mul(color, 0.58));
+  fillPoly(img, [top, right, bottomTop, left], mul(color, 1.14));
+}
+
+function rect(img, x, y, w, h, color) {
+  for (let yy = y; yy < y + h; yy += 1) for (let xx = x; xx < x + w; xx += 1) img.set(xx, yy, color);
+}
+
+function propShadow(img, rx = 15, ry = 4.5, width = PROP_FRAME_W, height = PROP_FRAME_H) {
+  const shadow = new Image(width, height);
+  ellipseFill(shadow, width / 2, height === PROP_FRAME_H ? PROP_BASE_Y + 1 : height - 5, rx, ry, [8, 10, 10], false);
+  shadow.blit(img, 0, 0);
+  return shadow;
+}
+
+const SKIN = [172, 150, 128];
+const BLOOD = [92, 26, 24];
+
+function itemDraw(img, type, x, y) {
+  switch (type) {
+    case 'badge':
+      rect(img, x, y, 6, 4, [226, 232, 232]);
+      rect(img, x, y, 6, 1, [60, 120, 170]);
+      img.set(x + 1, y + 2, [40, 50, 52]);
+      break;
+    case 'map':
+      rect(img, x, y, 7, 5, [214, 212, 190]);
+      for (const yy of [1, 3]) rect(img, x + 1, y + yy, 5, 1, [120, 110, 90]);
+      break;
+    case 'vial':
+      rect(img, x + 1, y, 3, 5, [168, 184, 180]);
+      rect(img, x + 1, y + 2, 3, 3, [70, 190, 120]);
+      img.set(x + 2, y - 1, [60, 66, 66]);
+      break;
+    case 'valve':
+      rect(img, x, y + 2, 7, 2, [196, 156, 60]);
+      rect(img, x + 5, y, 2, 6, [196, 156, 60]);
+      img.set(x + 6, y + 1, [240, 210, 110]);
+      break;
+    case 'cutter':
+      rect(img, x, y + 2, 6, 2, [98, 108, 108]);
+      rect(img, x + 6, y + 2, 2, 2, [255, 150, 50]);
+      img.set(x + 8, y + 2, [255, 230, 150]);
+      break;
+    case 'fuse':
+      rect(img, x, y + 1, 6, 3, [150, 156, 154]);
+      rect(img, x, y + 1, 1, 3, [214, 172, 64]);
+      rect(img, x + 5, y + 1, 1, 3, [214, 172, 64]);
+      break;
+    case 'page':
+      rect(img, x, y, 6, 5, [230, 232, 222]);
+      rect(img, x + 1, y + 1, 4, 1, [140, 140, 150]);
+      rect(img, x + 1, y + 3, 3, 1, [140, 140, 150]);
+      break;
+    case 'key':
+      rect(img, x, y, 7, 4, [60, 200, 220]);
+      rect(img, x + 1, y + 1, 3, 1, [200, 250, 255]);
+      img.set(x - 1, y - 1, [120, 230, 245]);
+      img.set(x + 7, y + 4, [120, 230, 245]);
+      break;
+    default:
+      break;
+  }
+}
+
+function corpseFrame(outfit) {
+  const body = new Image(PROP_FRAME_W, PROP_FRAME_H);
+  ellipseFill(body, 22, 38, 12, 3.2, BLOOD, false);
+  capsuleFill(body, { x: 27, y: 35 }, { x: 41, y: 38 }, 2.7, 2.1, outfit.pants);
+  capsuleFill(body, { x: 27, y: 38 }, { x: 40, y: 41 }, 2.5, 2, mul(outfit.pants, 0.9));
+  capsuleFill(body, { x: 14, y: 34 }, { x: 28, y: 36 }, 4.3, 3.9, outfit.shirt);
+  capsuleFill(body, { x: 16, y: 32 }, { x: 24, y: 30 }, 1.9, 1.7, outfit.shirt);
+  capsuleFill(body, { x: 17, y: 38 }, { x: 25, y: 41 }, 1.9, 1.7, outfit.shirt);
+  ellipseFill(body, 24, 29.5, 1.5, 1.3, SKIN);
+  ellipseFill(body, 26, 41.5, 1.5, 1.3, SKIN);
+  ellipseFill(body, 10, 34, 3.7, 3.5, SKIN);
+  if (outfit.hat) ellipseFill(body, 9.5, 31.6, 4.2, 2.4, outfit.hat);
+  if (outfit.hair) ellipseFill(body, 9, 32.4, 3.6, 2.2, outfit.hair);
+  if (outfit.mark) {
+    for (const [mx, my] of outfit.mark.points) body.set(mx, my, outfit.mark.color);
+  }
+  body.outline();
+  itemDraw(body, outfit.item, 3, 39);
+  return propShadow(body, 19, 4.8);
+}
+
+const THE_DEAD = [
+  { shirt: [140, 144, 140], pants: [58, 62, 66], hair: [60, 48, 40], item: 'badge', mark: { color: [150, 40, 36], points: [[20, 33], [20, 34], [21, 34], [22, 35]] } },
+  { shirt: [38, 50, 80], pants: [30, 36, 52], hat: [28, 34, 52], item: 'map', mark: { color: [196, 168, 60], points: [[18, 32], [19, 32], [20, 32]] } },
+  { shirt: [204, 210, 210], pants: [64, 80, 90], hair: [120, 120, 118], item: 'vial', mark: { color: [150, 34, 30], points: [[18, 33], [19, 33], [18, 34], [19, 34], [20, 35]] } },
+  { shirt: [124, 84, 44], pants: [70, 58, 44], hat: [224, 142, 30], item: 'badge', mark: { color: [240, 210, 80], points: [[19, 32], [20, 32], [21, 32]] } },
+  { shirt: [52, 82, 132], pants: [40, 60, 98], hair: [70, 52, 40], item: 'valve', mark: { color: [196, 156, 60], points: [[19, 34], [20, 34]] } },
+  { shirt: [78, 56, 40], pants: [46, 40, 36], hat: [60, 66, 70], item: 'cutter', mark: { color: [255, 150, 50], points: [[18, 35], [19, 35]] } },
+  { shirt: [64, 98, 84], pants: [52, 52, 60], hair: [150, 150, 150], item: 'page', mark: { color: [30, 34, 34], points: [[7, 33], [8, 33], [11, 33], [12, 33]] } },
+  { shirt: [210, 176, 40], pants: [44, 46, 50], hat: [210, 176, 40], item: 'fuse', mark: { color: [30, 30, 30], points: [[19, 33], [21, 33], [23, 33]] } },
+  { shirt: [92, 82, 114], pants: [44, 44, 56], hair: [30, 26, 34], item: 'page', mark: { color: [200, 190, 230], points: [[18, 34], [19, 34], [20, 34]] } },
+  { shirt: [32, 38, 32], pants: [30, 34, 30], hair: [90, 70, 50], item: 'key', mark: { color: [196, 40, 36], points: [[22, 33], [22, 34], [22, 35], [22, 36]] } },
+];
+
+const BASE = PROP_BASE_Y;
+const CX = PROP_BASE_X;
+
+function floorProp(floor) {
+  const img = new Image(PROP_FRAME_W, PROP_FRAME_H);
+  switch (floor) {
+    case 0: {
+      isoBox(img, CX, BASE, 15, 7, 11, [128, 132, 128]);
+      rect(img, CX - 6, BASE - 21, 10, 5, [20, 24, 24]);
+      rect(img, CX - 5, BASE - 20, 8, 3, [70, 200, 150]);
+      rect(img, CX + 2, BASE - 12, 4, 2, [210, 200, 150]);
+      break;
+    }
+    case 1: {
+      isoBox(img, CX, BASE, 14, 7, 5, [88, 78, 64]);
+      isoBox(img, CX, BASE - 13, 14, 7, 3, [96, 86, 70]);
+      for (const [px, py] of [[CX - 13, BASE - 2], [CX + 13, BASE - 2], [CX, BASE + 5]]) rect(img, px - 1, py - 14, 2, 14, [36, 34, 32]);
+      rect(img, CX - 6, BASE - 19, 7, 2, [150, 130, 100]);
+      break;
+    }
+    case 2: {
+      isoBox(img, CX, BASE, 14, 7, 6, [204, 218, 218]);
+      isoBox(img, CX - 6, BASE - 6, 5, 3, 2, [244, 250, 250]);
+      fillPoly(img, [[CX + 1, BASE - 12], [CX + 13, BASE - 6], [CX, BASE + 1], [CX - 12, BASE - 5]], [90, 150, 176]);
+      rect(img, CX + 15, BASE - 22, 1, 20, [170, 180, 180]);
+      rect(img, CX + 13, BASE - 24, 5, 4, [190, 220, 230]);
+      break;
+    }
+    case 3: {
+      isoBox(img, CX, BASE - 3, 13, 6, 8, [102, 74, 48]);
+      for (let i = 0; i < 12; i += 1) img.set(CX - 8 + ((i * 5) % 16), BASE - 14 - (i % 3), i % 2 ? [120, 120, 112] : [196, 160, 70]);
+      for (const wx of [CX - 8, CX + 8]) ellipseFill(img, wx, BASE + 4, 3, 3, [40, 40, 42], false);
+      break;
+    }
+    case 4: {
+      isoBox(img, CX, BASE, 12, 6, 3, [70, 76, 92]);
+      rect(img, CX - 8, BASE - 22, 16, 20, [60, 74, 126]);
+      ellipseFill(img, CX, BASE - 22, 8, 3, [96, 112, 176], false);
+      ellipseFill(img, CX + 11, BASE - 10, 4, 4, [104, 78, 170], false);
+      ellipseFill(img, CX + 11, BASE - 10, 1.6, 1.6, [20, 20, 30], false);
+      rect(img, CX - 9, BASE - 14, 18, 1, [30, 36, 70]);
+      break;
+    }
+    case 5: {
+      rect(img, CX - 9, BASE - 20, 18, 20, [60, 46, 40]);
+      ellipseFill(img, CX, BASE, 9, 3.5, [60, 46, 40], false);
+      ellipseFill(img, CX, BASE - 20, 9, 3.5, [50, 36, 30], false);
+      ellipseFill(img, CX, BASE - 20, 7, 2.6, [255, 150, 40], false);
+      ellipseFill(img, CX, BASE - 20, 4, 1.4, [255, 230, 150], false);
+      rect(img, CX - 9, BASE - 10, 18, 2, [90, 40, 30]);
+      for (const [sx, sy] of [[CX - 5, BASE - 26], [CX + 4, BASE - 28], [CX + 1, BASE - 31]]) img.set(sx, sy, [255, 190, 90]);
+      break;
+    }
+    case 6: {
+      isoBox(img, CX, BASE, 12, 5, 24, [58, 76, 70]);
+      for (const sy of [BASE - 8, BASE - 15, BASE - 22]) rect(img, CX - 12, sy, 12, 1, [22, 30, 28]);
+      const spines = [[190, 80, 60], [90, 140, 170], [200, 180, 80], [140, 150, 150]];
+      for (let i = 0; i < 9; i += 1) rect(img, CX - 11 + i, BASE - 6 - (i % 3) * 7, 1, 5, spines[i % spines.length]);
+      break;
+    }
+    case 7: {
+      isoBox(img, CX, BASE, 13, 6, 14, [52, 62, 82]);
+      for (const ix of [CX - 8, CX, CX + 8]) {
+        rect(img, ix - 1, BASE - 24, 3, 7, [214, 196, 70]);
+        rect(img, ix - 2, BASE - 25, 5, 1, [244, 232, 130]);
+      }
+      for (let i = 0; i < 5; i += 1) rect(img, CX - 11 + i * 2, BASE - 6, 1, 4, i % 2 ? [24, 24, 24] : [214, 196, 70]);
+      break;
+    }
+    case 8: {
+      isoBox(img, CX, BASE, 15, 7, 4, [70, 70, 64]);
+      rect(img, CX - 12, BASE - 6, 24, 1, [210, 170, 40]);
+      ellipseFill(img, CX, BASE - 11, 8, 5, [96, 100, 100]);
+      ellipseFill(img, CX + 3, BASE - 11, 2, 1.8, [250, 170, 40], false);
+      rect(img, CX - 10, BASE - 17, 1, 4, [60, 64, 64]);
+      rect(img, CX + 9, BASE - 17, 1, 4, [60, 64, 64]);
+      break;
+    }
+    case 9: {
+      isoBox(img, CX, BASE, 13, 6, 8, [56, 74, 104]);
+      fillPoly(img, [[CX - 10, BASE - 8], [CX + 10, BASE - 8], [CX + 10, BASE - 20], [CX - 10, BASE - 16]], [22, 30, 42]);
+      fillPoly(img, [[CX - 8, BASE - 9], [CX + 8, BASE - 9], [CX + 8, BASE - 18], [CX - 8, BASE - 15]], [60, 150, 210]);
+      rect(img, CX + 12, BASE - 34, 1, 26, [140, 150, 160]);
+      img.set(CX + 12, BASE - 35, [230, 60, 50]);
+      break;
+    }
+    default: {
+      isoBox(img, CX, BASE, 10, 5, 28, [26, 28, 30]);
+      rect(img, CX - 1, BASE - 28, 2, 26, [190, 36, 32]);
+      rect(img, CX - 10, BASE - 14, 10, 1, [90, 96, 100]);
+      ellipseFill(img, CX, BASE - 33, 4, 2, [210, 40, 36], false);
+      break;
+    }
+  }
+  img.outline();
+  return propShadow(img);
+}
+
+function terminalProp() {
+  const img = new Image(PROP_FRAME_W, PROP_FRAME_H);
+  isoBox(img, CX, BASE, 11, 5, 13, [46, 52, 54]);
+  fillPoly(img, [[CX - 10, BASE - 14], [CX + 10, BASE - 14], [CX + 10, BASE - 30], [CX - 10, BASE - 24]], [14, 18, 18]);
+  fillPoly(img, [[CX - 8, BASE - 15], [CX + 8, BASE - 15], [CX + 8, BASE - 28], [CX - 8, BASE - 23]], [18, 54, 44]);
+  for (let i = 0; i < 5; i += 1) rect(img, CX - 6, BASE - 26 + i * 2 + (i === 0 ? 1 : 0), 12 - (i % 3) * 3, 1, [120, 240, 170]);
+  rect(img, CX - 7, BASE - 9, 14, 2, [24, 28, 28]);
+  for (let i = 0; i < 6; i += 1) img.set(CX - 6 + i * 2, BASE - 9, [150, 160, 156]);
+  img.set(CX + 8, BASE - 12, [230, 60, 50]);
+  img.outline();
+  return propShadow(img);
+}
+
+function floorPropSheet() {
+  const frames = [...THE_DEAD.map((outfit) => corpseFrame(outfit)), ...Array.from({ length: 11 }, (_, floor) => floorProp(floor)), terminalProp()];
+  const sheet = new Image(PROP_FRAME_W * frames.length, PROP_FRAME_H);
+  frames.forEach((frame, index) => sheet.blit(frame, index * PROP_FRAME_W, 0));
+  return { sheet, count: frames.length };
+}
+
 function hudIcons() {
   const cross = new Image(12, 12);
   for (let y = 0; y < 12; y += 1) {
@@ -753,14 +1237,34 @@ async function main() {
   await mkdir(OUT, { recursive: true });
   await mkdir(PREVIEW, { recursive: true });
 
+  for (const [index, theme] of THEMES.entries()) {
+    applyTheme(theme);
+    const themed = buildAtlas().atlas;
+    const file = index === 0 ? 'tiles.png' : `tiles_${index}.png`;
+    await writeFile(path.join(OUT, file), await themed.png());
+    const mockup = await mockCorridor(themed);
+    await writeFile(path.join(PREVIEW, `corridor_${index}_${theme.name}.png`), await mockup.png(3));
+  }
+  applyTheme(THEMES[0]);
   const { atlas } = buildAtlas();
-  await writeFile(path.join(OUT, 'tiles.png'), await atlas.png());
 
   const drones = DIRECTIONS.map((d) => droneFrame(d.yaw));
   const sheet = new Image(DRONE_W * 8, DRONE_H);
   drones.forEach((frame, index) => sheet.blit(frame, index * DRONE_W, 0));
   await writeFile(path.join(OUT, 'drone.png'), await sheet.png());
 
+  const tanks = DIRECTIONS.map((d) => tankFrame(d.yaw));
+  const tankSheet = new Image(TANK_W * 8, TANK_H);
+  tanks.forEach((frame, index) => tankSheet.blit(frame, index * TANK_W, 0));
+  await writeFile(path.join(OUT, 'tank.png'), await tankSheet.png());
+  await writeFile(path.join(OUT, 'tank_dead.png'), await tankWreck().png());
+  await writeFile(path.join(PREVIEW, 'tank-4x.png'), await tankSheet.png(4));
+  const wardens = DIRECTIONS.map((d) => wardenFrame(d.yaw));
+  const wardenSheet = new Image(WD_W * 8, WD_H);
+  wardens.forEach((frame, index) => wardenSheet.blit(frame, index * WD_W, 0));
+  await writeFile(path.join(OUT, 'warden.png'), await wardenSheet.png());
+  await writeFile(path.join(OUT, 'warden_dead.png'), await wardenFrame(0, true).png());
+  await writeFile(path.join(PREVIEW, 'warden-4x.png'), await wardenSheet.png(4));
   await writeFile(path.join(OUT, 'drone_dead.png'), await droneWreck().png());
   await writeFile(path.join(PREVIEW, 'drone-dead-8x.png'), await droneWreck().png(8));
 
@@ -782,6 +1286,10 @@ async function main() {
   iconSheet.blit(icons.full, 18, 2);
   iconSheet.blit(icons.empty, 28, 2);
   await writeFile(path.join(PREVIEW, 'hud-icons-8x.png'), await iconSheet.png(8));
+
+  const floorProps = floorPropSheet();
+  await writeFile(path.join(OUT, 'props_floor.png'), await floorProps.sheet.png());
+  await writeFile(path.join(PREVIEW, 'props-floor-4x.png'), await floorProps.sheet.png(4));
 
   const mock = await mockCorridor(atlas);
   await writeFile(path.join(PREVIEW, 'corridor.png'), await mock.png(3));

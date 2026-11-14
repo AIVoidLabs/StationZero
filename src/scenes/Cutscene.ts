@@ -80,8 +80,7 @@ export class Cutscene extends Scene {
   }
 
   private showPanel(): void {
-    const panels = CUTSCENES[this.def.id];
-    const panel = panels[this.panelIndex];
+    const panel = CUTSCENES[this.def.id]?.[this.panelIndex];
     const image = this.image;
     if (!panel || !image) {
       this.finish();

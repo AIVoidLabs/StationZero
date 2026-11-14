@@ -33,7 +33,7 @@ export class End extends Scene {
 
     this.add.image(GAME_WIDTH / 2, 8, survived ? END_SURVIVED_KEY : END_DEAD_KEY).setOrigin(0.5, 0).setDepth(1);
     this.add
-      .text(GAME_WIDTH / 2, 196, survived ? (runFlags.compliant ? t('end.compliantTitle') : t('end.defiantTitle')) : t('end.deadTitle'), {
+      .text(GAME_WIDTH / 2, 196, survived ? t('end.survivedTitle') : t('end.deadTitle'), {
         fontFamily: 'monospace',
         fontSize: '26px',
         color: survived ? '#3ab4d2' : MENU_COLORS.danger,

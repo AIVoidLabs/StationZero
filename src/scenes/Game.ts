@@ -29,6 +29,7 @@ import type { MapState } from '../systems/MiniMap';
 import { Lantern } from '../systems/Lantern';
 import { loadDungeon } from '../systems/LevelLoader';
 import { LogFeed } from '../systems/LogFeed';
+import { Hazards } from '../systems/Hazards';
 import { LootSystem } from '../systems/LootSystem';
 import { Occlusion } from '../systems/Occlusion';
 import { PlayerCombat } from '../systems/PlayerCombat';
@@ -117,6 +118,7 @@ export class Game extends Scene {
   private warden: WardenAtmosphere | undefined = undefined;
   private ambience: Ambience | undefined = undefined;
   private combat: Combat | undefined = undefined;
+  private hazards: Hazards | undefined = undefined;
   private loot: LootSystem | undefined = undefined;
   private depth: DepthManager | undefined = undefined;
   private gate: DescentGate | undefined = undefined;
@@ -185,6 +187,14 @@ export class Game extends Scene {
       const at = drone.gridPosition;
       loot.roll(at.x, at.y);
     });
+    const hazards = new Hazards(
+      this,
+      level,
+      dungeon,
+      player,
+      () => combat.roster,
+      loot.pickups.map((item) => ({ x: item.gridX, y: item.gridY })),
+    );
     const gate = dungeon.exit ? new DescentGate(this, dungeon.exit) : null;
     if (dungeon.exit) level.blockCell(dungeon.exit.x, dungeon.exit.y);
     const lantern = new Lantern(this, player.x, player.y);
@@ -232,6 +242,7 @@ export class Game extends Scene {
     this.warden = warden;
     this.ambience = ambience;
     this.combat = combat;
+    this.hazards = hazards;
     this.loot = loot;
     this.depth = depth;
     this.gate = gate ?? undefined;
@@ -249,8 +260,8 @@ export class Game extends Scene {
     hints.clear();
     this.unsubscribeVoice = voice.onSpeaking((speaking) => ambience.setVoiceDuck(speaking));
     this.time.delayedCall(1500, () => voice.say(arrivalLine(floor), 'warden'));
-    if (floor === 2) this.time.delayedCall(6200, () => this.exileOnce('drill', 'exile.drill'));
-    if (floor === 3) this.time.delayedCall(6200, () => this.exileOnce('final', 'exile.final'));
+    if (floor === 3) this.time.delayedCall(6200, () => this.exileOnce('drill', 'exile.drill'));
+    if (floor === FLOOR_COUNT - 1) this.time.delayedCall(6200, () => this.exileOnce('final', 'exile.final'));
 
     if (!this.scene.isActive('HudScene')) {
       this.scene.launch('HudScene');
@@ -327,6 +338,8 @@ export class Game extends Scene {
       this.ambience = undefined;
       this.combat?.destroy();
       this.combat = undefined;
+      this.hazards?.destroy();
+      this.hazards = undefined;
       this.playerCombat = undefined;
       this.attackTarget = undefined;
       this.repathCell = undefined;
@@ -427,6 +440,7 @@ export class Game extends Scene {
     this.exploration?.update(Math.round(grid.x), Math.round(grid.y), this.time.now);
 
     combat.update(delta);
+    this.hazards?.update();
     this.loot?.update(player);
     if (this.pointerInside) {
       const pointer = this.input.activePointer;
@@ -497,6 +511,21 @@ export class Game extends Scene {
         hints.trigger('attack', t('hint.attack', { key: keyName(keys.attack) }));
       }
       if (drone.isAiming) hints.trigger('dodge', t('hint.dodge'));
+    }
+
+    for (const drone of combat.roster) {
+      if (drone.isDead || drone.kind === 'drone') continue;
+      const at = drone.gridPosition;
+      if (Math.hypot(at.x - grid.x, at.y - grid.y) >= 10) continue;
+      hints.trigger(drone.kind === 'tank' ? 'tank' : 'boss', t(drone.kind === 'tank' ? 'hint.tank' : 'hint.boss'));
+    }
+
+    for (const cell of this.hazards?.ventCells ?? []) {
+      if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 4) hints.trigger('steam', t('hint.steam'));
+    }
+
+    for (const cell of this.hazards?.gateCells ?? []) {
+      if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 5) hints.trigger('laser', t('hint.laser'));
     }
 
     for (const item of this.loot?.pickups ?? []) {
@@ -594,6 +623,7 @@ export class Game extends Scene {
     combat: Combat,
   ): void {
     const now = this.time.now;
+    this.hazards?.emitLights(emit);
     const player = this.player;
     if (player && !player.isDeadState) {
       const flicker = 1 + Math.sin(now / 130) * 0.035 + Math.sin(now / 57) * 0.02;
