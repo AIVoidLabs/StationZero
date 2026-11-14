@@ -204,7 +204,7 @@ export class Game extends Scene {
       loot.pickups.map((item) => ({ x: item.gridX, y: item.gridY })),
     );
     const barrels = new Barrels(this, level, player, () => combat.roster, decor.barrels);
-    combat.projectileSystem.setBlockedHitHandler((x, y) => barrels.hitCell(x, y));
+    combat.projectileSystem.setBlockedHitHandler((x, y, owner) => barrels.hitCell(x, y, owner === 'player'));
     const gate = dungeon.exit ? new DescentGate(this, dungeon.exit) : null;
     if (dungeon.exit) level.blockCell(dungeon.exit.x, dungeon.exit.y);
     const lantern = new Lantern(this, player.x, player.y);

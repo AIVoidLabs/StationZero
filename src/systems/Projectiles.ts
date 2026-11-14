@@ -126,7 +126,7 @@ export class Projectiles {
   private readonly player: Player;
   private readonly bullets: Projectile[] = [];
   private readonly flareStates: FlareState[] = [];
-  private blockedHit: ((gridX: number, gridY: number) => void) | null = null;
+  private blockedHit: ((gridX: number, gridY: number, owner: ProjectileOwner) => void) | null = null;
 
   constructor(scene: Scene, level: Level, player: Player, getDrones: () => readonly Drone[]) {
     this.scene = scene;
@@ -138,7 +138,7 @@ export class Projectiles {
     buildStreak(scene, 'shell');
   }
 
-  setBlockedHitHandler(handler: (gridX: number, gridY: number) => void): void {
+  setBlockedHitHandler(handler: (gridX: number, gridY: number, owner: ProjectileOwner) => void): void {
     this.blockedHit = handler;
   }
 
@@ -230,7 +230,7 @@ export class Projectiles {
       travel -= step;
 
       if (!this.level.isWalkable(Math.round(bullet.x), Math.round(bullet.y))) {
-        this.blockedHit?.(Math.round(bullet.x), Math.round(bullet.y));
+        this.blockedHit?.(Math.round(bullet.x), Math.round(bullet.y), bullet.owner);
         this.impact(bullet, fromX, fromY);
         return true;
       }

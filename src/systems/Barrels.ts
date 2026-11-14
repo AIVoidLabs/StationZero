@@ -1,5 +1,6 @@
 import { BlendModes, type GameObjects, type Scene } from 'phaser';
 import { DEPTH_FLOOR, DEPTH_VFX, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
+import { ENEMY_SPECS } from '../data/enemies';
 import type { Drone } from '../entities/enemies/Drone';
 import type { Player } from '../entities/Player';
 import { gridVectorToWorld } from '../utils/iso';
@@ -11,6 +12,7 @@ import { distanceGain, sfx } from './Sfx';
 const BLAST_RADIUS = 2.2;
 const ENEMY_DAMAGE = 3;
 const PLAYER_DAMAGE = 2;
+const BOSS_DAMAGE = 2;
 const CHAIN_DELAY_MS = 140;
 const FLASH_MS = 420;
 const SHAKE_MS = 200;
@@ -52,9 +54,9 @@ export class Barrels {
     this.barrels = [...barrels];
   }
 
-  hitCell(gridX: number, gridY: number): void {
+  hitCell(gridX: number, gridY: number, byPlayer: boolean): void {
     const barrel = this.barrels.find((item) => item.x === gridX && item.y === gridY && !this.exploded.has(item));
-    if (barrel) this.explode(barrel);
+    if (barrel) this.explode(barrel, byPlayer);
   }
 
   update(deltaMs: number): void {
@@ -83,7 +85,7 @@ export class Barrels {
     this.barrels.length = 0;
   }
 
-  private explode(barrel: BarrelCell): void {
+  private explode(barrel: BarrelCell, byPlayer: boolean): void {
     this.exploded.add(barrel);
     this.level.unblockCell(barrel.x, barrel.y);
     barrel.image.setVisible(false).setActive(false);
@@ -95,10 +97,13 @@ export class Barrels {
 
     this.spawnEffects(barrel);
 
-    for (const enemy of this.getEnemies()) {
-      if (enemy.isDead) continue;
-      const position = enemy.gridPosition;
-      if (Math.hypot(position.x - barrel.x, position.y - barrel.y) <= BLAST_RADIUS) enemy.takeDamage(ENEMY_DAMAGE);
+    if (byPlayer) {
+      for (const enemy of this.getEnemies()) {
+        if (enemy.isDead) continue;
+        const position = enemy.gridPosition;
+        if (Math.hypot(position.x - barrel.x, position.y - barrel.y) > BLAST_RADIUS) continue;
+        enemy.takeDamage(ENEMY_SPECS[enemy.kind].boss ? BOSS_DAMAGE : ENEMY_DAMAGE);
+      }
     }
 
     if (!this.player.isDeadState && Math.hypot(at.x - barrel.x, at.y - barrel.y) <= BLAST_RADIUS) {
@@ -111,7 +116,7 @@ export class Barrels {
       this.exploded.add(other);
       this.scene.time.delayedCall(CHAIN_DELAY_MS, () => {
         this.exploded.delete(other);
-        this.explode(other);
+        this.explode(other, byPlayer);
       });
     }
   }

@@ -19,6 +19,7 @@ import {
   laserCount,
   steamCount,
 } from '../data/hazards';
+import { ENEMY_SPECS } from '../data/enemies';
 import type { Drone } from '../entities/enemies/Drone';
 import type { Player } from '../entities/Player';
 import { gridVectorToWorld } from '../utils/iso';
@@ -287,7 +288,7 @@ export class Hazards {
     }
 
     for (const enemy of this.getEnemies()) {
-      if (enemy.isDead) continue;
+      if (enemy.isDead || ENEMY_SPECS[enemy.kind].boss) continue;
       const position = enemy.gridPosition;
       if (Math.hypot(position.x - vent.cell.x, position.y - vent.cell.y) > STEAM_RADIUS) continue;
       const last = vent.enemyHurt.get(enemy) ?? -STEAM_ENEMY_COOLDOWN_MS;
