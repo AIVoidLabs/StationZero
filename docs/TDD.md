@@ -264,7 +264,7 @@ Tasarım kararı: sonuç doğrulanamazsa **tohum değişir** (`seed + attempt`),
 3. Tanklar (`tankCountForFloor`) en büyük, boss olmayan odalara.
 4. Konum: `pickSpawn` önce "yayılmış" hücreleri arar (spawn'dan ≥ `DRONE_MIN_SPAWN_DISTANCE = 11` ve diğerlerinden ≥ `ENEMY_SPACING = 2.5`), yoksa serbest hücreye düşer. Her birine `Math.floor(rng()*0xffffff)` bir **düşman tohumu** verilir (devriye ve ateş zamanlaması bundan türer).
 
-**Buhar delikleri (`placeHazards`).** Adet `steamCount(floor)`: B1-B3'te 0, B4'ten `min(6, 2 + floor - 3)`. Adaylar: koridor hücreleri (iki karşıt komşu açık, diğer ikisi duvar) ve oda içi "açık" hücreler (4 komşu açık). Spawn'dan ≥ 6, çıkıştan ≥ 2.5, lootlardan ≥ 1.5, birbirinden ≥ 3 (`HAZARD_MIN_SEPARATION`). Üçte ikisi (`STEAM_CORRIDOR_SHARE = 0.6`) koridordan seçilir. Her deliğin faz ofseti `rng() * STEAM_CYCLE_MS`.
+**Buhar delikleri ve elektrik plakaları (`placeHazards`).** Buhar adedi `steamCount(floor)`: B1-B3'te 0, B4'ten `min(6, 2 + floor - 3)`; elektrik plakası `shockCount(floor)`: B6'dan `min(4, 1 + ⌊(floor-5)/2⌋)`, aynı aday havuzundan ve aynı ayrım kurallarıyla seçilir (vent'ten sonra). Adaylar: koridor hücreleri (iki karşıt komşu açık, diğer ikisi duvar) ve oda içi "açık" hücreler (4 komşu açık). Spawn'dan ≥ 6, çıkıştan ≥ 2.5, lootlardan ≥ 1.5, birbirinden ≥ 3 (`HAZARD_MIN_SEPARATION`). Üçte ikisi (`STEAM_CORRIDOR_SHARE = 0.6`) koridordan seçilir. Her deliğin faz ofseti `rng() * STEAM_CYCLE_MS`.
 
 **Ölü (`placeCorpse`).** B1–B10'da. En son çalışır, böylece öbür aşamaların RNG akışını bozmaz. Terminal 0'ın odasında, kenardan en az 1 hücre içeride ve 8 komşusu da zemin olan (izometrik duvarların arkasında kalmayan), prop/loot/düşman/tuzak/spawn/çıkış olmayan, terminale en yakın hücre. Yoksa diğer odalara bakılır, hâlâ yoksa terminalin komşusuna düşer.
 
@@ -576,11 +576,11 @@ tickAlert(dt, spotted): spotted ? (calmMs = 0; addAlert(dt/1000 * 0.45))
 Tek yer: [difficulty.ts](../src/data/difficulty.ts); `d` kat indeksidir (B1 = 0). Sayı, bake sırasında JSON'a yazılır; can ve ateş çalışma zamanında okunur.
 | Büyüklük | Formül |
 | --- | --- |
-| Drone sayısı | `round(11 + 0.55·d)`; boss katlarında ×0.8 |
+| Drone sayısı | `round(11 + 0.55·d)`; her katta boss olduğu için ×0.8 |
 | Düşman canı (boss hariç) | `max(1, round(maxHp · (1 + 0.08·d)))` |
 | Ateş bekleme çarpanı | `max(0.7, 1 - 0.03·d) × (1 - 0.05·alarm)`, alt sınır 0.4 |
 | Mermi düşüşü | `round(ammoDrop · (1 + 0.08·d))` |
-Tank sayısı tabloda (`TANKS_BY_FLOOR`), boss katları `BOSS_BY_FLOOR = {8: assembler, 10: warden}`. `hostileCountForFloor` drone + tank + boss (+2 çağrı payı) toplar ve can odası sayısını belirler (bkz. 4.3). Formülün gerekçesi: oyuncu gücü sırlarla kata göre arttığı için **sayı ve can** artırılır, ama her kat yalnızca "azıcık" zorlaşsın diye eğimler küçük tutulur (ölçüm: bkz. 15.4).
+Tank sayısı tabloda (`TANKS_BY_FLOOR`), boss `BOSS_VARIANTS`'tan (her kat, bkz. 6.6a); drone'ların bir kısmı örümcektir (`spiderShareForFloor`) ve boss olmayan düşmanların seviyesi `tierMixForFloor` ile dağılır. `hostileCountForFloor` drone + tank + boss (+2 çağrı payı) toplar ve can odası sayısını belirler (bkz. 4.3). Formülün gerekçesi: oyuncu gücü sırlarla kata göre arttığı için **sayı ve can** artırılır, ama her kat yalnızca "azıcık" zorlaşsın diye eğimler küçük tutulur (ölçüm: bkz. 15.4).
 
 ### 8.9 Derinlik baskısı
 [DepthManager.ts](../src/systems/DepthManager.ts) bir katın "ne kadar derin" olduğunu `DepthPressure` olarak verir (`t = band / DEPTH_MAX_BAND + 0.12·alarm`, 0–1):
@@ -773,7 +773,7 @@ Her iki bot sahne yeniden başlatmasında **headless kare adımlamasıyla çökt
 `devflags.ts` bu bayrakların **yalnızca `import.meta.env.DEV`'de** çalışmasını sağlar; üretim derlemesinde hiçbir hata ayıklama kancası etkin değildir.
 
 ### 15.4 Ölçülen sonuçlar ve sınırlar
-Son ölçümler (insan botu, tüm sırlar önceden verilmiş, `?depth=N`): kat başına yaklaşık 30–90 sn, toplam **~15 dk** (terminal okuma tahmini dahil); bot B6–B7'de ölümlerle karşılaştı. Önceki sürümlerde `playtest-bot` ile **hasar** B1'de 2–4, B10–B11'de 10–17 aralığındaydı; yani formül eğimi "her kat azıcık daha zor"u sağlıyor, ancak tek koşu gürültülüdür (±birkaç puan). **Sınırlar:** bot kusursuz bir oyuncu modeli değildir (merak, yanlış kapı, ses dinleme yok); ses ve oyun hissi ölçülmez; başsız (headless) çalışmada kare hızı/çizim performansı ölçülmez (bkz. 16).
+Son ölçümler (insan botu, `?debug&depth=N&cutscenes=0`, tek koşu; bot zehir, hücum ve şok halkasına özel tepki vermez, yalnızca genel geri çekilme kuralı vardır): B1 44 sn / 11 hasar, B2 60 sn / 6, B3 55 sn / 7, B4 42 sn / 16, B8 83 sn / 26, B9 53 sn / 18 ile bitirildi; **B5, B6, B7, B10 ve B11'de ölüm** (10–22 sn). Yani seviyeler, örümcek, elektrik plakası ve her katta boss birlikte oyunu bu botla belirgin biçimde zorlaştırdı; gerçek bir oyuncu kaçınma ve siper kullandığı için daha iyi gider ama denge ayrıca oynanarak ayarlanmalıdır (tier oranları, örümcek ateş hızı, boss canları). Önceki sürümlerde `playtest-bot` ile **hasar** B1'de 2–4, B10–B11'de 10–17 aralığındaydı; yani formül eğimi "her kat azıcık daha zor"u sağlıyor, ancak tek koşu gürültülüdür (±birkaç puan). **Sınırlar:** bot kusursuz bir oyuncu modeli değildir (merak, yanlış kapı, ses dinleme yok); ses ve oyun hissi ölçülmez; başsız (headless) çalışmada kare hızı/çizim performansı ölçülmez (bkz. 16).
 
 ---
 

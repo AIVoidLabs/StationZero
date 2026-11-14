@@ -142,6 +142,11 @@
     const next = bfs(level, here, (c) => isFrontier(level, c.x, c.y));
     if (!next) {
       H.target = null;
+      const gate = sz.scene.gate;
+      if (gate && gate.state === 'LOCKED') {
+        const hunted = sz.combat.roster.filter((d) => !d.isDead).sort((a, b) => dist(here, a.gridPosition) - dist(here, b.gridPosition))[0];
+        if (hunted && !p.hasPath) p.setDestination(Math.round(hunted.gridPosition.x), Math.round(hunted.gridPosition.y));
+      }
       return;
     }
     H.target = next;
