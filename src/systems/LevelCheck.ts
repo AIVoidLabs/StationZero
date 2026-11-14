@@ -1,4 +1,4 @@
-import { bossForFloor } from '../data/enemies';
+import { ENEMY_SPECS, bossForFloor } from '../data/enemies';
 import type { GridPoint } from '../data/levelTypes';
 import type { Dungeon } from './DungeonGen';
 
@@ -112,7 +112,7 @@ export function checkLevel(dungeon: Dungeon): LevelProblem[] {
     }
   }
 
-  const bosses = e.enemies.filter((enemy) => enemy.kind === 'assembler' || enemy.kind === 'warden');
+  const bosses = e.enemies.filter((enemy) => ENEMY_SPECS[enemy.kind].boss);
   const expected = bossForFloor(dungeon.floor) !== null ? 1 : 0;
   if (bosses.length !== expected) add(`expected ${expected} boss, found ${bosses.length}`, null);
   if (e.enemies.length === 0) add('floor has no enemies', null);

@@ -31,6 +31,9 @@ const TOOL_GROUPS: readonly { readonly title: string; readonly tools: readonly T
       { id: 'enemy:spider', label: 'Spider (poison)' },
       { id: 'enemy:tank', label: 'Tank' },
       { id: 'enemy:assembler', label: 'Assembler (boss)' },
+      { id: 'enemy:crusher', label: 'Crusher (boss)' },
+      { id: 'enemy:dynamo', label: 'Dynamo (boss)' },
+      { id: 'enemy:matriarch', label: 'Matriarch (boss)' },
       { id: 'enemy:warden', label: 'WARDEN (boss)' },
     ],
   },
@@ -424,7 +427,7 @@ function renderDifficulty(root: HTMLElement, state: EditorState): void {
     el('p', { className: 'score', text: `Score ${score}   (formula ${Math.round(target.total)}, ${percent(rating.total, target.total)})` }),
     el('p', {
       className: 'hint',
-      text: `Enemies ${Math.round(rating.enemyThreat)} + hazards ${Math.round(rating.hazardThreat)}. ${rating.counts.drone} drone, ${rating.counts.tank} tank, ${rating.counts.assembler + rating.counts.warden} boss.`,
+      text: `Enemies ${Math.round(rating.enemyThreat)} + hazards ${Math.round(rating.hazardThreat)}. ${rating.counts.drone} drone, ${rating.counts.tank} tank, ${rating.bosses} boss.`,
     }),
   );
   if (previous) {

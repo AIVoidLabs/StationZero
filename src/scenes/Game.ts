@@ -80,6 +80,7 @@ export interface HudState {
   secrets: number;
   alert: number;
   poisoned: boolean;
+  boss: { name: string; ratio: number } | null;
 }
 
 const SECRET_ALERT = 1;
@@ -873,6 +874,16 @@ export class Game extends Scene {
     };
   }
 
+  private bossInfo(): { name: string; ratio: number } | null {
+    for (const drone of this.combat?.roster ?? []) {
+      const name = drone.bossName;
+      if (!name || drone.isDead || drone.isDormantNow) continue;
+      const health = drone.health;
+      return { name, ratio: health.maxHp > 0 ? health.hp / health.maxHp : 0 };
+    }
+    return null;
+  }
+
   get hudState(): HudState | null {
     const player = this.player;
     if (!player) return null;
@@ -914,6 +925,7 @@ export class Game extends Scene {
       secrets: runFlags.secretCount,
       alert: runFlags.alert,
       poisoned: player.isPoisoned,
+      boss: this.bossInfo(),
     };
   }
 

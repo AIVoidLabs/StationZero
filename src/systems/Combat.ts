@@ -50,7 +50,7 @@ export class Combat {
         spawn.kind,
         spawn.tier,
       );
-      if (spawn.kind === 'warden') unit.sleep();
+      if (ENEMY_SPECS[spawn.kind].boss) unit.sleep();
       this.drones.push(unit);
     }
   }
@@ -114,7 +114,7 @@ export class Combat {
             y,
             0x9e3779b9 ^ this.summonSeed,
             this.projectiles,
-            'drone',
+            ENEMY_SPECS[boss.kind].summonKind,
           );
           this.drones.push(unit);
           this.summoned.add(unit);

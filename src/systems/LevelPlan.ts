@@ -149,13 +149,10 @@ class Planner {
         const cell = candidates.splice(candidateIndex, 1)[0];
         if (!cell) continue;
 
-        if (rng() < THEME_PROP_CHANCE) {
-          this.props.push({ x: cell.x, y: cell.y, kind: 'theme' });
-        } else {
-          const kind = RANDOM_PROP_KINDS[Math.floor(rng() * RANDOM_PROP_KINDS.length)] ?? 'barrel';
-          this.props.push({ x: cell.x, y: cell.y, kind });
-        }
-        this.level.blockCell(cell.x, cell.y);
+        const theme = rng() < THEME_PROP_CHANCE;
+        const kind: PropKind = theme ? 'theme' : (RANDOM_PROP_KINDS[Math.floor(rng() * RANDOM_PROP_KINDS.length)] ?? 'barrel');
+        if (!this.blockSafely(cell)) continue;
+        this.props.push({ x: cell.x, y: cell.y, kind });
         this.propCount += 1;
       }
     }
@@ -174,11 +171,19 @@ class Planner {
       const cell = candidates[Math.floor(rng() * candidates.length)];
       if (!cell) continue;
 
+      if (!this.blockSafely(cell)) continue;
       this.terminals.push({ x: cell.x, y: cell.y });
-      this.level.blockCell(cell.x, cell.y);
       this.propCount += 1;
       placed += 1;
     }
+  }
+
+  private blockSafely(cell: Cell): boolean {
+    const before = this.countWalkable();
+    this.level.blockCell(cell.x, cell.y);
+    if (this.countReachable() === before - 1) return true;
+    this.level.unblockCell(cell.x, cell.y);
+    return false;
   }
 
   private propCandidates(room: Room): Cell[] {

@@ -28,6 +28,7 @@ export interface LevelRating {
   readonly ammoSupply: number;
   readonly ammoNeeded: number;
   readonly stims: number;
+  readonly bosses: number;
 }
 
 export function enemyThreat(kind: EnemyKind, floor: number, tier: EnemyTier = 'novice'): number {
@@ -42,7 +43,7 @@ export function enemyThreat(kind: EnemyKind, floor: number, tier: EnemyTier = 'n
 }
 
 export function rateLevel(input: RatingInput): LevelRating {
-  const counts: Record<EnemyKind, number> = { drone: 0, spider: 0, tank: 0, assembler: 0, warden: 0 };
+  const counts = Object.fromEntries(Object.keys(ENEMY_SPECS).map((kind) => [kind, 0])) as Record<EnemyKind, number>;
   let enemies = 0;
   let ammoNeeded = 0;
   let ammoDrops = 0;
@@ -64,6 +65,7 @@ export function rateLevel(input: RatingInput): LevelRating {
     ammoSupply: PISTOL_AMMO_START + input.lootAmmo + ammoDrops,
     ammoNeeded,
     stims: input.lootStims,
+    bosses: input.enemies.filter((enemy) => ENEMY_SPECS[enemy.kind].boss).length,
   };
 }
 

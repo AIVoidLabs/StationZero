@@ -52,3 +52,5 @@ It also shows ammo supply versus ammo needed (start ammo + loot + enemy drops, a
 
 ## Enemy tiers
 Every non-boss enemy has a **tier**: *novice* (acemi), *journeyman* (kalfa) or *master* (usta). Higher tiers have more health, hit harder (master shots and touch do 2 damage), fire faster, move faster, notice from further away, and give more XP (10 / 25 / 60). In the game a journeyman shows one stripe and a master two stripes with a gold outline next to its health bar. In the editor, pick the tier for **new** enemies in the Enemies group (the Novice/Journeyman/Master buttons) and change an existing enemy's tier in the inspector. Bosses are always master and ignore the tier setting. The difficulty score counts the tier. XP is added to the run score and shown in the end report.
+
+Boss tools in the Enemies group: Assembler, Crusher, Dynamo, Matriarch, WARDEN. Every floor needs exactly one boss (`levels:check` and the validation panel enforce it); give it room: boss rooms are 11 by 9 where the map allows.

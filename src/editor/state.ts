@@ -36,6 +36,9 @@ export type ToolId =
   | 'enemy:spider'
   | 'enemy:tank'
   | 'enemy:assembler'
+  | 'enemy:crusher'
+  | 'enemy:dynamo'
+  | 'enemy:matriarch'
   | 'enemy:warden'
   | 'vent'
   | 'shock';

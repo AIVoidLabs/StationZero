@@ -127,6 +127,9 @@ export class HudScene extends Scene {
   private maxHpShown = PLAYER_MAX_HP;
   private secretText!: GameObjects.Text;
   private poisonText!: GameObjects.Text;
+  private bossName!: GameObjects.Text;
+  private bossBack!: GameObjects.Rectangle;
+  private bossFill!: GameObjects.Rectangle;
   private poisoned = false;
   private objectiveCalm = false;
   private lastObjective = '';
@@ -169,6 +172,12 @@ export class HudScene extends Scene {
     this.secretText = this.add
       .text(HP_X + 4, HP_Y + HP_H + 8, '', { fontFamily: FONT, fontSize: '9px', color: '#d9a441' })
       .setOrigin(0, 0);
+    this.bossBack = this.add.rectangle(GAME_WIDTH / 2, 42, 262, 10, 0x0a0a0a, 0.85).setStrokeStyle(1, 0x6b2b2b, 1).setVisible(false);
+    this.bossFill = this.add.rectangle(GAME_WIDTH / 2 - 130, 42, 260, 8, 0xc8321e, 1).setOrigin(0, 0.5).setVisible(false);
+    this.bossName = this.add
+      .text(GAME_WIDTH / 2, 28, '', { fontFamily: FONT, fontSize: '11px', color: '#e8a090' })
+      .setOrigin(0.5, 0.5)
+      .setVisible(false);
     this.poisonText = this.add
       .text(HP_X + HP_W - 8, HP_Y + HP_H + 8, '', { fontFamily: FONT, fontSize: '9px', color: '#7fe870' })
       .setOrigin(1, 0);
@@ -323,6 +332,14 @@ export class HudScene extends Scene {
     this.updateSector(state.floorCode, state.floorName, state.objective, state.objectiveCalm);
     this.alert = state.alert;
     this.poisoned = state.poisoned;
+    const boss = state.boss;
+    this.bossBack.setVisible(boss !== null);
+    this.bossFill.setVisible(boss !== null);
+    this.bossName.setVisible(boss !== null);
+    if (boss) {
+      this.bossName.setText(boss.name);
+      this.bossFill.setSize(Math.max(0, 260 * boss.ratio), 8);
+    }
     this.poisonText.setText(state.poisoned ? `${t('hud.poison')}` : '').setAlpha(0.6 + 0.4 * Math.abs(Math.sin(this.time.now / 180)));
     this.drawHealth(delta);
     this.drawStripe(state.objectiveCalm);

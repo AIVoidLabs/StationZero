@@ -32,12 +32,15 @@ import {
   DRONE_DODGE_SENSE_TILES,
   DRONE_DODGE_SPEED,
 } from '../../data/config';
+import { bossVariantForFloor, type BossVariant } from '../../data/bosses';
 import { fireCooldownScale, scaledEnemyHp } from '../../data/difficulty';
 import { BOSS_XP, TIER_SPECS, type EnemyTier, type TierSpec } from '../../data/tiers';
 import { ENEMY_SPECS, TANK_FRONT_COS, type EnemyKind, type EnemySpec } from '../../data/enemies';
 import type { Projectiles } from '../../systems/Projectiles';
 import { runFlags } from '../../systems/RunFlags';
 import { distanceGain, sfx } from '../../systems/Sfx';
+import { settings } from '../../systems/Settings';
+import { t } from '../../i18n';
 import { upgradeStats } from '../../systems/Upgrades';
 import { DIRECTION_VECTOR, DIRECTIONS, facingForGridStep } from '../../utils/facing';
 import { gridVectorToWorld, worldVectorToGrid } from '../../utils/iso';
@@ -60,6 +63,23 @@ type FireState = 'NONE' | 'WINDUP' | 'RECOVER';
 
 const WRECK_DEPTH_OFFSET = 12;
 const DORMANT_WAKE_RANGE = 6;
+const CHARGE_TELEGRAPH_MS = 800;
+const CHARGE_AIM_MS = 550;
+const CHARGE_SPEED = 7;
+const CHARGE_MAX_TILES = 9;
+const CHARGE_COOLDOWN_MS = 3500;
+const CHARGE_STUN_MS = 2000;
+const CHARGE_RECOVER_MS = 700;
+const CHARGE_DAMAGE = 2;
+const CHARGE_MIN_RANGE = 3;
+const CHARGE_MAX_RANGE = 8;
+const RING_COOLDOWN_MS = 4500;
+const RING_TELEGRAPH_MS = 700;
+const RING_EXPAND_MS = 800;
+const RING_MAX_RADIUS = 6;
+const RING_BAND = 0.75;
+const RING_RX = TILE_WIDTH * 0.7071;
+const RING_RY = (TILE_HEIGHT * 0.7071);
 
 const WAYPOINT_EPSILON = 0.08;
 const MAX_STEP_SECONDS = 0.05;
@@ -123,6 +143,23 @@ export class Drone extends Entity {
   private readonly armorBarBack: GameObjects.Rectangle;
   private readonly armorBarFill: GameObjects.Rectangle;
   private readonly tierMarks: GameObjects.Rectangle[] = [];
+  private readonly variant: BossVariant | null;
+  private readonly visualScale: number;
+  private readonly idleTintValue: number | null;
+  private readonly chaseTintValue: number;
+  private chargeState: 'NONE' | 'TELEGRAPH' | 'DASH' | 'STUN' | 'RECOVER' = 'NONE';
+  private chargeMs = 0;
+  private chargeCooldownMs = 1500;
+  private chargeTraveled = 0;
+  private chargeHit = false;
+  private chargeDirX = 0;
+  private chargeDirY = 1;
+  private ringState: 'NONE' | 'TELEGRAPH' | 'EXPAND' = 'NONE';
+  private ringMs = 0;
+  private ringCooldownMs = 2500;
+  private ringHit = false;
+  private ringGfx: GameObjects.Graphics | null = null;
+  private chargeGfx: GameObjects.Graphics | null = null;
 
   constructor(
     scene: Scene,
@@ -141,6 +178,11 @@ export class Drone extends Entity {
 
     this.kind = kind;
     this.spec = ENEMY_SPECS[kind];
+    const variant = this.spec.boss ? bossVariantForFloor(depth.floor) : null;
+    this.variant = variant && variant.kind === kind ? variant : null;
+    this.visualScale = this.spec.scale * (this.variant?.scaleMul ?? 1);
+    this.idleTintValue = this.variant ? this.variant.idleTint : this.spec.idleTint;
+    this.chaseTintValue = this.variant?.chaseTint ?? this.spec.chaseTint;
     this.tier = this.spec.boss ? 'master' : tier;
     this.tierSpec = this.spec.boss ? TIER_SPECS.novice : TIER_SPECS[tier];
     this.level = level;
@@ -158,14 +200,14 @@ export class Drone extends Entity {
     this.bobPhase = this.rng() * Math.PI * 2;
     this.idleMs = DRONE_IDLE_MIN_MS + this.rng() * (DRONE_IDLE_MAX_MS - DRONE_IDLE_MIN_MS);
 
-    const maxHp = this.spec.boss ? this.spec.maxHp : Math.max(1, Math.round(scaledEnemyHp(this.spec.maxHp, depth.floor) * this.tierSpec.hpMul));
+    const maxHp = this.spec.boss ? Math.max(1, Math.round(this.spec.maxHp * (this.variant?.hpMul ?? 1))) : Math.max(1, Math.round(scaledEnemyHp(this.spec.maxHp, depth.floor) * this.tierSpec.hpMul));
     this.hp = maxHp;
     this.maxHp = maxHp;
     this.maxArmorHp = this.spec.armorHp > 0 ? this.spec.armorHp + this.tierSpec.armorBonus : 0;
     this.armorHp = this.maxArmorHp;
     this.dead = false;
 
-    const scale = this.spec.scale;
+    const scale = this.visualScale;
     const barWidth = this.spec.healthBarWidth;
     const barY = -this.spec.height * scale - 6;
     this.shadow = scene.add.image(0, 0, 'shadow').setOrigin(0.5, 0.5).setScale(0.8 * scale).setAlpha(0.65);
@@ -240,6 +282,14 @@ export class Drone extends Entity {
     return this.spec.contactDamage + this.tierSpec.damageBonus;
   }
 
+  get bossName(): string | null {
+    return this.variant ? t(this.variant.nameKey) : null;
+  }
+
+  get isDormantNow(): boolean {
+    return this.dormant;
+  }
+
   get xpValue(): number {
     return this.spec.boss ? BOSS_XP : this.tierSpec.xp;
   }
@@ -309,6 +359,12 @@ export class Drone extends Entity {
       }
     }
     if (this.updateDodge(deltaMs, dt)) {
+      this.syncTransform();
+      this.updateVisual();
+      return;
+    }
+    if (this.spec.ability === 'shockRing') this.updateShockRing(deltaMs);
+    if (this.spec.ability === 'charge' && this.updateCharge(deltaMs, dt)) {
       this.syncTransform();
       this.updateVisual();
       return;
@@ -418,6 +474,153 @@ export class Drone extends Entity {
     }
 
     this.followPath(dt, this.spec.chaseSpeed * this.tierSpec.speedMul);
+  }
+
+  private updateCharge(deltaMs: number, dt: number): boolean {
+    const target = this.playerCell();
+    const now = this.scene.time.now;
+    switch (this.chargeState) {
+      case 'NONE': {
+        this.chargeCooldownMs -= deltaMs;
+        if (this.mode !== 'CHASE' || this.chargeCooldownMs > 0 || this.fireState !== 'NONE') return false;
+        const dx = target.gridX - this.posX;
+        const dy = target.gridY - this.posY;
+        const distance = Math.hypot(dx, dy);
+        if (distance < CHARGE_MIN_RANGE || distance > CHARGE_MAX_RANGE || !this.canSee(1)) return false;
+        this.chargeState = 'TELEGRAPH';
+        this.chargeMs = 0;
+        this.path = [];
+        this.aimCharge(dx, dy, distance);
+        sfx.play('shockHum', this.audioGain());
+        return true;
+      }
+      case 'TELEGRAPH': {
+        this.chargeMs += deltaMs;
+        if (this.chargeMs < CHARGE_AIM_MS) {
+          const dx = target.gridX - this.posX;
+          const dy = target.gridY - this.posY;
+          this.aimCharge(dx, dy, Math.hypot(dx, dy));
+        }
+        this.drawChargeLine();
+        if (this.chargeMs >= CHARGE_TELEGRAPH_MS) {
+          this.chargeState = 'DASH';
+          this.chargeMs = 0;
+          this.chargeTraveled = 0;
+          this.chargeHit = false;
+          this.clearChargeLine();
+          sfx.play('shell', this.audioGain());
+        }
+        return true;
+      }
+      case 'DASH': {
+        const step = CHARGE_SPEED * dt;
+        const moved = this.moveBy(this.chargeDirX * step, this.chargeDirY * step);
+        this.chargeTraveled += step;
+        const at = this.player.gridPosition;
+        if (!this.chargeHit && Math.hypot(at.x - this.posX, at.y - this.posY) <= 1.15) {
+          this.chargeHit = true;
+          this.player.takeDamage(CHARGE_DAMAGE, now, { x: this.chargeDirX, y: this.chargeDirY });
+        }
+        if (!moved) {
+          this.chargeState = 'STUN';
+          this.chargeMs = 0;
+          this.armorHp = 0;
+          this.updateArmorBar();
+          sfx.play('armorBreak', this.audioGain());
+          this.spawnArmorBreakFx();
+          if (settings.data.screenShake) this.scene.cameras.main.shake(220, 0.008);
+        } else if (this.chargeTraveled >= CHARGE_MAX_TILES) {
+          this.chargeState = 'RECOVER';
+          this.chargeMs = 0;
+        }
+        return true;
+      }
+      case 'STUN':
+        this.chargeMs += deltaMs;
+        if (this.chargeMs >= CHARGE_STUN_MS) {
+          this.armorHp = Math.ceil(this.maxArmorHp / 2);
+          this.updateArmorBar();
+          this.chargeState = 'NONE';
+          this.chargeCooldownMs = CHARGE_COOLDOWN_MS;
+        }
+        return true;
+      case 'RECOVER':
+        this.chargeMs += deltaMs;
+        if (this.chargeMs >= CHARGE_RECOVER_MS) {
+          this.chargeState = 'NONE';
+          this.chargeCooldownMs = CHARGE_COOLDOWN_MS;
+        }
+        return true;
+    }
+  }
+
+  private aimCharge(dx: number, dy: number, distance: number): void {
+    if (distance < 0.0001) return;
+    this.chargeDirX = dx / distance;
+    this.chargeDirY = dy / distance;
+    this.faceToward(this.chargeDirX, this.chargeDirY);
+  }
+
+  private drawChargeLine(): void {
+    if (!this.chargeGfx) this.chargeGfx = this.scene.add.graphics().setDepth(DEPTH_VFX - 6);
+    const g = this.chargeGfx;
+    g.clear();
+    const from = gridVectorToWorld(this.posX, this.posY, TILE_WIDTH, TILE_HEIGHT);
+    const to = gridVectorToWorld(
+      this.posX + this.chargeDirX * CHARGE_MAX_TILES,
+      this.posY + this.chargeDirY * CHARGE_MAX_TILES,
+      TILE_WIDTH,
+      TILE_HEIGHT,
+    );
+    g.lineStyle(4, 0xff3a22, 0.35 + 0.35 * Math.abs(Math.sin(this.scene.time.now / 80)));
+    g.lineBetween(from.x, from.y, to.x, to.y);
+  }
+
+  private clearChargeLine(): void {
+    this.chargeGfx?.clear();
+  }
+
+  private updateShockRing(deltaMs: number): void {
+    const gfx = (this.ringGfx ??= this.scene.add.graphics().setDepth(DEPTH_VFX - 6));
+    const world = gridVectorToWorld(this.posX, this.posY, TILE_WIDTH, TILE_HEIGHT);
+    gfx.clear();
+    const at = this.player.gridPosition;
+    const distance = Math.hypot(at.x - this.posX, at.y - this.posY);
+    if (this.ringState === 'NONE') {
+      this.ringCooldownMs -= deltaMs;
+      if (this.mode === 'CHASE' && this.ringCooldownMs <= 0 && distance <= RING_MAX_RADIUS + 3) {
+        this.ringState = 'TELEGRAPH';
+        this.ringMs = 0;
+        sfx.play('shockHum', this.audioGain());
+      }
+      return;
+    }
+    this.ringMs += deltaMs;
+    if (this.ringState === 'TELEGRAPH') {
+      const pulse = 0.35 + 0.35 * Math.abs(Math.sin(this.scene.time.now / 70));
+      gfx.lineStyle(3, 0x7fe0ff, pulse);
+      gfx.strokeEllipse(world.x, world.y, RING_RX * 2 * 1.4, RING_RY * 2 * 1.4);
+      if (this.ringMs >= RING_TELEGRAPH_MS) {
+        this.ringState = 'EXPAND';
+        this.ringMs = 0;
+        this.ringHit = false;
+        sfx.play('shock', this.audioGain());
+      }
+      return;
+    }
+    const radius = 0.8 + (RING_MAX_RADIUS - 0.8) * Math.min(1, this.ringMs / RING_EXPAND_MS);
+    gfx.lineStyle(5, 0x59d8ff, 0.9);
+    gfx.strokeEllipse(world.x, world.y, RING_RX * 2 * radius, RING_RY * 2 * radius);
+    gfx.lineStyle(2, 0xffffff, 1);
+    gfx.strokeEllipse(world.x, world.y, RING_RX * 2 * radius, RING_RY * 2 * radius);
+    if (!this.ringHit && Math.abs(distance - radius) <= RING_BAND) {
+      this.ringHit = true;
+      this.player.takeDamage(1, this.scene.time.now, { x: at.x - this.posX, y: at.y - this.posY });
+    }
+    if (this.ringMs >= RING_EXPAND_MS) {
+      this.ringState = 'NONE';
+      this.ringCooldownMs = RING_COOLDOWN_MS;
+    }
   }
 
   private retreatFrom(target: GridCell, dt: number): void {
@@ -674,7 +877,7 @@ export class Drone extends Entity {
   get lightState(): DroneLightState {
     let kind: DroneLightKind = 'idle';
     if (this.dead) kind = 'wreck';
-    else if (this.fireState === 'WINDUP') kind = 'aim';
+    else if (this.fireState === 'WINDUP' || this.chargeState === 'TELEGRAPH' || this.chargeState === 'DASH' || this.ringState === 'TELEGRAPH') kind = 'aim';
     else if (this.mode === 'CHASE') kind = 'chase';
     else if (this.mode === 'SEARCH') kind = 'search';
     const deathAgeMs = this.dead ? this.scene.time.now - this.diedAt : 0;
@@ -775,6 +978,8 @@ export class Drone extends Entity {
   }
 
   private onDeath(): void {
+    this.ringGfx?.clear();
+    this.chargeGfx?.clear();
     this.diedAt = this.scene.time.now;
     this.fireState = 'NONE';
     this.shadow.setVisible(false);
@@ -844,7 +1049,7 @@ export class Drone extends Entity {
 
   private spawnDeflectFx(): void {
     const spark = this.scene.add
-      .circle(this.x, this.y - 18 * this.spec.scale, 3, 0xe8f4ff, 0.95)
+      .circle(this.x, this.y - 18 * this.visualScale, 3, 0xe8f4ff, 0.95)
       .setDepth(DEPTH_VFX + 1)
       .setBlendMode(BlendModes.ADD);
     this.scene.tweens.add({
@@ -881,7 +1086,7 @@ export class Drone extends Entity {
     for (let index = 0; index < 8; index += 1) {
       const angle = this.rng() * Math.PI * 2;
       const spark = this.scene.add
-        .circle(this.x, this.y - 18 * this.spec.scale, 2, 0xcfe6ff, 1)
+        .circle(this.x, this.y - 18 * this.visualScale, 2, 0xcfe6ff, 1)
         .setDepth(DEPTH_VFX + 1)
         .setBlendMode(BlendModes.ADD);
       this.scene.tweens.add({
@@ -922,14 +1127,14 @@ export class Drone extends Entity {
   private updateVisual(): void {
     const bob = Math.sin(this.scene.time.now * 0.0035 + this.bobPhase) * this.spec.bob;
     this.sprite.y = -2 + bob;
-    this.shadow.setScale((0.8 - bob * 0.02) * this.spec.scale, 0.8 * this.spec.scale);
+    this.shadow.setScale((0.8 - bob * 0.02) * this.visualScale, 0.8 * this.visualScale);
 
     if (this.dormant) this.sprite.setTint(0x5a4a4a);
     else if (this.fireState === 'WINDUP') {
       this.sprite.setTint(Math.floor(this.scene.time.now / 70) % 2 === 0 ? 0xff2a1a : 0xffb0a0);
-    } else if (this.mode === 'CHASE') this.sprite.setTint(this.spec.chaseTint);
+    } else if (this.mode === 'CHASE') this.sprite.setTint(this.chaseTintValue);
     else if (this.mode === 'SEARCH') this.sprite.setTint(0xd9a441);
-    else if (this.spec.idleTint !== null) this.sprite.setTint(this.spec.idleTint);
+    else if (this.idleTintValue !== null) this.sprite.setTint(this.idleTintValue);
     else this.sprite.clearTint();
 
     this.applyFacingFrame();
@@ -943,6 +1148,8 @@ export class Drone extends Entity {
   }
 
   destroy(fromScene?: boolean): void {
+    this.ringGfx?.destroy();
+    this.chargeGfx?.destroy();
     this.sprite.destroy();
     this.shadow.destroy();
     this.removeAll(true);

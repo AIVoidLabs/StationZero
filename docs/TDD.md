@@ -381,6 +381,7 @@ Tüm düşman türleri **tek bir sınıf** (`Drone`) ve **veri tablosuyla** ([sr
 | `spider` | 2 | 0 | yeşil zehir tükürür (3600 ms, menzil 7) | hızlı, mesafe tutar, zehir 3 sn (1 hasar / 1.5 sn), stim temizler |
 | `tank` | 2 | 3 | tek mermi (shell), 3800 ms, menzil 7 | ağır, yavaş dönüş (`turnMs` 900), önden zırhlı |
 | `assembler` | 6 | 3 | 3'lü yelpaze, 3000 ms, menzil 8 | boss; her 11 sn drone çağırır (en çok 2); ölçek 1.7 |
+| `crusher` / `dynamo` / `matriarch` | 7 / 8 / 8 | 4 / 3 / 2 | shell / 3'lü yelpaze / zehir yelpazesi | boss prototipleri (6.6a) |
 | `warden` | 9 | 4 | 5'li yelpaze, 3200 ms, menzil 11 | boss; hareketsiz (`speed 0`), uykuda başlar; 10 sn'de bir çağrı |
 
 Kat sayısına bağlı sayılar (`droneCountForFloor`, `tankCountForFloor`, `bossForFloor`) aynı dosyadadır; drone sayısı ve can ölçeklemesi `difficulty.ts`'ten gelir (bkz. 8.8). Tank sayıları tablodadır: B6, B8, B10'da birer tane.
@@ -434,6 +435,11 @@ hasLineOfSight(level, düşman hücresi, oyuncu hücresi)           // duvar/pro
 
 ### 6.5 Zırh
 Zırhlı türler (`armorHp > 0`) için `takeDamage(amount, travel)`: önce **ön cephe testi** `isFrontalHit(travel)`; merminin yönünün tersi ile düşmanın baktığı yön arasındaki kosinüs `TANK_FRONT_COS = 0.8`'den büyükse (≈ ±37°) darbe **zırhı** aşındırır, canı değil: `armorHp -= upgradeStats().armorHit` (sır B5: 1 yerine 2). Zırh bitince `armorBreak` sesi ve kıvılcım, çubuk gizlenir. Arkadan/yandan vuruş doğrudan cana işler. Düşman `turnMs` ile yavaş döndüğü için (tank 900 ms) **yan geçip arkadan vurmak** mümkündür; boss'un da "ön plakayı kır ya da kanattan vur" ipucu buradan gelir. Zırh çubuğu (mavi) can çubuğunun altındadır.
+
+### 6.6a Boss varyantları (her katta boss)
+[bosses.ts](../src/data/bosses.ts) `BOSS_VARIANTS`: her kat için `{ kind, nameKey, scaleMul, hpMul, idleTint, chaseTint }`. `bossForFloor(floor)` buradan okunur (artık her kat için boss vardır; `DungeonGen` 11×9 boss odasını her katta ayırır, `LevelPlan` boss'u en uzak odaya koyar). Beş prototip: **assembler** ve **warden** (var olanlar), **crusher** (`ability: 'charge'`), **dynamo** (`ability: 'shockRing'`), **matriarch** (zehir yelpazesi + `summonKind: 'spider'`). `Drone` varyantı kurucuda uygular: görsel ölçek (`visualScale`), ton, boss canı `spec.maxHp × hpMul`. Tüm bosslar uykuda başlar (`Combat`).
+**Hücum (Crusher, `updateCharge`)**: durum makinesi `NONE → TELEGRAPH (800 ms, kırmızı çizgi + nişan ışığı, ilk 550 ms hedefi izler) → DASH (7 kare/sn, en çok 9 kare, oyuncuya değerse 2 hasar) → RECOVER (700 ms)`; duvara çarparsa `STUN` (2 sn, zırh sıfırlanır, kamera sarsıntısı) ve zırhın yarısı geri gelir. **Şok halkası (Dynamo, `updateShockRing`)**: 4.5 sn'de bir, `TELEGRAPH (700 ms)` sonra yarıçap 0.8 → 6 kareye 800 ms'de genişleyen halka; halka bandı (±0.75) oyuncudan geçerken bir kez 1 hasar; halka izometrik elips olarak çizilir (`rx = 0.707·TILE_WIDTH`, `ry = 0.707·TILE_HEIGHT` × yarıçap). HUD üstte boss adı ve can çubuğu gösterir (`HudState.boss`, uyanık boss).
+Mevcut kilitli katlara tek seferlik `tools/add-bosses.mjs` boss'u ekler ve en uzak odayı (11×9 ya da sığdığı kadar) genişletir.
 
 ### 6.6 Boss mantığı
 - **Uykuda doğma:** `LevelPlan` boss'u en uzak odaya koyar; `Combat` WARDEN için `unit.sleep()` çağırır (`dormant = true`). Uykudaki düşman `update` içinde yalnızca oyuncu `DORMANT_WAKE_RANGE = 6` içine girerse uyanır (`wake()`: ateş bekleme 1500 ms, `laser` sesi, zırh kırılma efekti). `takeDamage` da `wake()` çağırır, yani uzaktan ateşle de uyanır.
