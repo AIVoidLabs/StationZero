@@ -16,8 +16,8 @@ export const PLAYER_FOOTPRINT = 0.3;
 export const PLAYER_STRIDE_TILES = 1.8;
 export const FOOTSTEP_DISTANCE = 0.9;
 
-export const DUNGEON_WIDTH = 27;
-export const DUNGEON_HEIGHT = 27;
+export const DUNGEON_WIDTH = 35;
+export const DUNGEON_HEIGHT = 35;
 export const DUNGEON_SEED = 240731;
 
 export const FLOOR_COUNT = 11;
@@ -88,7 +88,7 @@ export const PLAYER_IFRAMES_MS = 600;
 // Pistol
 export const PISTOL_AMMO_START = 12;
 export const PISTOL_MAX_AMMO = 12;
-export const PISTOL_RANGE = 5.5;
+export const PISTOL_RANGE = 7;
 export const PISTOL_DAMAGE = 1;
 export const PISTOL_COOLDOWN_MS = 320;
 
@@ -103,7 +103,7 @@ export const PLAYER_BULLET_LENGTH = 26;
 export const PLAYER_BULLET_RANGE = PISTOL_RANGE + 1.5;
 export const PLAYER_BULLET_HIT_RADIUS = 0.5;
 
-export const DRONE_BULLET_SPEED = 7;
+export const DRONE_BULLET_SPEED = 4.5;
 export const DRONE_BULLET_LENGTH = 20;
 export const DRONE_BULLET_RANGE = 9;
 export const DRONE_BULLET_DAMAGE = 1;

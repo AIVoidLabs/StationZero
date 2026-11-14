@@ -10,6 +10,13 @@ import type { OccluderSpec } from './Occlusion';
 
 const DECOR_SEED = 0x5a17e;
 const DECAL_SEED = 0xdecaf;
+const COVER_SEED = 0xc07e5;
+const COVER_MIN_ROOM_WIDTH = 6;
+const COVER_MIN_ROOM_HEIGHT = 5;
+const COVER_BIG_ROOM_AREA = 40;
+const COVER_PAIR_CHANCE = 0.55;
+const COVER_START_CLEARANCE = 3;
+const COVER_SPACING = 2;
 const TERMINAL_SEED = 0x7e34a;
 const MAX_PROPS = 10;
 const MIN_TERMINALS = 3;
@@ -81,6 +88,7 @@ export class Decor {
     this.placeProps(dungeon);
     this.placeTerminals(dungeon);
     this.placeCorpse();
+    this.placeCover(dungeon);
     this.placeDecals(dungeon);
   }
 
@@ -191,6 +199,81 @@ export class Decor {
     }
 
     return false;
+  }
+
+  private placeCover(dungeon: Dungeon): void {
+    const rng = createRng(dungeon.seed ^ COVER_SEED);
+    const placed: Cell[] = [];
+    let walkable = this.countWalkable();
+
+    const tryBlock = (cell: Cell): boolean => {
+      this.level.blockCell(cell.x, cell.y);
+      if (this.countReachable() === walkable - 1) {
+        walkable -= 1;
+        this.addProp(cell.x, cell.y, 'crate');
+        placed.push(cell);
+        return true;
+      }
+      this.level.unblockCell(cell.x, cell.y);
+      return false;
+    };
+
+    for (const room of dungeon.rooms) {
+      if (room.width < COVER_MIN_ROOM_WIDTH || room.height < COVER_MIN_ROOM_HEIGHT) continue;
+      const blocks = room.width * room.height >= COVER_BIG_ROOM_AREA ? 3 : 2;
+
+      for (let index = 0; index < blocks; index += 1) {
+        const candidates = this.coverCandidates(room, placed);
+        const cell = candidates[Math.floor(rng() * candidates.length)];
+        if (!cell || !tryBlock(cell)) continue;
+        if (rng() >= COVER_PAIR_CHANCE) continue;
+
+        const along = rng() < 0.5 ? { x: 1, y: 0 } : { x: 0, y: 1 };
+        const next = { x: cell.x + along.x, y: cell.y + along.y };
+        if (candidates.some((other) => other.x === next.x && other.y === next.y)) tryBlock(next);
+      }
+    }
+  }
+
+  private coverCandidates(room: Room, placed: readonly Cell[]): Cell[] {
+    const result: Cell[] = [];
+    for (let y = room.y + 2; y < room.y + room.height - 2; y += 1) {
+      for (let x = room.x + 2; x < room.x + room.width - 2; x += 1) {
+        if (!this.level.isWalkable(x, y)) continue;
+        if (Math.hypot(x - this.level.spawnX, y - this.level.spawnY) < COVER_START_CLEARANCE) continue;
+        if (this.exit !== null && Math.hypot(x - this.exit.x, y - this.exit.y) < COVER_START_CLEARANCE) continue;
+        if (placed.some((cell) => Math.max(Math.abs(cell.x - x), Math.abs(cell.y - y)) < COVER_SPACING)) continue;
+        result.push({ x, y });
+      }
+    }
+    return result;
+  }
+
+  private countWalkable(): number {
+    let count = 0;
+    for (let y = 0; y < this.level.height; y += 1) {
+      for (let x = 0; x < this.level.width; x += 1) if (this.level.isWalkable(x, y)) count += 1;
+    }
+    return count;
+  }
+
+  private countReachable(): number {
+    const start = { x: Math.round(this.level.spawnX), y: Math.round(this.level.spawnY) };
+    const seen = new Set<number>([start.y * this.level.width + start.x]);
+    const queue: Cell[] = [start];
+    for (let head = 0; head < queue.length; head += 1) {
+      const cell = queue[head];
+      if (!cell) continue;
+      for (const [dx, dy] of CORPSE_NEIGHBORS.slice(0, 4)) {
+        const x = cell.x + dx;
+        const y = cell.y + dy;
+        const key = y * this.level.width + x;
+        if (seen.has(key) || !this.level.isWalkable(x, y)) continue;
+        seen.add(key);
+        queue.push({ x, y });
+      }
+    }
+    return seen.size;
   }
 
   private addThemeProp(gridX: number, gridY: number): void {

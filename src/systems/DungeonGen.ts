@@ -44,60 +44,19 @@ interface FloorProfile {
   readonly extraLinks: number;
 }
 
-const DEFAULT_PROFILE: FloorProfile = {
-  roomCount: 7,
-  hallSize: 7,
-  minRoomWidth: 3,
-  maxRoomWidth: 7,
-  minRoomHeight: 3,
-  maxRoomHeight: 6,
-  damagedChance: 0.3,
-  extraLinks: 3,
-};
-
-const FLOOR_PROFILES: readonly FloorProfile[] = [
-  DEFAULT_PROFILE,
-  {
-    roomCount: 7,
-    hallSize: 6,
-    minRoomWidth: 3,
-    maxRoomWidth: 6,
-    minRoomHeight: 3,
-    maxRoomHeight: 5,
-    damagedChance: 0.5,
-    extraLinks: 3,
-  },
-  {
-    roomCount: 6,
-    hallSize: 6,
-    minRoomWidth: 3,
-    maxRoomWidth: 6,
-    minRoomHeight: 3,
-    maxRoomHeight: 5,
-    damagedChance: 0.68,
-    extraLinks: 2,
-  },
-  {
-    roomCount: 6,
-    hallSize: 5,
-    minRoomWidth: 3,
-    maxRoomWidth: 5,
-    minRoomHeight: 3,
-    maxRoomHeight: 4,
-    damagedChance: 0.85,
-    extraLinks: 2,
-  },
-  ...Array.from({ length: 7 }, (_, step): FloorProfile => ({
-    roomCount: 6 + (step % 2),
-    hallSize: 5,
-    minRoomWidth: 3,
-    maxRoomWidth: 5,
-    minRoomHeight: 3,
-    maxRoomHeight: 4,
-    damagedChance: Math.min(0.95, 0.88 + step * 0.01),
-    extraLinks: 2,
-  })),
-];
+function buildProfile(floor: number): FloorProfile {
+  const depth = Math.max(0, Math.min(FLOOR_COUNT - 1, floor));
+  return {
+    roomCount: depth < 3 ? 7 : 6 + (depth % 2),
+    hallSize: depth < 4 ? 8 : 7,
+    minRoomWidth: depth < 5 ? 5 : 4,
+    maxRoomWidth: depth < 5 ? 10 : 9,
+    minRoomHeight: depth < 5 ? 5 : 4,
+    maxRoomHeight: depth < 5 ? 8 : 7,
+    damagedChance: Math.min(0.95, 0.3 + depth * 0.08),
+    extraLinks: depth < 2 ? 3 : 2,
+  };
+}
 
 const ROOM_PLACEMENT_ATTEMPTS = 40;
 const ROOM_ATTEMPT_LIMIT = 500;
@@ -120,8 +79,7 @@ function clampFloor(floor: number): number {
 }
 
 function profileFor(floor: number): FloorProfile {
-  const index = Math.max(0, Math.min(FLOOR_PROFILES.length - 1, floor));
-  return FLOOR_PROFILES[index] ?? DEFAULT_PROFILE;
+  return buildProfile(floor);
 }
 
 function randInt(rng: () => number, min: number, max: number): number {

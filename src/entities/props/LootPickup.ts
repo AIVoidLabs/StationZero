@@ -12,15 +12,17 @@ const GLOW_TINT: Record<LootKind, number> = { stim: 0x6fe09a, ammo: 0xf0c070 };
 
 export class LootPickup extends Entity {
   readonly kind: LootKind;
+  readonly amount: number;
   private readonly sprite: GameObjects.Image;
   private readonly glow: GameObjects.Image;
   private readonly pulse: Tweens.Tween;
   private collected = false;
 
-  constructor(scene: Scene, gridX: number, gridY: number, kind: LootKind) {
+  constructor(scene: Scene, gridX: number, gridY: number, kind: LootKind, amount = 0) {
     const iso = gridVectorToWorld(gridX, gridY, TILE_WIDTH, TILE_HEIGHT);
     super(scene, iso.x, iso.y, { gridX, gridY, isoX: iso.x, isoY: iso.y });
     this.kind = kind;
+    this.amount = amount;
 
     this.glow = scene.add
       .image(0, -7, DESCENT_SIGNAL_KEY)

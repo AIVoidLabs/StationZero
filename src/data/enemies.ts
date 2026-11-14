@@ -49,6 +49,7 @@ export interface EnemySpec {
   readonly summonMs: number;
   readonly summonCap: number;
   readonly boss: boolean;
+  readonly ammoDrop: number;
   readonly turnMs: number;
   readonly scale: number;
   readonly idleTint: number | null;
@@ -81,6 +82,7 @@ export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
     summonMs: 0,
     summonCap: 0,
     boss: false,
+    ammoDrop: 4,
     turnMs: 0,
     scale: 1,
     idleTint: null,
@@ -111,6 +113,7 @@ export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
     summonMs: 0,
     summonCap: 0,
     boss: false,
+    ammoDrop: 8,
     turnMs: 900,
     scale: 1,
     idleTint: null,
@@ -141,6 +144,7 @@ export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
     summonMs: 11000,
     summonCap: 2,
     boss: true,
+    ammoDrop: 8,
     turnMs: 800,
     scale: 1.7,
     idleTint: 0xe0c060,
@@ -171,6 +175,7 @@ export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
     summonMs: 10000,
     summonCap: 2,
     boss: true,
+    ammoDrop: 0,
     turnMs: 1100,
     scale: 1,
     idleTint: null,

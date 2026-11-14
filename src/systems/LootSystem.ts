@@ -40,7 +40,6 @@ export class LootSystem {
   private readonly rng: () => number;
   private readonly items: LootPickup[] = [];
   private readonly dropChance: number;
-  private guaranteedDrop = true;
   private hoverLabel: GameObjects.Text | null = null;
   private hovered: LootPickup | null = null;
 
@@ -57,17 +56,18 @@ export class LootSystem {
     return this.items;
   }
 
-  roll(gridX: number, gridY: number): LootPickup | null {
-    const cell = this.freeCellNear(Math.round(gridX), Math.round(gridY));
-    if (!cell) return null;
+  roll(gridX: number, gridY: number, ammoDrop: number): void {
+    const x = Math.round(gridX);
+    const y = Math.round(gridY);
+    if (ammoDrop > 0) {
+      const cell = this.freeCellNear(x, y);
+      if (cell) this.spawn(cell.x, cell.y, 'ammo', ammoDrop);
+    }
 
     const state = this.player.getHealth();
-    const needsSupplies = state.hp < state.maxHp || state.ammo < state.maxAmmo;
-    const guaranteed = this.guaranteedDrop && needsSupplies;
-    if (!guaranteed && this.rng() > this.dropChance) return null;
-    if (guaranteed) this.guaranteedDrop = false;
-
-    return this.spawn(cell.x, cell.y, this.pickKind());
+    if (state.hp >= state.maxHp || this.rng() > this.dropChance) return;
+    const cell = this.freeCellNear(x, y);
+    if (cell) this.spawn(cell.x, cell.y, 'stim');
   }
 
   hoverAt(worldX: number | null, worldY: number, player: Player): void {
@@ -101,7 +101,7 @@ export class LootSystem {
     const effect =
       best.kind === 'stim'
         ? t('loot.stimEffect', { n: upgradeStats().stimHeal })
-        : t('loot.ammoEffect', { n: LOOT_AMMO_AMOUNT });
+        : t('loot.ammoEffect', { n: best.amount || LOOT_AMMO_AMOUNT });
     const name = best.kind === 'stim' ? t('loot.stim') : t('loot.ammo');
     label
       .setText(`${name}\n${effect}${full ? `  ${t('loot.full')}` : ''}`)
@@ -148,7 +148,7 @@ export class LootSystem {
 
       if (Math.hypot(item.gridX - grid.x, item.gridY - grid.y) > LOOT_PICKUP_RANGE) continue;
 
-      const text = this.apply(item.kind, player);
+      const text = this.apply(item.kind, item.amount, player);
       if (text === null) continue;
 
       item.collect();
@@ -165,7 +165,7 @@ export class LootSystem {
     this.items.length = 0;
   }
 
-  private apply(kind: LootKind, player: Player): string | null {
+  private apply(kind: LootKind, amount: number, player: Player): string | null {
     const state = player.getHealth();
     if (kind === 'stim') {
       if (state.hp >= state.maxHp) return null;
@@ -175,7 +175,7 @@ export class LootSystem {
       return t('loot.gainHp', { n: heal });
     }
     if (state.ammo >= state.maxAmmo) return null;
-    const added = player.addAmmo(LOOT_AMMO_AMOUNT);
+    const added = player.addAmmo(amount || LOOT_AMMO_AMOUNT);
     if (added > 0) sfx.play('pickupAmmo');
     return added > 0 ? t('loot.gainAmmo', { n: added }) : null;
   }
@@ -200,20 +200,8 @@ export class LootSystem {
     });
   }
 
-  private pickKind(): LootKind {
-    const state = this.player.getHealth();
-    const hpMissing = state.maxHp - state.hp;
-    const ammoMissing = state.maxAmmo - state.ammo;
-    if (hpMissing <= 0 && ammoMissing <= 0) return this.rng() < 0.5 ? 'stim' : 'ammo';
-    if (hpMissing <= 0) return 'ammo';
-    if (ammoMissing <= 0) return 'stim';
-    const hpWeight = hpMissing / state.maxHp;
-    const ammoWeight = ammoMissing / state.maxAmmo;
-    return this.rng() * (hpWeight + ammoWeight) < hpWeight ? 'stim' : 'ammo';
-  }
-
-  private spawn(x: number, y: number, kind: LootKind): LootPickup {
-    const pickup = new LootPickup(this.scene, x, y, kind);
+  private spawn(x: number, y: number, kind: LootKind, amount = 0): LootPickup {
+    const pickup = new LootPickup(this.scene, x, y, kind, amount);
     this.items.push(pickup);
     return pickup;
   }

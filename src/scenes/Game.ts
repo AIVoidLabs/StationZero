@@ -48,6 +48,7 @@ import { t, type StringKey } from '../i18n';
 import { dialogueForFloor, type Effect } from '../data/dialogue';
 import { runFlags } from '../systems/RunFlags';
 import { upgradeStats } from '../systems/Upgrades';
+import { ENEMY_SPECS } from '../data/enemies';
 import { SECRET_COUNT } from '../data/secrets';
 import { descentCutscene } from '../data/cutscenes';
 import { logKeyFor } from '../systems/LogFeed';
@@ -190,7 +191,7 @@ export class Game extends Scene {
     const loot = new LootSystem(this, level, dungeon, player);
     const combat = new Combat(this, level, dungeon, player, depth, (drone) => {
       const at = drone.gridPosition;
-      loot.roll(at.x, at.y);
+      loot.roll(at.x, at.y, ENEMY_SPECS[drone.kind].ammoDrop);
     });
     const hazards = new Hazards(
       this,

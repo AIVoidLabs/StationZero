@@ -35,16 +35,17 @@ Browser (desktop), HTML5 / WebGL via Phaser 4, 960×540 logical resolution scale
 | --- | --- |
 | Health | 6 (HP), 0.6 s invulnerability after a hit, small knockback |
 | Move speed | 190 px/s, 8 screen-relative directions, grid collision |
-| Pistol | 12 rounds max (start full), 1 damage, range 5.5 tiles, 0.32 s cooldown; bullet travels at 15 tiles/s (visible streak) |
+| Pistol | 12 rounds max (start full), 1 damage, range 7 tiles, 0.32 s cooldown; bullet travels at 15 tiles/s (visible streak) |
 | Melee | 1 damage, range 1.8 tiles, 95° arc, 0.28 s cooldown |
-| Loot | Stim +2 HP; ammo box +4 rounds. Drops from drones (30%, falling with depth) plus a guaranteed number per floor (3 on B1, fewer deeper) |
+| Loot | Stim +2 HP; ammo box +4 rounds. Every drone drops +4 ammo (tank +8, Assembler +8); stims drop 30% (falling with depth) when HP is missing plus a guaranteed number per floor (3 on B1, fewer deeper) |
 
 Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previews the target tile), left-click or Space attacks, right-click fires the pistol, `E` interacts with terminals, `M` mutes, `Esc` pauses.
 
 ## 4. World
 
 - **Projection:** dimetric 2:1 (tile 64×32, wall height 46); depth-sorted by iso Y; walls near the player fade out.
-- **Floors:** eleven hand-baked 27×27 grid levels (`src/data/levels/floor-*.json`), 6–7 rooms each, spawn and a far-away hatch (sealed on the last floor). Materials: steel, concrete, grate; decals and props (barrel, crate, terminal, pipe) add clutter; props block movement.
+- **Floors:** eleven hand-baked 35×35 grid levels (`src/data/levels/floor-*.json`), 6–7 rooms each, spawn and a far-away hatch (sealed on the last floor). Materials: steel, concrete, grate; decals and props (barrel, crate, terminal, pipe) add clutter; props block movement.
+- **Cover:** rooms 6x5 and larger get 2-3 crate blocks (some two tiles long) inside them. They block movement, sight and bullets, and placement is checked so the floor stays connected.
 - **Visibility:** a light map darkens everything except the player's light and the lantern cone; dying drone flares and shots briefly light the room. Walls occlude drone vision.
 - **Minimap:** bottom-right, fog-of-war (unexplored areas stay black), with a *% explored* readout.
 
@@ -53,7 +54,7 @@ Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previe
 - 2 HP, hover with a bob, hostile since WARDEN rebuilt them. Two per floor, three from B3.
 - **States:** idle/patrol → chase → search → return/disengage. Sight: 7.5 tiles in a 120° cone, plus 1.8 tiles of peripheral awareness; sight scales up with depth (+30% at B11).
 - **Rules:** need line of sight; chase leashes (max 7 s / 11 tiles), search for 2.6 s, then return home. No infinite pursuit.
-- **Attack:** a red flash wind-up (0.45 s), then a red bullet (7 tiles/s, slower than the player's), 1 damage; fire cooldown ~2.4 s, shorter deeper. They also sidestep player shots (50% chance) and deal contact damage in melee.
+- **Attack:** a red flash wind-up (0.45 s), then a red bullet (4.5 tiles/s, slower than the player), 1 damage; fire cooldown ~2.4 s, shorter deeper. They also sidestep player shots (50% chance) and deal contact damage in melee.
 - **Death:** a wreck sprite stays on the floor; a flare lights the area for 0.9 s. Kills may drop loot.
 - Pressure rises with **numbers and awareness, not HP**: drones never become bullet sponges.
 
