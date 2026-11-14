@@ -378,6 +378,7 @@ Tüm düşman türleri **tek bir sınıf** (`Drone`) ve **veri tablosuyla** ([sr
 | Tür | HP | Zırh | Ateş | Özellik |
 | --- | --- | --- | --- | --- |
 | `drone` | 2 | 0 | tek mermi, 2400 ms bekleme, menzil 6 | mermiden kaçar (`dodges`) |
+| `spider` | 2 | 0 | yeşil zehir tükürür (3600 ms, menzil 7) | hızlı, mesafe tutar, zehir 3 sn (1 hasar / 1.5 sn), stim temizler |
 | `tank` | 2 | 3 | tek mermi (shell), 3800 ms, menzil 7 | ağır, yavaş dönüş (`turnMs` 900), önden zırhlı |
 | `assembler` | 6 | 3 | 3'lü yelpaze, 3000 ms, menzil 8 | boss; her 11 sn drone çağırır (en çok 2); ölçek 1.7 |
 | `warden` | 9 | 4 | 5'li yelpaze, 3200 ms, menzil 11 | boss; hareketsiz (`speed 0`), uykuda başlar; 10 sn'de bir çağrı |
@@ -386,6 +387,9 @@ Kat sayısına bağlı sayılar (`droneCountForFloor`, `tankCountForFloor`, `bos
 
 ### 6.1b Seviyeler ve XP
 [tiers.ts](../src/data/tiers.ts): her boss olmayan düşmanın JSON'da `tier` alanı vardır (`novice | journeyman | master`, yoksa `novice`). `TIER_SPECS` çarpanları tek yerdedir: can ×1/1.3/1.7, hasar +0/+0/+1 (mermi ve temas), ateş bekleme ×1/0.9/0.8, hız ×1/1.06/1.12, mermi hızı, algı menzili, zırh bonusu, XP 10/25/60. `Drone` bunları kurucuda uygular (`tierSpec`); mermi hasarı/hızı `Projectiles.spawn(..., {damage, speedMul})` ile geçer. Görsel: kalfa 1, usta 2 şerit (+ altın kenar). XP: `Combat.reportDeath` `runStats.xp += drone.xpValue` ve "+N XP" yazısı; `computeScore` XP'yi ekler, `End` raporunda gösterilir. `LevelPlan` tier'ı ayrı tohumla (`seed ^ TIER_SEED`) dağıtır (`tierMixForFloor`/`rollTier`), böylece diğer yerleşimler kaymaz; mevcut dosyalar için `tools/assign-tiers.mjs` (tek seferlik, `--reroll` ile yeniden). `LevelRating` tier'ı dayanıklılık ve ateş gücüne katar.
+
+### 6.1c Örümcek ve zehir
+`spider` (B4'ten itibaren, drone'ların %15-40'ı): hızlı (`chaseSpeed 150`), 2 can, zırhsız. `spec.keepDistance = 3`: oyuncu 3 kareden yakınsa `Drone.retreatFrom` kaçacak hücre arar (oyuncudan uzağa 5/3 kare, 5 açı denemesi) ve kaçarken ateş eder. Mermisi yeni `'poison'` sahibidir (yeşil çizgi, hız 4, menzil 8). İsabet doğrudan hasar vermez: `Player.applyPoison()` 3 sn zehir kurar (`POISON_DURATION_MS`), her 1.5 sn'de 1 can alır (dokunulmazlığı yok sayar, yenilenir ama birikmez), sprite yeşile boyanır, HUD nabzı yeşil ve "ZEHİR" yazar. **Stim** (`LootSystem.apply`) zehri temizler ve canı dolu olsa bile zehirliyken toplanır. Spritelar `tools/gen-world-v2.mjs` (`spiderFrame`, 8 yön, `spiderWreck`) ile üretilir. Mevcut katlara tek seferlik `tools/add-spiders.mjs` ile eklendi; `LevelPlan` yeni katlarda ayrı tohumla (`SPIDER_SEED`) drone'ların bir kısmını örümceğe çevirir.
 
 ### 6.2 `Drone` durum makinesi
 [src/entities/enemies/Drone.ts](../src/entities/enemies/Drone.ts): `mode: 'IDLE' | 'PATROL' | 'CHASE' | 'SEARCH' | 'DISENGAGE'`.

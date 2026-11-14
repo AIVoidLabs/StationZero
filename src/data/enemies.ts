@@ -1,6 +1,8 @@
 import {
   DRONE_DEAD_V2_KEY,
   DRONE_V2_SPRITE_KEY,
+  SPIDER_DEAD_V2_KEY,
+  SPIDER_V2_SPRITE_KEY,
   TANK_DEAD_V2_KEY,
   TANK_V2_SPRITE_KEY,
   WARDEN_DEAD_V2_KEY,
@@ -23,8 +25,8 @@ import {
   FLOOR_COUNT,
 } from './config';
 
-export type EnemyKind = 'drone' | 'tank' | 'assembler' | 'warden';
-export type EnemyShot = 'drone' | 'shell';
+export type EnemyKind = 'drone' | 'spider' | 'tank' | 'assembler' | 'warden';
+export type EnemyShot = 'drone' | 'shell' | 'poison';
 
 export interface EnemySpec {
   readonly spriteKey: string;
@@ -56,6 +58,7 @@ export interface EnemySpec {
   readonly idleTint: number | null;
   readonly chaseTint: number;
   readonly healthBarWidth: number;
+  readonly keepDistance: number;
 }
 
 export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
@@ -89,6 +92,39 @@ export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
     idleTint: null,
     chaseTint: 0xff7a5a,
     healthBarWidth: 24,
+    keepDistance: 0,
+  },
+  spider: {
+    spriteKey: SPIDER_V2_SPRITE_KEY,
+    deadKey: SPIDER_DEAD_V2_KEY,
+    height: 30,
+    bob: 0.6,
+    maxHp: 2,
+    speed: 118,
+    chaseSpeed: 150,
+    returnSpeed: 150,
+    footprint: 0.22,
+    contactRange: 1,
+    contactDamage: 1,
+    fireWindupMs: 400,
+    fireRecoverMs: 450,
+    fireCooldownMs: 3600,
+    fireRange: 7,
+    shot: 'poison',
+    dodges: false,
+    armorHp: 0,
+    fan: 1,
+    fanStep: 0,
+    summonMs: 0,
+    summonCap: 0,
+    boss: false,
+    ammoDrop: 4,
+    turnMs: 0,
+    scale: 0.95,
+    idleTint: null,
+    chaseTint: 0x9fe8a0,
+    healthBarWidth: 20,
+    keepDistance: 3,
   },
   tank: {
     spriteKey: TANK_V2_SPRITE_KEY,
@@ -120,6 +156,7 @@ export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
     idleTint: null,
     chaseTint: 0xffa090,
     healthBarWidth: 34,
+    keepDistance: 0,
   },
   assembler: {
     spriteKey: TANK_V2_SPRITE_KEY,
@@ -151,6 +188,7 @@ export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
     idleTint: 0xe0c060,
     chaseTint: 0xffb070,
     healthBarWidth: 60,
+    keepDistance: 0,
   },
   warden: {
     spriteKey: WARDEN_V2_SPRITE_KEY,
@@ -182,6 +220,7 @@ export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
     idleTint: null,
     chaseTint: 0xff9a8a,
     healthBarWidth: 64,
+    keepDistance: 0,
   },
 };
 
@@ -189,6 +228,16 @@ export const TANK_FRONT_COS = 0.8;
 
 const TANKS_BY_FLOOR: readonly number[] = [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0];
 const BOSS_BY_FLOOR: Readonly<Record<number, EnemyKind>> = { 8: 'assembler', 10: 'warden' };
+
+const SPIDER_FROM_FLOOR = 3;
+const SPIDER_BASE_SHARE = 0.15;
+const SPIDER_SHARE_PER_FLOOR = 0.05;
+const SPIDER_MAX_SHARE = 0.4;
+
+export function spiderShareForFloor(floor: number): number {
+  if (floor < SPIDER_FROM_FLOOR) return 0;
+  return Math.min(SPIDER_MAX_SHARE, SPIDER_BASE_SHARE + (floor - SPIDER_FROM_FLOOR) * SPIDER_SHARE_PER_FLOOR);
+}
 
 export function droneCountForFloor(floor: number): number {
   return droneTotalForFloor(floor, bossForFloor(floor) !== null);

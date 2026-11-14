@@ -589,6 +589,107 @@ function droneFrame(yaw) {
   return img;
 }
 
+const SP = {
+  hull: [56, 66, 60],
+  hullDark: [24, 30, 27],
+  leg: [42, 50, 46],
+  legLight: [88, 100, 92],
+  glow: [70, 220, 100],
+  glowHot: [210, 255, 215],
+  sac: [58, 196, 84],
+  rust: [112, 56, 36],
+};
+
+function spiderFrame(yaw) {
+  const img = new Image(DRONE_W, DRONE_H);
+  const theta = (yaw * Math.PI) / 180;
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+  const proj = (lx, ly, lz) => {
+    const wx = -lx * cos + lz * sin;
+    const wz = lx * sin + lz * cos;
+    return { x: DRONE_CX + wx, y: DRONE_GROUND - ly + wz * DRONE_TILT, depth: wz };
+  };
+  const prims = [];
+  const push = (depth, draw) => prims.push({ depth, draw });
+
+  const glow = proj(0, 1.6, 0);
+  push(-99, () => {
+    ellipseFill(img, glow.x, glow.y, 9, 3, SP.glow, false);
+    ellipseFill(img, glow.x, glow.y, 5, 1.6, SP.glowHot, false);
+  });
+
+  const legZ = [-7, -2.5, 2.5, 7];
+  for (const side of [-1, 1]) {
+    legZ.forEach((z, index) => {
+      const spread = 1 + index * 0.08;
+      const root = proj(5 * side, 11, z * 0.55);
+      const knee = proj(13 * side * spread, 17 - index * 0.5, z * 1.15);
+      const foot = proj(18 * side * spread, 0.8, z * 1.7);
+      push(Math.min(root.depth, foot.depth) - 0.01, () => {
+        capsuleFill(img, root, knee, 1.25, 1.1, SP.leg);
+        capsuleFill(img, knee, foot, 1.05, 0.7, SP.legLight);
+        img.set(Math.round(foot.x), Math.round(foot.y), SP.hullDark);
+      });
+    });
+  }
+
+  const abdomen = proj(0, 11.5, -5.5);
+  push(-1, () => {
+    ellipseFill(img, abdomen.x, abdomen.y, 7.4, 6.2, SP.hull);
+    const sac = proj(0, 11, -9.5);
+    if (sac.depth < 0.5) ellipseFill(img, sac.x, sac.y, 3.2, 2.4, SP.sac, false);
+    const mark = proj(-3, 15.5, -5.5);
+    ellipseFill(img, mark.x, mark.y, 2, 1.1, SP.rust, false);
+  });
+
+  const head = proj(0, 11, 4);
+  push(0.5, () => {
+    ellipseFill(img, head.x, head.y, 5.2, 4.6, add(SP.hull, 10));
+    ellipseFill(img, head.x, head.y + 2.2, 5.2, 1.6, SP.hullDark, false);
+  });
+
+  const front = cos;
+  if (front > -0.15) {
+    for (const dx of [-2.4, 0, 2.4]) {
+      const eye = proj(dx, 12 + (dx === 0 ? 0.8 : 0), 8.6);
+      push(1, () => {
+        const rx = Math.max(0.7, 1.5 * Math.max(0.4, front));
+        ellipseFill(img, eye.x, eye.y, rx + 0.6, 1.7, SP.hullDark, false);
+        ellipseFill(img, eye.x, eye.y, rx, 1.2, SP.glow, false);
+        img.set(Math.floor(eye.x), Math.floor(eye.y) - 1, SP.glowHot);
+      });
+    }
+    for (const side of [-1, 1]) {
+      const fang = proj(1.6 * side, 8.4, 9);
+      push(1, () => capsuleFill(img, fang, { x: fang.x, y: fang.y + 3 }, 0.9, 0.5, SP.glowHot));
+    }
+  }
+
+  prims.sort((a, b) => a.depth - b.depth);
+  for (const prim of prims) prim.draw();
+  img.outline();
+  return img;
+}
+
+function spiderWreck() {
+  const img = new Image(DRONE_W, DRONE_H);
+  ellipseFill(img, 20, 34, 15, 4.2, [14, 15, 15], false);
+  ellipseFill(img, 22, 33.5, 9.5, 2.6, [28, 70, 38], false);
+  ellipseFill(img, 20, 30, 8, 4.6, [42, 50, 46]);
+  ellipseFill(img, 15, 27, 4.2, 2.8, [56, 66, 60]);
+  for (const [ax, ay, bx, by] of [
+    [14, 29, 7, 24], [7, 24, 4, 31], [26, 29, 32, 23], [32, 23, 35, 30],
+    [16, 32, 9, 34], [25, 32, 31, 34], [18, 26, 15, 20], [23, 26, 27, 21],
+  ]) {
+    capsuleFill(img, { x: ax, y: ay }, { x: bx, y: by }, 0.9, 0.7, [64, 74, 68]);
+  }
+  for (const [x, y] of [[13, 26], [16, 25]]) img.set(x, y, [70, 220, 100]);
+  ellipseFill(img, 27, 34, 2.4, 1, [70, 220, 100], false);
+  img.outline();
+  return img;
+}
+
 const TANK_W = 56;
 const TANK_H = 52;
 const TANK_CX = 28;
@@ -1285,6 +1386,12 @@ async function main() {
   await writeFile(path.join(OUT, 'warden.png'), await wardenSheet.png());
   await writeFile(path.join(OUT, 'warden_dead.png'), await wardenFrame(0, true).png());
   await writeFile(path.join(PREVIEW, 'warden-4x.png'), await wardenSheet.png(4));
+  const spiders = DIRECTIONS.map((d) => spiderFrame(d.yaw));
+  const spiderSheet = new Image(DRONE_W * 8, DRONE_H);
+  spiders.forEach((frame, index) => spiderSheet.blit(frame, index * DRONE_W, 0));
+  await writeFile(path.join(OUT, 'spider.png'), await spiderSheet.png());
+  await writeFile(path.join(OUT, 'spider_dead.png'), await spiderWreck().png());
+  await writeFile(path.join(PREVIEW, 'spider-4x.png'), await spiderSheet.png(4));
   await writeFile(path.join(OUT, 'drone_dead.png'), await droneWreck().png());
   await writeFile(path.join(PREVIEW, 'drone-dead-8x.png'), await droneWreck().png(8));
 

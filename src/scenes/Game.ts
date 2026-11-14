@@ -79,6 +79,7 @@ export interface HudState {
   lastFloor: boolean;
   secrets: number;
   alert: number;
+  poisoned: boolean;
 }
 
 const SECRET_ALERT = 1;
@@ -515,6 +516,7 @@ export class Game extends Scene {
     }
 
     if (runFlags.alert >= 1) hints.trigger('alarm', t('hint.alarm'));
+    if (player.isPoisoned) hints.trigger('poison', t('hint.poison'));
 
     for (const cell of this.hazards?.ventCells ?? []) {
       if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 4) hints.trigger('steam', t('hint.steam'));
@@ -911,6 +913,7 @@ export class Game extends Scene {
       lastFloor,
       secrets: runFlags.secretCount,
       alert: runFlags.alert,
+      poisoned: player.isPoisoned,
     };
   }
 

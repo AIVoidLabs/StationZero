@@ -29,6 +29,10 @@ export const DRONE_V2_SPRITE_KEY = 'drone_v2';
 
 export const DRONE_DEAD_V2_KEY = 'drone_dead_v2';
 
+export const SPIDER_V2_SPRITE_KEY = 'spider_v2';
+
+export const SPIDER_DEAD_V2_KEY = 'spider_dead_v2';
+
 export const TANK_V2_SPRITE_KEY = 'tank_v2';
 
 export const TANK_DEAD_V2_KEY = 'tank_dead_v2';
@@ -126,6 +130,8 @@ export const ASSETS: readonly AssetSpec[] = [
     enabled: true,
   })),
   { key: DRONE_V2_SPRITE_KEY, path: 'art/v2/drone.png', kind: 'spritesheet', frameWidth: 40, frameHeight: 40, enabled: true },
+  { key: SPIDER_V2_SPRITE_KEY, path: 'art/v2/spider.png', kind: 'spritesheet', frameWidth: 40, frameHeight: 40, enabled: true },
+  { key: SPIDER_DEAD_V2_KEY, path: 'art/v2/spider_dead.png', kind: 'image', enabled: true },
   {
     key: 'props',
     path: 'art/runtime/props.png',

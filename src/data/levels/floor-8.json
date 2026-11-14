@@ -272,14 +272,14 @@
       {
         "x": 7,
         "y": 15,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "journeyman",
         "seed": 9698795
       },
       {
         "x": 3,
         "y": 18,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "novice",
         "seed": 13543394
       },
@@ -293,21 +293,21 @@
       {
         "x": 20,
         "y": 8,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "journeyman",
         "seed": 310214
       },
       {
         "x": 16,
         "y": 5,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "novice",
         "seed": 2451539
       },
       {
         "x": 27,
         "y": 7,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "journeyman",
         "seed": 9480465
       },
@@ -342,7 +342,7 @@
       {
         "x": 17,
         "y": 12,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "master",
         "seed": 13296842
       }

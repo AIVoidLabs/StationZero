@@ -1,6 +1,6 @@
 import { PISTOL_AMMO_START, PISTOL_DAMAGE } from '../data/config';
 import { fireCooldownScale, scaledAmmoDrop, scaledEnemyHp } from '../data/difficulty';
-import { ENEMY_SPECS, bossForFloor, droneCountForFloor, tankCountForFloor, type EnemyKind } from '../data/enemies';
+import { ENEMY_SPECS, bossForFloor, droneCountForFloor, spiderShareForFloor, tankCountForFloor, type EnemyKind } from '../data/enemies';
 import { shockCount, steamCount } from '../data/hazards';
 import { TIER_SPECS, tierMixForFloor, type EnemyTier } from '../data/tiers';
 
@@ -42,7 +42,7 @@ export function enemyThreat(kind: EnemyKind, floor: number, tier: EnemyTier = 'n
 }
 
 export function rateLevel(input: RatingInput): LevelRating {
-  const counts: Record<EnemyKind, number> = { drone: 0, tank: 0, assembler: 0, warden: 0 };
+  const counts: Record<EnemyKind, number> = { drone: 0, spider: 0, tank: 0, assembler: 0, warden: 0 };
   let enemies = 0;
   let ammoNeeded = 0;
   let ammoDrops = 0;
@@ -73,7 +73,9 @@ export function formulaTarget(floor: number): LevelRating {
   if (boss) enemies.push({ kind: boss });
   const mix = tierMixForFloor(floor);
   const grunts: EnemyKind[] = [];
-  for (let index = 0; index < droneCountForFloor(floor); index += 1) grunts.push('drone');
+  const droneTotal = droneCountForFloor(floor);
+  const spiders = Math.round(droneTotal * spiderShareForFloor(floor));
+  for (let index = 0; index < droneTotal; index += 1) grunts.push(index < spiders ? 'spider' : 'drone');
   for (let index = 0; index < tankCountForFloor(floor); index += 1) grunts.push('tank');
   const masters = Math.round(grunts.length * mix.master);
   const journeymen = Math.round(grunts.length * mix.journeyman);

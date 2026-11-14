@@ -20,6 +20,9 @@ import {
   PISTOL_MAX_AMMO,
   PLAYER_FOOTPRINT,
   PLAYER_IFRAMES_MS,
+  POISON_DAMAGE,
+  POISON_DURATION_MS,
+  POISON_TICK_MS,
   PLAYER_SPEED,
   PLAYER_STRIDE_TILES,
   TILE_HEIGHT,
@@ -98,6 +101,8 @@ export class Player extends Entity {
   private maxHp: number;
   private dead = false;
   private lastHitAt = -1000000;
+  private poisonMs = 0;
+  private poisonTickMs = 0;
   private attackCooldownUntil = 0;
 
   private weaponType: WeaponType = 'PISTOL';
@@ -216,6 +221,41 @@ export class Player extends Entity {
     this.iframesMs = stats.iframesMs;
   }
 
+  get isPoisoned(): boolean {
+    return this.poisonMs > 0 && !this.dead;
+  }
+
+  applyPoison(): void {
+    if (this.dead) return;
+    if (this.poisonMs <= 0) this.poisonTickMs = POISON_TICK_MS;
+    this.poisonMs = POISON_DURATION_MS;
+    this.sprite.setTint(0x9fe8a0);
+  }
+
+  curePoison(): void {
+    this.poisonMs = 0;
+    if (!this.dead) this.sprite.clearTint();
+  }
+
+  private updatePoison(deltaMs: number): void {
+    if (this.poisonMs <= 0 || this.dead) return;
+    this.poisonMs -= deltaMs;
+    this.poisonTickMs -= deltaMs;
+    if (this.poisonTickMs <= 0) {
+      this.poisonTickMs += POISON_TICK_MS;
+      this.hp -= POISON_DAMAGE;
+      if (this.hp <= 0) {
+        this.hp = 0;
+        this.dead = true;
+        this.sprite.setTint(0x6b2b2b);
+        sfx.play('playerDeath');
+        return;
+      }
+      sfx.play('playerHurt', 0.5);
+    }
+    if (this.poisonMs <= 0) this.sprite.clearTint();
+  }
+
   heal(amount: number): void {
     if (this.dead) return;
     this.hp = Math.min(this.maxHp, this.hp + amount);
@@ -272,6 +312,7 @@ export class Player extends Entity {
 
   update(deltaMs: number, input: MoveInput | null): void {
     const dt = Math.min(deltaMs, MAX_STEP_SECONDS * 1000) / 1000;
+    this.updatePoison(deltaMs);
     if (this.dead) {
       this.path = [];
       this.moving = false;

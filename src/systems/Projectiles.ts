@@ -21,7 +21,7 @@ import { createCanvasContext, refreshCanvasTexture } from '../utils/canvas';
 import { gridVectorToWorld } from '../utils/iso';
 import type { Level } from './Level';
 
-export type ProjectileOwner = 'player' | 'drone' | 'shell';
+export type ProjectileOwner = 'player' | 'drone' | 'shell' | 'poison';
 
 export interface ProjectileView {
   readonly owner: ProjectileOwner;
@@ -65,13 +65,15 @@ const STREAK_KEYS: Record<ProjectileOwner, string> = {
   player: 'bullet_streak_player',
   drone: 'bullet_streak_drone',
   shell: 'bullet_streak_shell',
+  poison: 'bullet_streak_poison',
 };
 const STREAK_COLORS: Record<ProjectileOwner, readonly [string, string, string]> = {
   player: ['255, 244, 210', '255, 190, 96', '217, 164, 65'],
   drone: ['255, 236, 224', '255, 48, 30', '140, 18, 10'],
   shell: ['255, 240, 200', '255, 120, 30', '150, 50, 10'],
+  poison: ['225, 255, 215', '90, 235, 110', '20, 120, 40'],
 };
-const SPARK_COLORS: Record<ProjectileOwner, number> = { player: 0xffb060, drone: 0xff3a22, shell: 0xff8a2a };
+const SPARK_COLORS: Record<ProjectileOwner, number> = { player: 0xffb060, drone: 0xff3a22, shell: 0xff8a2a, poison: 0x66e070 };
 
 interface ProjectileStats {
   readonly speed: number;
@@ -97,6 +99,7 @@ const PROJECTILE_STATS: Record<ProjectileOwner, ProjectileStats> = {
     length: DRONE_BULLET_LENGTH,
   },
   shell: { speed: 5, damage: 1, hitRadius: 0.62, range: 10, length: 34 },
+  poison: { speed: 4, damage: 0, hitRadius: 0.45, range: 8, length: 20 },
 };
 const SUBSTEP_TILES = 0.2;
 const FLARE_MS = 110;
@@ -136,6 +139,7 @@ export class Projectiles {
     buildStreak(scene, 'player');
     buildStreak(scene, 'drone');
     buildStreak(scene, 'shell');
+    buildStreak(scene, 'poison');
   }
 
   setBlockedHitHandler(handler: (gridX: number, gridY: number, owner: ProjectileOwner) => void): void {
@@ -269,7 +273,8 @@ export class Projectiles {
     if (this.player.isDeadState) return false;
     const at = this.player.gridPosition;
     if (segmentDistance(at.x, at.y, fromX, fromY, bullet.x, bullet.y) > bullet.hitRadius) return false;
-    this.player.takeDamage(bullet.damage, now, { x: bullet.dirX, y: bullet.dirY });
+    if (bullet.owner === 'poison') this.player.applyPoison();
+    else this.player.takeDamage(bullet.damage, now, { x: bullet.dirX, y: bullet.dirY });
     this.impact(bullet, at.x, at.y);
     return true;
   }

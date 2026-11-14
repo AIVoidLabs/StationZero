@@ -261,7 +261,7 @@
       {
         "x": 6,
         "y": 10,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "novice",
         "seed": 15172943
       },
@@ -275,14 +275,14 @@
       {
         "x": 7,
         "y": 22,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "journeyman",
         "seed": 1573734
       },
       {
         "x": 2,
         "y": 23,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "journeyman",
         "seed": 2723347
       },
@@ -296,7 +296,7 @@
       {
         "x": 11,
         "y": 28,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "journeyman",
         "seed": 6336484
       },
@@ -310,7 +310,7 @@
       {
         "x": 25,
         "y": 6,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "journeyman",
         "seed": 995262
       },
@@ -324,7 +324,7 @@
       {
         "x": 22,
         "y": 9,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "journeyman",
         "seed": 498150
       },
@@ -338,7 +338,7 @@
       {
         "x": 15,
         "y": 19,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "novice",
         "seed": 11747686
       },
@@ -352,7 +352,7 @@
       {
         "x": 29,
         "y": 29,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "novice",
         "seed": 9999593
       },

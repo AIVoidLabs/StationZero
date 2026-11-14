@@ -126,6 +126,8 @@ export class HudScene extends Scene {
   private currentHp = 4;
   private maxHpShown = PLAYER_MAX_HP;
   private secretText!: GameObjects.Text;
+  private poisonText!: GameObjects.Text;
+  private poisoned = false;
   private objectiveCalm = false;
   private lastObjective = '';
   private lastCode = '';
@@ -167,6 +169,9 @@ export class HudScene extends Scene {
     this.secretText = this.add
       .text(HP_X + 4, HP_Y + HP_H + 8, '', { fontFamily: FONT, fontSize: '9px', color: '#d9a441' })
       .setOrigin(0, 0);
+    this.poisonText = this.add
+      .text(HP_X + HP_W - 8, HP_Y + HP_H + 8, '', { fontFamily: FONT, fontSize: '9px', color: '#7fe870' })
+      .setOrigin(1, 0);
 
     this.ammoFrame = new PanelFrame(this, AMMO_X, AMMO_Y, AMMO_W, AMMO_H, { label: t('hud.ammo'), accent: AMBER });
     const ammoBox = this.add.graphics();
@@ -317,6 +322,8 @@ export class HudScene extends Scene {
 
     this.updateSector(state.floorCode, state.floorName, state.objective, state.objectiveCalm);
     this.alert = state.alert;
+    this.poisoned = state.poisoned;
+    this.poisonText.setText(state.poisoned ? `${t('hud.poison')}` : '').setAlpha(0.6 + 0.4 * Math.abs(Math.sin(this.time.now / 180)));
     this.drawHealth(delta);
     this.drawStripe(state.objectiveCalm);
 
@@ -428,7 +435,7 @@ export class HudScene extends Scene {
   private drawHealth(delta: number): void {
     const hp = this.currentHp;
     const color = this.hpColor(hp);
-    const ecgColor = this.alert >= 2.5 ? ALARM_RED : this.alert >= 1 ? AMBER : color;
+    const ecgColor = this.poisoned ? 0x7fe870 : this.alert >= 2.5 ? ALARM_RED : this.alert >= 1 ? AMBER : color;
     const g = this.barGfx;
     g.clear();
     const x0 = HP_X + 56 + this.shakeX;

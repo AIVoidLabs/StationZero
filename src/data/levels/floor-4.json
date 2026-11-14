@@ -264,7 +264,7 @@
       {
         "x": 10,
         "y": 28,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "novice",
         "seed": 15115908
       },
@@ -313,7 +313,7 @@
       {
         "x": 13,
         "y": 18,
-        "kind": "drone",
+        "kind": "spider",
         "tier": "novice",
         "seed": 786612
       },

@@ -1,6 +1,6 @@
 import { FLOOR_LOOT_BASE, FLOOR_LOOT_MIN, HEALTH_PER_HOSTILE, LOOT_AMMO_AMOUNT } from '../data/config';
 import { DRONE_MIN_SPAWN_DISTANCE } from '../data/config';
-import { ENEMY_SPECS, bossForFloor, droneCountForFloor, hostileCountForFloor, tankCountForFloor, type EnemyKind } from '../data/enemies';
+import { ENEMY_SPECS, bossForFloor, droneCountForFloor, hostileCountForFloor, spiderShareForFloor, tankCountForFloor, type EnemyKind } from '../data/enemies';
 import {
   HAZARD_LOOT_CLEARANCE,
   HAZARD_MIN_SEPARATION,
@@ -32,6 +32,7 @@ const FLOOR_LOOT_SEED = 0x2b3c;
 const COMBAT_SEED = 0x0d20e;
 const HAZARD_SEED = 0x7a5e;
 const TIER_SEED = 0x71e5;
+const SPIDER_SEED = 0x5d1e7;
 
 const BARRELS_PER_COVER_ROOM = 2;
 const EXTRA_BARREL_CHANCE = 0.5;
@@ -457,6 +458,10 @@ class Planner {
 
     const tankRooms = bySize.filter((entry) => entry.room !== bossRoom).slice(0, tankCountForFloor(dungeon.floor));
     for (const entry of tankRooms) plan.push({ room: entry.room, kind: 'tank' });
+
+    const spiderRng = createRng(dungeon.seed ^ SPIDER_SEED);
+    const spiderShare = spiderShareForFloor(dungeon.floor);
+    for (const entry of plan) if (entry.kind === 'drone' && spiderRng() < spiderShare) entry.kind = 'spider';
 
     const taken = new Set<string>();
     const placed: Cell[] = [];

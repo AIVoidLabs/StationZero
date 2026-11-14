@@ -78,6 +78,9 @@ export const DRONE_MIN_SPAWN_DISTANCE = 11;
 // Combat
 export const PLAYER_MAX_HP = 6;
 export const PLAYER_IFRAMES_MS = 600;
+export const POISON_DURATION_MS = 3000;
+export const POISON_TICK_MS = 1500;
+export const POISON_DAMAGE = 1;
 
 // Pistol
 export const PISTOL_AMMO_START = 12;

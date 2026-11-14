@@ -33,6 +33,7 @@ export type ToolId =
   | 'loot:ammo'
   | 'loot:stim'
   | 'enemy:drone'
+  | 'enemy:spider'
   | 'enemy:tank'
   | 'enemy:assembler'
   | 'enemy:warden'

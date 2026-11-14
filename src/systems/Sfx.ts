@@ -12,6 +12,7 @@ export type SfxName =
   | 'steam'
   | 'laser'
   | 'shock'
+  | 'spit'
   | 'shockHum'
   | 'hazardTick'
   | 'playerHurt'
@@ -175,6 +176,11 @@ class SfxEngine {
         tone('sawtooth', 900, 1500, 0.35, 0.22);
         tone('square', 120, 118, 0.35, 0.18);
         noise(0.2, 0.18, 'highpass', 5200, 3800);
+        break;
+      case 'spit':
+        tone('sine', 820, 240, 0.2, 0.4);
+        noise(0.18, 0.3, 'bandpass', 2400, 900);
+        tone('triangle', 400, 120, 0.16, 0.2);
         break;
       case 'shock':
         noise(0.4, 0.9, 'highpass', 6500, 1400);

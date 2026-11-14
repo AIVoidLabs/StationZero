@@ -28,6 +28,7 @@ const TOOL_GROUPS: readonly { readonly title: string; readonly tools: readonly T
     title: 'Enemies',
     tools: [
       { id: 'enemy:drone', label: 'Drone' },
+      { id: 'enemy:spider', label: 'Spider (poison)' },
       { id: 'enemy:tank', label: 'Tank' },
       { id: 'enemy:assembler', label: 'Assembler (boss)' },
       { id: 'enemy:warden', label: 'WARDEN (boss)' },

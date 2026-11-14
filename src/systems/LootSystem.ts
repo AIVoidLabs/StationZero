@@ -93,7 +93,9 @@ export class LootSystem {
   private apply(kind: LootKind, amount: number, player: Player): string | null {
     const state = player.getHealth();
     if (kind === 'stim') {
-      if (state.hp >= state.maxHp) return null;
+      const poisoned = player.isPoisoned;
+      if (state.hp >= state.maxHp && !poisoned) return null;
+      player.curePoison();
       const heal = upgradeStats().stimHeal;
       player.heal(heal);
       sfx.play('pickupHealth');

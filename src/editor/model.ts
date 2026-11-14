@@ -37,7 +37,7 @@ export type Selection =
   | { readonly type: EntityType; readonly index: number }
   | { readonly type: 'room'; readonly index: number };
 
-export const ENEMY_KINDS: readonly EnemyKind[] = ['drone', 'tank', 'assembler', 'warden'];
+export const ENEMY_KINDS: readonly EnemyKind[] = ['drone', 'spider', 'tank', 'assembler', 'warden'];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

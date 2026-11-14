@@ -401,6 +401,11 @@ export class Drone extends Entity {
     const distanceToPlayer = Math.hypot(target.gridX - this.posX, target.gridY - this.posY);
     if (this.updateFire(deltaMs, sees, distanceToPlayer)) return;
 
+    if (this.spec.keepDistance > 0 && distanceToPlayer < this.spec.keepDistance) {
+      this.retreatFrom(target, dt);
+      return;
+    }
+
     if (distanceToPlayer <= this.spec.contactRange) {
       this.path = [];
       this.faceToward(target.gridX - this.posX, target.gridY - this.posY);
@@ -412,6 +417,32 @@ export class Drone extends Entity {
       this.setPath(target.gridX, target.gridY);
     }
 
+    this.followPath(dt, this.spec.chaseSpeed * this.tierSpec.speedMul);
+  }
+
+  private retreatFrom(target: GridCell, dt: number): void {
+    if (this.repathMs <= 0) {
+      this.repathMs = DRONE_REPATH_MS;
+      const awayX = this.posX - target.gridX;
+      const awayY = this.posY - target.gridY;
+      const length = Math.hypot(awayX, awayY) || 1;
+      let found = false;
+      for (const angle of [0, 0.7, -0.7, 1.4, -1.4]) {
+        const c = Math.cos(angle);
+        const s = Math.sin(angle);
+        const dx = (awayX / length) * c - (awayY / length) * s;
+        const dy = (awayX / length) * s + (awayY / length) * c;
+        for (const distance of [5, 3]) {
+          const goalX = Math.round(this.posX + dx * distance);
+          const goalY = Math.round(this.posY + dy * distance);
+          if (!this.level.isWalkable(goalX, goalY)) continue;
+          this.setPath(goalX, goalY);
+          if (this.path.length > 0) found = true;
+          if (found) break;
+        }
+        if (found) break;
+      }
+    }
     this.followPath(dt, this.spec.chaseSpeed * this.tierSpec.speedMul);
   }
 
@@ -673,7 +704,7 @@ export class Drone extends Entity {
             speedMul: this.tierSpec.shotSpeedMul,
           });
         }
-        sfx.play(this.spec.shot === 'shell' ? 'shell' : 'droneShot', this.audioGain());
+        sfx.play(this.spec.shot === 'shell' ? 'shell' : this.spec.shot === 'poison' ? 'spit' : 'droneShot', this.audioGain());
         this.fireState = 'RECOVER';
         this.fireMs = 0;
       }
