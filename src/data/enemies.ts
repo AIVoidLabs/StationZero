@@ -6,6 +6,7 @@ import {
   WARDEN_DEAD_V2_KEY,
   WARDEN_V2_SPRITE_KEY,
 } from '../assets/manifest';
+import { droneTotalForFloor } from './difficulty';
 import {
   DRONE_CHASE_SPEED,
   DRONE_CONTACT_RANGE,
@@ -186,12 +187,11 @@ export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
 
 export const TANK_FRONT_COS = 0.8;
 
-const DRONES_BY_FLOOR: readonly number[] = [6, 7, 7, 8, 8, 8, 9, 9, 6, 9, 6];
 const TANKS_BY_FLOOR: readonly number[] = [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0];
 const BOSS_BY_FLOOR: Readonly<Record<number, EnemyKind>> = { 8: 'assembler', 10: 'warden' };
 
 export function droneCountForFloor(floor: number): number {
-  return DRONES_BY_FLOOR[Math.max(0, Math.min(FLOOR_COUNT - 1, floor))] ?? 2;
+  return droneTotalForFloor(floor, bossForFloor(floor) !== null);
 }
 
 export function hostileCountForFloor(floor: number): number {

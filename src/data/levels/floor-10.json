@@ -266,6 +266,12 @@
         "y": 24,
         "kind": "stim",
         "amount": 0
+      },
+      {
+        "x": 31,
+        "y": 27,
+        "kind": "stim",
+        "amount": 0
       }
     ],
     "enemies": [
@@ -294,22 +300,34 @@
         "seed": 435863
       },
       {
-        "x": 33,
-        "y": 32,
+        "x": 12,
+        "y": 7,
         "kind": "drone",
         "seed": 14744614
       },
       {
         "x": 30,
-        "y": 22,
+        "y": 28,
         "kind": "drone",
         "seed": 4513551
       },
       {
-        "x": 19,
-        "y": 12,
+        "x": 27,
+        "y": 27,
         "kind": "drone",
         "seed": 14717899
+      },
+      {
+        "x": 29,
+        "y": 24,
+        "kind": "drone",
+        "seed": 13802084
+      },
+      {
+        "x": 19,
+        "y": 18,
+        "kind": "drone",
+        "seed": 514989
       }
     ],
     "hazards": {
@@ -317,32 +335,32 @@
         {
           "x": 27,
           "y": 30,
-          "phaseMs": 4919
+          "phaseMs": 67
         },
         {
           "x": 26,
           "y": 18,
-          "phaseMs": 2547
+          "phaseMs": 1857
         },
         {
           "x": 25,
           "y": 15,
-          "phaseMs": 1617
+          "phaseMs": 4919
         },
         {
           "x": 19,
           "y": 14,
-          "phaseMs": 2264
+          "phaseMs": 2547
         },
         {
-          "x": 9,
-          "y": 28,
-          "phaseMs": 1864
+          "x": 29,
+          "y": 23,
+          "phaseMs": 1617
         },
         {
-          "x": 11,
+          "x": 16,
           "y": 22,
-          "phaseMs": 4446
+          "phaseMs": 2264
         }
       ],
       "gates": [
@@ -350,19 +368,19 @@
           "x": 19,
           "y": 25,
           "axis": "x",
-          "phaseMs": 3238
+          "phaseMs": 2692
         },
         {
           "x": 14,
           "y": 27,
           "axis": "y",
-          "phaseMs": 44
+          "phaseMs": 2185
         },
         {
           "x": 10,
           "y": 25,
           "axis": "x",
-          "phaseMs": 1214
+          "phaseMs": 3238
         }
       ]
     }

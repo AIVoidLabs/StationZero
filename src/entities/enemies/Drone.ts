@@ -30,8 +30,9 @@ import {
   DRONE_DODGE_RETRY_MS,
   DRONE_DODGE_SENSE_TILES,
   DRONE_DODGE_SPEED,
-  DRONE_FIRE_COOLDOWN_MIN_SCALE,
 } from '../../data/config';
+import { fireCooldownScale, scaledEnemyHp } from '../../data/difficulty';
+import { runFlags } from '../../systems/RunFlags';
 import { ENEMY_SPECS, TANK_FRONT_COS, type EnemyKind, type EnemySpec } from '../../data/enemies';
 import type { Projectiles } from '../../systems/Projectiles';
 import { distanceGain, sfx } from '../../systems/Sfx';
@@ -148,8 +149,9 @@ export class Drone extends Entity {
     this.bobPhase = this.rng() * Math.PI * 2;
     this.idleMs = DRONE_IDLE_MIN_MS + this.rng() * (DRONE_IDLE_MAX_MS - DRONE_IDLE_MIN_MS);
 
-    this.hp = this.spec.maxHp;
-    this.maxHp = this.spec.maxHp;
+    const maxHp = this.spec.boss ? this.spec.maxHp : scaledEnemyHp(this.spec.maxHp, depth.floor);
+    this.hp = maxHp;
+    this.maxHp = maxHp;
     this.armorHp = this.spec.armorHp;
     this.dead = false;
 
@@ -658,9 +660,7 @@ export class Drone extends Entity {
       this.fireMs += deltaMs;
       if (this.fireMs >= this.spec.fireRecoverMs) {
         this.fireState = 'NONE';
-        const pressure = this.depthManager.pressure;
-        const scale = 1 - (1 - DRONE_FIRE_COOLDOWN_MIN_SCALE) * pressure.t;
-        this.fireCooldownMs = this.spec.fireCooldownMs * scale;
+        this.fireCooldownMs = this.spec.fireCooldownMs * fireCooldownScale(this.depthManager.floor, runFlags.alert);
       }
       return true;
     }
