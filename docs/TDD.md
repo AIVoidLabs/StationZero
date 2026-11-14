@@ -384,6 +384,9 @@ Tüm düşman türleri **tek bir sınıf** (`Drone`) ve **veri tablosuyla** ([sr
 
 Kat sayısına bağlı sayılar (`droneCountForFloor`, `tankCountForFloor`, `bossForFloor`) aynı dosyadadır; drone sayısı ve can ölçeklemesi `difficulty.ts`'ten gelir (bkz. 8.8). Tank sayıları tablodadır: B6, B8, B10'da birer tane.
 
+### 6.1b Seviyeler ve XP
+[tiers.ts](../src/data/tiers.ts): her boss olmayan düşmanın JSON'da `tier` alanı vardır (`novice | journeyman | master`, yoksa `novice`). `TIER_SPECS` çarpanları tek yerdedir: can ×1/1.3/1.7, hasar +0/+0/+1 (mermi ve temas), ateş bekleme ×1/0.9/0.8, hız ×1/1.06/1.12, mermi hızı, algı menzili, zırh bonusu, XP 10/25/60. `Drone` bunları kurucuda uygular (`tierSpec`); mermi hasarı/hızı `Projectiles.spawn(..., {damage, speedMul})` ile geçer. Görsel: kalfa 1, usta 2 şerit (+ altın kenar). XP: `Combat.reportDeath` `runStats.xp += drone.xpValue` ve "+N XP" yazısı; `computeScore` XP'yi ekler, `End` raporunda gösterilir. `LevelPlan` tier'ı ayrı tohumla (`seed ^ TIER_SEED`) dağıtır (`tierMixForFloor`/`rollTier`), böylece diğer yerleşimler kaymaz; mevcut dosyalar için `tools/assign-tiers.mjs` (tek seferlik, `--reroll` ile yeniden). `LevelRating` tier'ı dayanıklılık ve ateş gücüne katar.
+
 ### 6.2 `Drone` durum makinesi
 [src/entities/enemies/Drone.ts](../src/entities/enemies/Drone.ts): `mode: 'IDLE' | 'PATROL' | 'CHASE' | 'SEARCH' | 'DISENGAGE'`.
 

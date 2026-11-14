@@ -265,66 +265,77 @@
         "x": 6,
         "y": 3,
         "kind": "drone",
+        "tier": "novice",
         "seed": 10265171
       },
       {
         "x": 26,
         "y": 9,
         "kind": "drone",
+        "tier": "novice",
         "seed": 4573822
       },
       {
         "x": 24,
         "y": 6,
         "kind": "drone",
+        "tier": "novice",
         "seed": 14349941
       },
       {
         "x": 8,
         "y": 11,
         "kind": "drone",
+        "tier": "novice",
         "seed": 4661270
       },
       {
         "x": 5,
         "y": 13,
         "kind": "drone",
+        "tier": "novice",
         "seed": 10118218
       },
       {
         "x": 7,
         "y": 30,
         "kind": "drone",
+        "tier": "novice",
         "seed": 6646741
       },
       {
         "x": 11,
         "y": 27,
         "kind": "drone",
+        "tier": "novice",
         "seed": 10632792
       },
       {
         "x": 27,
         "y": 23,
         "kind": "drone",
+        "tier": "novice",
         "seed": 7959088
       },
       {
         "x": 27,
         "y": 19,
         "kind": "drone",
+        "tier": "novice",
         "seed": 4677507
       },
       {
         "x": 14,
         "y": 13,
         "kind": "drone",
+        "tier": "novice",
         "seed": 8450963
       },
       {
         "x": 16,
         "y": 14,
         "kind": "drone",
+        "tier": "novice",
         "seed": 5123232
       }
     ],

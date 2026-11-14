@@ -1,4 +1,5 @@
 import type { EnemyKind } from './enemies';
+import type { EnemyTier } from './tiers';
 
 export type PropKind = 'barrel' | 'crate' | 'pipe' | 'theme';
 export type LootKindName = 'ammo' | 'stim';
@@ -19,6 +20,7 @@ export interface LootSpawn extends GridPoint {
 
 export interface EnemySpawn extends GridPoint {
   readonly kind: EnemyKind;
+  readonly tier: EnemyTier;
   readonly seed: number;
 }
 

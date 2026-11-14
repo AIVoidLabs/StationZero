@@ -14,6 +14,7 @@ import type {
   PropKind,
   VentSpawn,
 } from '../data/levelTypes';
+import { isEnemyTier } from '../data/tiers';
 import type { Dungeon, DungeonExit, FloorStyle, Room } from './DungeonGen';
 
 const RAW_LEVELS: readonly unknown[] = Object.entries(
@@ -234,7 +235,9 @@ function parseEntities(value: unknown, floor: number, rows: readonly string[]): 
     const { x, y, record } = readPoint(raw, floor, `entities.enemies[${index}]`, rows);
     const kind = enemyKinds.find((candidate) => candidate === record.kind);
     if (!kind) fail(floor, `\`entities.enemies[${index}].kind\` must be one of ${enemyKinds.join(', ')}`);
-    return { x, y, kind, seed: readInteger(record, 'seed', floor) };
+    const tier = record.tier === undefined ? 'novice' : record.tier;
+    if (!isEnemyTier(tier)) fail(floor, `\`entities.enemies[${index}].tier\` must be novice, journeyman or master`);
+    return { x, y, kind, tier, seed: readInteger(record, 'seed', floor) };
   });
 
   const hazardRaw = value.hazards;

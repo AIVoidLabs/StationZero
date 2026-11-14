@@ -1,4 +1,5 @@
 import { FLOOR_COUNT } from '../data/config';
+import { ENEMY_TIERS, TIER_SPECS, type EnemyTier } from '../data/tiers';
 import { docFromJson, ENEMY_KINDS, removeSelection, type EditorDoc, type Selection } from './model';
 import type { EditorState, ToolId } from './state';
 
@@ -55,6 +56,8 @@ const TOOL_GROUPS: readonly { readonly title: string; readonly tools: readonly T
     tools: [{ id: 'vent', label: 'Steam vent' }],
   },
 ];
+
+const TIER_LABEL: Readonly<Record<EnemyTier, string>> = { novice: 'Novice', journeyman: 'Journeyman', master: 'Master' };
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -198,6 +201,17 @@ function renderTools(root: HTMLElement, state: EditorState): void {
   root.replaceChildren();
   for (const group of TOOL_GROUPS) {
     root.append(el('h2', { text: group.title }));
+    if (group.title === 'Enemies') {
+      const row = el('div', { className: 'tierrow' });
+      for (const tier of ENEMY_TIERS) {
+        const node = button(TIER_LABEL[tier], () => {
+          state.placeTier = tier;
+          state.setTool(state.tool);
+        }, false, state.placeTier === tier ? 'active' : '');
+        row.append(node);
+      }
+      root.append(el('p', { className: 'hint', text: 'New enemies get this tier:' }), row);
+    }
     for (const tool of group.tools) {
       const label = tool.key ? `${tool.label}  [${tool.key}]` : tool.label;
       root.append(button(label, () => state.setTool(tool.id), false, state.tool === tool.id ? 'active' : ''));
@@ -293,6 +307,8 @@ function renderInspector(root: HTMLElement, state: EditorState): void {
       if (!enemy) break;
       root.append(
         selectField('Kind', enemy.kind, ENEMY_KINDS, (value) => edit(() => (enemy.kind = value as typeof enemy.kind))),
+        selectField('Tier', enemy.tier ?? 'novice', ENEMY_TIERS, (value) => edit(() => (enemy.tier = value as EnemyTier))),
+        el('p', { className: 'hint', text: `${TIER_SPECS[enemy.tier ?? 'novice'].xp} XP` }),
         numberField('Seed', enemy.seed, (value) => edit(() => (enemy.seed = value))),
       );
       break;

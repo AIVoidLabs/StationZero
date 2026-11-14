@@ -242,96 +242,112 @@
         "x": 4,
         "y": 11,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 9888625
       },
       {
         "x": 7,
         "y": 8,
         "kind": "drone",
+        "tier": "novice",
         "seed": 11554717
       },
       {
         "x": 25,
         "y": 5,
         "kind": "drone",
+        "tier": "novice",
         "seed": 13930733
       },
       {
         "x": 27,
         "y": 8,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 12455414
       },
       {
         "x": 20,
         "y": 4,
         "kind": "drone",
+        "tier": "novice",
         "seed": 110703
       },
       {
         "x": 22,
         "y": 20,
         "kind": "drone",
+        "tier": "master",
         "seed": 13334112
       },
       {
         "x": 26,
         "y": 19,
         "kind": "drone",
+        "tier": "novice",
         "seed": 12613703
       },
       {
         "x": 28,
         "y": 15,
         "kind": "drone",
+        "tier": "novice",
         "seed": 4960598
       },
       {
         "x": 18,
         "y": 15,
         "kind": "drone",
+        "tier": "novice",
         "seed": 4290606
       },
       {
         "x": 14,
         "y": 15,
         "kind": "drone",
+        "tier": "novice",
         "seed": 2895187
       },
       {
         "x": 16,
         "y": 13,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 7059378
       },
       {
         "x": 2,
         "y": 30,
         "kind": "drone",
+        "tier": "novice",
         "seed": 15951279
       },
       {
         "x": 7,
         "y": 27,
         "kind": "drone",
+        "tier": "novice",
         "seed": 6992464
       },
       {
         "x": 27,
         "y": 25,
         "kind": "drone",
+        "tier": "novice",
         "seed": 11247827
       },
       {
         "x": 30,
         "y": 25,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 6303152
       },
       {
         "x": 22,
         "y": 14,
         "kind": "tank",
+        "tier": "master",
         "seed": 120519
       }
     ],

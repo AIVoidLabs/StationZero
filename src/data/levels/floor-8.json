@@ -259,78 +259,91 @@
         "x": 1,
         "y": 15,
         "kind": "assembler",
+        "tier": "master",
         "seed": 7662012
       },
       {
         "x": 8,
         "y": 19,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 5384332
       },
       {
         "x": 7,
         "y": 15,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 9698795
       },
       {
         "x": 3,
         "y": 18,
         "kind": "drone",
+        "tier": "novice",
         "seed": 13543394
       },
       {
         "x": 16,
         "y": 8,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 7305247
       },
       {
         "x": 20,
         "y": 8,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 310214
       },
       {
         "x": 16,
         "y": 5,
         "kind": "drone",
+        "tier": "novice",
         "seed": 2451539
       },
       {
         "x": 27,
         "y": 7,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 9480465
       },
       {
         "x": 24,
         "y": 6,
         "kind": "drone",
+        "tier": "novice",
         "seed": 14879794
       },
       {
         "x": 5,
         "y": 29,
         "kind": "drone",
+        "tier": "master",
         "seed": 11018042
       },
       {
         "x": 8,
         "y": 27,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 941535
       },
       {
         "x": 19,
         "y": 15,
         "kind": "drone",
+        "tier": "novice",
         "seed": 7897616
       },
       {
         "x": 17,
         "y": 12,
         "kind": "drone",
+        "tier": "master",
         "seed": 13296842
       }
     ],

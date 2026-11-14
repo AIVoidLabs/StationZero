@@ -150,7 +150,14 @@ export class Projectiles {
     return this.flareStates;
   }
 
-  spawn(owner: ProjectileOwner, gridX: number, gridY: number, aimX: number, aimY: number): void {
+  spawn(
+    owner: ProjectileOwner,
+    gridX: number,
+    gridY: number,
+    aimX: number,
+    aimY: number,
+    options: { readonly damage?: number; readonly speedMul?: number } = {},
+  ): void {
     const length = Math.hypot(aimX, aimY);
     if (length < 1e-4) return;
     const dirX = aimX / length;
@@ -174,8 +181,8 @@ export class Projectiles {
       y: fromY,
       dirX,
       dirY,
-      speed: stats.speed,
-      damage: stats.damage,
+      speed: stats.speed * (options.speedMul ?? 1),
+      damage: options.damage ?? stats.damage,
       hitRadius: stats.hitRadius,
       remaining: stats.range,
       image,

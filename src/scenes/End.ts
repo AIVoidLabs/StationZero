@@ -56,6 +56,7 @@ export class End extends Scene {
       stat(t('end.floor'), `${snapshot.floorReached}/${FLOOR_COUNT}`),
       stat(t('end.hostiles'), snapshot.kills),
       stat(t('end.shots'), snapshot.shots),
+      stat(t('end.xp'), snapshot.xp ?? 0),
       stat(t('end.time'), formatTime(Math.floor(snapshot.playMs / 1000))),
       stat(t('end.score'), result.entry.score),
       result.rank !== null ? t('end.record', { n: result.rank }) : '',

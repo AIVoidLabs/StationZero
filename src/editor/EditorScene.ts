@@ -7,6 +7,7 @@ import {
 } from '../assets/manifest';
 import { FLOOR_COUNT, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import { ENEMY_SPECS } from '../data/enemies';
+import { TIER_SPECS } from '../data/tiers';
 import { Level } from '../systems/Level';
 import { ensureArt } from '../systems/PlaceholderArt';
 import { registerTilesV2 } from '../systems/TileShaper';
@@ -305,7 +306,7 @@ export class EditorScene extends Scene {
       e.loot.push({ x: cell.x, y: cell.y, kind, amount: kind === 'ammo' ? 4 : 0 });
       selection = { type: 'loot', index: e.loot.length - 1 };
     } else if (tool.startsWith('enemy:')) {
-      e.enemies.push({ x: cell.x, y: cell.y, kind: tool.slice(6) as keyof typeof ENEMY_SPECS, seed: randomSeed });
+      e.enemies.push({ x: cell.x, y: cell.y, kind: tool.slice(6) as keyof typeof ENEMY_SPECS, tier: ENEMY_SPECS[tool.slice(6) as keyof typeof ENEMY_SPECS].boss ? 'master' : state.placeTier, seed: randomSeed });
       selection = { type: 'enemy', index: e.enemies.length - 1 };
     } else if (tool === 'vent') {
       e.vents.push({ x: cell.x, y: cell.y, phaseMs: phase(5200) });
@@ -409,6 +410,14 @@ export class EditorScene extends Scene {
       g.fillStyle(0x5ad0ff, 0.45);
       this.diamond(g, exit.x, exit.y, 4);
       g.fillPath();
+    }
+
+    for (const enemy of doc.entities.enemies) {
+      const stripes = TIER_SPECS[enemy.tier ?? 'novice'].stripes;
+      if (stripes === 0 || ENEMY_SPECS[enemy.kind].boss) continue;
+      const iso = gridVectorToWorld(enemy.x, enemy.y, TILE_WIDTH, TILE_HEIGHT);
+      g.fillStyle(enemy.tier === 'master' ? 0xe8c060 : 0x9fd0ff, 1);
+      for (let index = 0; index < stripes; index += 1) g.fillRect(iso.x - 9 + index * 7, iso.y - 46, 5, 4);
     }
 
     for (const vent of doc.entities.vents) {

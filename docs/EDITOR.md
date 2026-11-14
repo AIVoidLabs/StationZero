@@ -49,3 +49,6 @@ It also shows ammo supply versus ammo needed (start ammo + loot + enemy drops, a
 2. Edit the map and placements by hand: add, move or remove enemies, loot and props. Watch the score and the all-floors curve.
 3. Aim for a smooth curve: each floor a little above the one before. The boss floors (B9 and B11) are naturally steep, so tune the floors around them.
 4. When happy, press **Save to file**, then run `npm run levels:check`. Enemy health and fire rate scale with the floor at run time, so hand-placed enemies follow the same ramp as generated ones.
+
+## Enemy tiers
+Every non-boss enemy has a **tier**: *novice* (acemi), *journeyman* (kalfa) or *master* (usta). Higher tiers have more health, hit harder (master shots and touch do 2 damage), fire faster, move faster, notice from further away, and give more XP (10 / 25 / 60). In the game a journeyman shows one stripe and a master two stripes with a gold outline next to its health bar. In the editor, pick the tier for **new** enemies in the Enemies group (the Novice/Journeyman/Master buttons) and change an existing enemy's tier in the inspector. Bosses are always master and ignore the tier setting. The difficulty score counts the tier. XP is added to the run score and shown in the end report.

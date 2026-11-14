@@ -1,6 +1,6 @@
 import { FLOOR_LOOT_BASE, FLOOR_LOOT_MIN, HEALTH_PER_HOSTILE, LOOT_AMMO_AMOUNT } from '../data/config';
 import { DRONE_MIN_SPAWN_DISTANCE } from '../data/config';
-import { bossForFloor, droneCountForFloor, hostileCountForFloor, tankCountForFloor, type EnemyKind } from '../data/enemies';
+import { ENEMY_SPECS, bossForFloor, droneCountForFloor, hostileCountForFloor, tankCountForFloor, type EnemyKind } from '../data/enemies';
 import {
   HAZARD_LOOT_CLEARANCE,
   HAZARD_MIN_SEPARATION,
@@ -17,6 +17,7 @@ import type {
   PropKind,
   VentSpawn,
 } from '../data/levelTypes';
+import { rollTier } from '../data/tiers';
 import { createRng } from '../utils/random';
 import type { Dungeon, Room } from './DungeonGen';
 import { Level } from './Level';
@@ -27,6 +28,7 @@ const TERMINAL_SEED = 0x7e34a;
 const FLOOR_LOOT_SEED = 0x2b3c;
 const COMBAT_SEED = 0x0d20e;
 const HAZARD_SEED = 0x7a5e;
+const TIER_SEED = 0x71e5;
 
 const BARRELS_PER_COVER_ROOM = 2;
 const EXTRA_BARREL_CHANCE = 0.5;
@@ -461,9 +463,10 @@ class Planner {
       if (!spawn) continue;
       taken.add(`${spawn.x},${spawn.y}`);
       placed.push(spawn);
-      enemies.push({ x: spawn.x, y: spawn.y, kind, seed: Math.floor(rng() * 0xffffff) });
+      enemies.push({ x: spawn.x, y: spawn.y, kind, tier: 'novice', seed: Math.floor(rng() * 0xffffff) });
     }
-    return enemies;
+    const tierRng = createRng(dungeon.seed ^ TIER_SEED);
+    return enemies.map((enemy) => (ENEMY_SPECS[enemy.kind].boss ? enemy : { ...enemy, tier: rollTier(dungeon.floor, tierRng()) }));
   }
 
   private pickSpawn(

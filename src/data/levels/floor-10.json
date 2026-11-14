@@ -298,84 +298,98 @@
         "x": 17,
         "y": 3,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 9211
       },
       {
         "x": 18,
         "y": 6,
         "kind": "drone",
+        "tier": "novice",
         "seed": 9422
       },
       {
         "x": 30,
         "y": 3,
         "kind": "drone",
+        "tier": "novice",
         "seed": 9633
       },
       {
         "x": 31,
         "y": 6,
         "kind": "drone",
+        "tier": "master",
         "seed": 9844
       },
       {
         "x": 30,
         "y": 14,
         "kind": "drone",
+        "tier": "novice",
         "seed": 10055
       },
       {
         "x": 28,
         "y": 17,
         "kind": "drone",
+        "tier": "novice",
         "seed": 10266
       },
       {
         "x": 17,
         "y": 14,
         "kind": "drone",
+        "tier": "novice",
         "seed": 10477
       },
       {
         "x": 18,
         "y": 17,
         "kind": "drone",
+        "tier": "novice",
         "seed": 10688
       },
       {
         "x": 3,
         "y": 14,
         "kind": "drone",
+        "tier": "novice",
         "seed": 10899
       },
       {
         "x": 7,
         "y": 17,
         "kind": "drone",
+        "tier": "master",
         "seed": 11110
       },
       {
         "x": 3,
         "y": 26,
         "kind": "drone",
+        "tier": "master",
         "seed": 11321
       },
       {
         "x": 7,
         "y": 29,
         "kind": "drone",
+        "tier": "novice",
         "seed": 11532
       },
       {
         "x": 21,
         "y": 29,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 11743
       },
       {
         "x": 24,
         "y": 28,
         "kind": "warden",
+        "tier": "master",
         "seed": 11954
       }
     ],

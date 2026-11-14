@@ -1,6 +1,7 @@
 import type { GameObjects, Scene } from 'phaser';
 import { DRONE_FRAME, type Direction } from '../../assets/manifest';
 import {
+  DRONE_BULLET_DAMAGE,
   DRONE_CHASE_LEASH,
   DRONE_CHASE_MAX_MS,
   DRONE_DISENGAGE_GRACE_MS,
@@ -32,6 +33,7 @@ import {
   DRONE_DODGE_SPEED,
 } from '../../data/config';
 import { fireCooldownScale, scaledEnemyHp } from '../../data/difficulty';
+import { BOSS_XP, TIER_SPECS, type EnemyTier, type TierSpec } from '../../data/tiers';
 import { ENEMY_SPECS, TANK_FRONT_COS, type EnemyKind, type EnemySpec } from '../../data/enemies';
 import type { Projectiles } from '../../systems/Projectiles';
 import { runFlags } from '../../systems/RunFlags';
@@ -70,6 +72,8 @@ export interface HitDirection {
 
 export class Drone extends Entity {
   readonly kind: EnemyKind;
+  readonly tier: EnemyTier;
+  private readonly tierSpec: TierSpec;
   private readonly spec: EnemySpec;
   private readonly level: Level;
   private readonly player: Player;
@@ -112,11 +116,13 @@ export class Drone extends Entity {
   private diedAt = 0;
   private nextTurnAt = 0;
   private armorHp = 0;
+  private maxArmorHp = 0;
   private dormant = false;
   private summonClock = 0;
   private summonPending = false;
   private readonly armorBarBack: GameObjects.Rectangle;
   private readonly armorBarFill: GameObjects.Rectangle;
+  private readonly tierMarks: GameObjects.Rectangle[] = [];
 
   constructor(
     scene: Scene,
@@ -128,12 +134,15 @@ export class Drone extends Entity {
     seed: number,
     projectiles: Projectiles | null = null,
     kind: EnemyKind = 'drone',
+    tier: EnemyTier = 'novice',
   ) {
     const iso = gridVectorToWorld(homeX, homeY, TILE_WIDTH, TILE_HEIGHT);
     super(scene, iso.x, iso.y, { gridX: homeX, gridY: homeY, isoX: iso.x, isoY: iso.y });
 
     this.kind = kind;
     this.spec = ENEMY_SPECS[kind];
+    this.tier = this.spec.boss ? 'master' : tier;
+    this.tierSpec = this.spec.boss ? TIER_SPECS.novice : TIER_SPECS[tier];
     this.level = level;
     this.player = player;
     this.depthManager = depth;
@@ -149,10 +158,11 @@ export class Drone extends Entity {
     this.bobPhase = this.rng() * Math.PI * 2;
     this.idleMs = DRONE_IDLE_MIN_MS + this.rng() * (DRONE_IDLE_MAX_MS - DRONE_IDLE_MIN_MS);
 
-    const maxHp = this.spec.boss ? this.spec.maxHp : scaledEnemyHp(this.spec.maxHp, depth.floor);
+    const maxHp = this.spec.boss ? this.spec.maxHp : Math.max(1, Math.round(scaledEnemyHp(this.spec.maxHp, depth.floor) * this.tierSpec.hpMul));
     this.hp = maxHp;
     this.maxHp = maxHp;
-    this.armorHp = this.spec.armorHp;
+    this.maxArmorHp = this.spec.armorHp > 0 ? this.spec.armorHp + this.tierSpec.armorBonus : 0;
+    this.armorHp = this.maxArmorHp;
     this.dead = false;
 
     const scale = this.spec.scale;
@@ -177,7 +187,14 @@ export class Drone extends Entity {
       .rectangle(-barWidth / 2, barY + HEALTH_BAR_HEIGHT + 3, barWidth, HEALTH_BAR_HEIGHT - 1, 0x7fb4dc, 1)
       .setOrigin(0, 0.5)
       .setVisible(this.armorHp > 0);
-    this.add([this.shadow, this.sprite, this.healthBarBack, this.healthBarFill, this.armorBarBack, this.armorBarFill]);
+    const markColor = this.tier === 'master' ? 0xe8c060 : 0x9fd0ff;
+    for (let index = 0; index < this.tierSpec.stripes; index += 1) {
+      this.tierMarks.push(
+        scene.add.rectangle(-barWidth / 2 - 6 - index * 5, barY, 3, HEALTH_BAR_HEIGHT + 4, markColor, 1).setOrigin(0.5, 0.5),
+      );
+    }
+    if (this.tier === 'master' && !this.spec.boss) this.healthBarBack.setStrokeStyle(1, 0xe8c060, 0.9);
+    this.add([this.shadow, this.sprite, this.healthBarBack, this.healthBarFill, this.armorBarBack, this.armorBarFill, ...this.tierMarks]);
     this.updateHealthBar();
 
     this.setDepth(iso.y);
@@ -220,7 +237,11 @@ export class Drone extends Entity {
   }
 
   get contactDamage(): number {
-    return this.spec.contactDamage;
+    return this.spec.contactDamage + this.tierSpec.damageBonus;
+  }
+
+  get xpValue(): number {
+    return this.spec.boss ? BOSS_XP : this.tierSpec.xp;
   }
 
   get health(): { hp: number; maxHp: number } {
@@ -348,7 +369,7 @@ export class Drone extends Entity {
       return;
     }
 
-    this.followPath(dt, this.spec.speed);
+    this.followPath(dt, this.spec.speed * this.tierSpec.speedMul);
   }
 
   private updateChase(deltaMs: number, dt: number): void {
@@ -391,7 +412,7 @@ export class Drone extends Entity {
       this.setPath(target.gridX, target.gridY);
     }
 
-    this.followPath(dt, this.spec.chaseSpeed);
+    this.followPath(dt, this.spec.chaseSpeed * this.tierSpec.speedMul);
   }
 
   private updateSearch(dt: number): void {
@@ -403,7 +424,7 @@ export class Drone extends Entity {
     }
 
     if (this.path.length > 0) {
-      this.followPath(dt, this.spec.speed);
+      this.followPath(dt, this.spec.speed * this.tierSpec.speedMul);
       return;
     }
 
@@ -428,7 +449,7 @@ export class Drone extends Entity {
       return;
     }
 
-    this.followPath(dt, this.spec.returnSpeed);
+    this.followPath(dt, this.spec.returnSpeed * this.tierSpec.speedMul);
   }
 
   private tryAggro(rangeScale: number): boolean {
@@ -444,7 +465,7 @@ export class Drone extends Entity {
     const dy = target.gridY - this.posY;
     const distance = Math.hypot(dx, dy);
 
-    if (distance > DRONE_SIGHT_RANGE * rangeScale * awareness) return false;
+    if (distance > DRONE_SIGHT_RANGE * rangeScale * awareness * this.tierSpec.senseMul) return false;
     if (distance > DRONE_PERIPHERAL_RANGE * awareness && !this.inViewCone(dx, dy, distance)) {
       return false;
     }
@@ -647,7 +668,10 @@ export class Drone extends Entity {
         const base = Math.atan2(at.y - this.posY, at.x - this.posX);
         for (let shot = 0; shot < this.spec.fan; shot += 1) {
           const angle = base + (shot - (this.spec.fan - 1) / 2) * this.spec.fanStep;
-          this.projectiles.spawn(this.spec.shot, this.posX, this.posY, Math.cos(angle), Math.sin(angle));
+          this.projectiles.spawn(this.spec.shot, this.posX, this.posY, Math.cos(angle), Math.sin(angle), {
+            damage: DRONE_BULLET_DAMAGE + this.tierSpec.damageBonus,
+            speedMul: this.tierSpec.shotSpeedMul,
+          });
         }
         sfx.play(this.spec.shot === 'shell' ? 'shell' : 'droneShot', this.audioGain());
         this.fireState = 'RECOVER';
@@ -660,7 +684,7 @@ export class Drone extends Entity {
       this.fireMs += deltaMs;
       if (this.fireMs >= this.spec.fireRecoverMs) {
         this.fireState = 'NONE';
-        this.fireCooldownMs = this.spec.fireCooldownMs * fireCooldownScale(this.depthManager.floor, runFlags.alert);
+        this.fireCooldownMs = this.spec.fireCooldownMs * this.tierSpec.fireMul * fireCooldownScale(this.depthManager.floor, runFlags.alert);
       }
       return true;
     }
@@ -815,7 +839,7 @@ export class Drone extends Entity {
   }
 
   private updateArmorBar(): void {
-    const ratio = this.spec.armorHp > 0 ? Math.max(0, this.armorHp / this.spec.armorHp) : 0;
+    const ratio = this.maxArmorHp > 0 ? Math.max(0, this.armorHp / this.maxArmorHp) : 0;
     this.armorBarFill.setScale(ratio, 1);
     const visible = this.armorHp > 0 && !this.dead;
     this.armorBarBack.setVisible(visible);
@@ -857,6 +881,7 @@ export class Drone extends Entity {
   private setHealthBarVisible(visible: boolean): void {
     this.healthBarBack.setVisible(visible);
     this.healthBarFill.setVisible(visible);
+    for (const mark of this.tierMarks) mark.setVisible(visible);
     if (!visible) {
       this.armorBarBack.setVisible(false);
       this.armorBarFill.setVisible(false);

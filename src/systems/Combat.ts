@@ -1,5 +1,7 @@
 import type { Scene } from 'phaser';
+import { DEPTH_VFX } from '../data/config';
 import { ENEMY_SPECS } from '../data/enemies';
+import { t } from '../i18n';
 import { Drone } from '../entities/enemies/Drone';
 import type { Player } from '../entities/Player';
 import type { DepthManager } from './DepthManager';
@@ -46,6 +48,7 @@ export class Combat {
         spawn.seed,
         this.projectiles,
         spawn.kind,
+        spawn.tier,
       );
       if (spawn.kind === 'warden') unit.sleep();
       this.drones.push(unit);
@@ -126,10 +129,31 @@ export class Combat {
     this.reportedDeaths.add(drone);
     if (this.summoned.has(drone)) return;
     runStats.kills += 1;
+    runStats.xp += drone.xpValue;
+    this.floatXp(drone);
     this.onDroneKilled?.(drone);
     if (ENEMY_SPECS[drone.kind].boss) {
       for (const unit of this.summoned) unit.takeDamage(Number.MAX_SAFE_INTEGER);
     }
+  }
+
+  private floatXp(drone: Drone): void {
+    const label = this.scene.add
+      .text(drone.x, drone.y - 44, t('xp.gain', { n: drone.xpValue }), {
+        fontFamily: 'monospace',
+        fontSize: '8px',
+        color: drone.tier === 'master' ? '#e8c060' : drone.tier === 'journeyman' ? '#9fd0ff' : '#b0a27a',
+      })
+      .setOrigin(0.5, 1)
+      .setDepth(DEPTH_VFX + 5);
+    this.scene.tweens.add({
+      targets: label,
+      y: label.y - 16,
+      alpha: 0,
+      duration: 1100,
+      ease: 'Quad.easeOut',
+      onComplete: () => label.destroy(),
+    });
   }
 
   destroy(): void {

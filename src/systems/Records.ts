@@ -18,7 +18,7 @@ const MAX_RECORDS = 10;
 
 export function computeScore(outcome: Outcome, stats: RunSnapshot): number {
   const seconds = Math.floor(stats.playMs / 1000);
-  const raw = stats.floorReached * 1000 + stats.kills * 150 + (outcome === 'survived' ? 3000 : 0) - seconds;
+  const raw = stats.floorReached * 1000 + stats.kills * 150 + (outcome === 'survived' ? 3000 : 0) + (stats.xp ?? 0) - seconds;
   return Math.max(0, raw);
 }
 

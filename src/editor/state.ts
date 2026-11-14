@@ -1,4 +1,5 @@
 import { DUNGEON_SEED, FLOOR_COUNT, FLOOR_SEED_STRIDE } from '../data/config';
+import type { EnemyTier } from '../data/tiers';
 import { DRAFT_KEY_PREFIX } from '../utils/devflags';
 import { generateDungeon } from '../systems/DungeonGen';
 import { checkLevel, type LevelProblem } from '../systems/LevelCheck';
@@ -64,6 +65,7 @@ export class EditorState {
   tool: ToolId = 'select';
   selection: Selection | null = null;
   roomStyle: 0 | 1 | 2 = 0;
+  placeTier: EnemyTier = 'novice';
   carveRooms = true;
   problems: LevelProblem[] = [];
   parseError: string | null = null;

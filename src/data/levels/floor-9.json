@@ -262,102 +262,119 @@
         "x": 6,
         "y": 10,
         "kind": "drone",
+        "tier": "novice",
         "seed": 15172943
       },
       {
         "x": 2,
         "y": 8,
         "kind": "drone",
+        "tier": "novice",
         "seed": 1547005
       },
       {
         "x": 7,
         "y": 22,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 1573734
       },
       {
         "x": 2,
         "y": 23,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 2723347
       },
       {
         "x": 14,
         "y": 31,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 2063867
       },
       {
         "x": 11,
         "y": 28,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 6336484
       },
       {
         "x": 16,
         "y": 28,
         "kind": "drone",
+        "tier": "novice",
         "seed": 9758769
       },
       {
         "x": 25,
         "y": 6,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 995262
       },
       {
         "x": 23,
         "y": 12,
         "kind": "drone",
+        "tier": "novice",
         "seed": 9562649
       },
       {
         "x": 22,
         "y": 9,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 498150
       },
       {
         "x": 16,
         "y": 24,
         "kind": "drone",
+        "tier": "novice",
         "seed": 7207472
       },
       {
         "x": 15,
         "y": 19,
         "kind": "drone",
+        "tier": "novice",
         "seed": 11747686
       },
       {
         "x": 14,
         "y": 22,
         "kind": "drone",
+        "tier": "master",
         "seed": 5268720
       },
       {
         "x": 29,
         "y": 29,
         "kind": "drone",
+        "tier": "novice",
         "seed": 9999593
       },
       {
         "x": 31,
         "y": 28,
         "kind": "drone",
+        "tier": "novice",
         "seed": 9396501
       },
       {
         "x": 25,
         "y": 31,
         "kind": "drone",
+        "tier": "journeyman",
         "seed": 15814775
       },
       {
         "x": 11,
         "y": 32,
         "kind": "tank",
+        "tier": "novice",
         "seed": 11754500
       }
     ],
