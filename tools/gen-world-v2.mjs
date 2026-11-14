@@ -1125,8 +1125,28 @@ function terminalProp() {
   return propShadow(img);
 }
 
+function explosiveBarrel() {
+  const img = new Image(PROP_FRAME_W, PROP_FRAME_H);
+  const red = [176, 52, 38];
+  rect(img, CX - 8, BASE - 22, 16, 22, red);
+  ellipseFill(img, CX, BASE, 8, 3.2, mul(red, 0.7), false);
+  ellipseFill(img, CX, BASE - 22, 8, 3.2, mul(red, 1.25), false);
+  for (const y of [BASE - 17, BASE - 5]) {
+    rect(img, CX - 8, y, 16, 2, mul(red, 0.62));
+    rect(img, CX - 8, y, 16, 1, mul(red, 0.9));
+  }
+  rect(img, CX - 8, BASE - 22, 3, 22, mul(red, 1.18));
+  rect(img, CX + 5, BASE - 22, 3, 22, mul(red, 0.66));
+  fillPoly(img, [[CX, BASE - 15], [CX + 4.5, BASE - 7], [CX - 4.5, BASE - 7]], [236, 196, 40]);
+  rect(img, CX - 0, BASE - 12, 1, 3, [24, 20, 12]);
+  img.set(CX, BASE - 8, [24, 20, 12]);
+  rect(img, CX - 3, BASE - 24, 6, 2, [60, 62, 62]);
+  img.outline();
+  return propShadow(img, 12, 4);
+}
+
 function floorPropSheet() {
-  const frames = [...THE_DEAD.map((outfit) => corpseFrame(outfit)), ...Array.from({ length: 11 }, (_, floor) => floorProp(floor)), terminalProp()];
+  const frames = [...THE_DEAD.map((outfit) => corpseFrame(outfit)), ...Array.from({ length: 11 }, (_, floor) => floorProp(floor)), terminalProp(), explosiveBarrel()];
   const sheet = new Image(PROP_FRAME_W * frames.length, PROP_FRAME_H);
   frames.forEach((frame, index) => sheet.blit(frame, index * PROP_FRAME_W, 0));
   return { sheet, count: frames.length };

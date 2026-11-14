@@ -8,6 +8,7 @@ export type SfxName =
   | 'shell'
   | 'deflect'
   | 'armorBreak'
+  | 'explosion'
   | 'steam'
   | 'laser'
   | 'playerHurt'
@@ -155,6 +156,12 @@ class SfxEngine {
         tone('triangle', 3200, 1800, 0.12, 0.35);
         tone('square', 1700, 900, 0.07, 0.2);
         noise(0.05, 0.3, 'highpass', 4500, 3000);
+        break;
+      case 'explosion':
+        noise(0.7, 1, 'lowpass', 3200, 90);
+        tone('sine', 110, 28, 0.6, 1);
+        tone('sawtooth', 200, 40, 0.5, 0.45);
+        noise(0.25, 0.6, 'bandpass', 1800, 500, 0.02);
         break;
       case 'armorBreak':
         noise(0.3, 0.8, 'bandpass', 2600, 900);

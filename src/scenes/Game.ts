@@ -30,6 +30,7 @@ import type { MapState } from '../systems/MiniMap';
 import { Lantern } from '../systems/Lantern';
 import { loadDungeon } from '../systems/LevelLoader';
 import { LogFeed } from '../systems/LogFeed';
+import { Barrels } from '../systems/Barrels';
 import { Hazards } from '../systems/Hazards';
 import { LootSystem } from '../systems/LootSystem';
 import { Occlusion } from '../systems/Occlusion';
@@ -124,6 +125,7 @@ export class Game extends Scene {
   private ambience: Ambience | undefined = undefined;
   private combat: Combat | undefined = undefined;
   private hazards: Hazards | undefined = undefined;
+  private barrels: Barrels | undefined = undefined;
   private loot: LootSystem | undefined = undefined;
   private depth: DepthManager | undefined = undefined;
   private gate: DescentGate | undefined = undefined;
@@ -201,6 +203,8 @@ export class Game extends Scene {
       () => combat.roster,
       loot.pickups.map((item) => ({ x: item.gridX, y: item.gridY })),
     );
+    const barrels = new Barrels(this, level, player, () => combat.roster, decor.barrels);
+    combat.projectileSystem.setBlockedHitHandler((x, y) => barrels.hitCell(x, y));
     const gate = dungeon.exit ? new DescentGate(this, dungeon.exit) : null;
     if (dungeon.exit) level.blockCell(dungeon.exit.x, dungeon.exit.y);
     const lantern = new Lantern(this, player.x, player.y);
@@ -249,6 +253,7 @@ export class Game extends Scene {
     this.ambience = ambience;
     this.combat = combat;
     this.hazards = hazards;
+    this.barrels = barrels;
     this.loot = loot;
     this.depth = depth;
     this.gate = gate ?? undefined;
@@ -347,6 +352,8 @@ export class Game extends Scene {
       this.combat = undefined;
       this.hazards?.destroy();
       this.hazards = undefined;
+      this.barrels?.destroy();
+      this.barrels = undefined;
       this.playerCombat = undefined;
       this.attackTarget = undefined;
       this.repathCell = undefined;
@@ -448,6 +455,7 @@ export class Game extends Scene {
 
     combat.update(delta);
     this.hazards?.update();
+    this.barrels?.update(delta);
     this.loot?.update(player);
     if (this.pointerInside) {
       const pointer = this.input.activePointer;
@@ -631,6 +639,7 @@ export class Game extends Scene {
   ): void {
     const now = this.time.now;
     this.hazards?.emitLights(emit);
+    this.barrels?.emitLights(emit);
     const player = this.player;
     if (player && !player.isDeadState) {
       const flicker = 1 + Math.sin(now / 130) * 0.035 + Math.sin(now / 57) * 0.02;

@@ -4,6 +4,7 @@ import { DEPTH_FLOOR, FLOOR_COUNT, TILE_HEIGHT, TILE_WIDTH } from '../data/confi
 import { gridVectorToWorld } from '../utils/iso';
 import { createRng } from '../utils/random';
 import type { Dungeon, DungeonExit, Room } from './DungeonGen';
+import type { BarrelCell } from './Barrels';
 import type { Level } from './Level';
 import type { TerminalCell } from './LogFeed';
 import type { OccluderSpec } from './Occlusion';
@@ -11,6 +12,7 @@ import type { OccluderSpec } from './Occlusion';
 const DECOR_SEED = 0x5a17e;
 const DECAL_SEED = 0xdecaf;
 const COVER_SEED = 0xc07e5;
+const BARREL_CHANCE = 0.75;
 const COVER_MIN_ROOM_WIDTH = 6;
 const COVER_MIN_ROOM_HEIGHT = 5;
 const COVER_BIG_ROOM_AREA = 40;
@@ -64,6 +66,7 @@ export class Decor {
   private readonly images: GameObjects.Image[] = [];
   private readonly propOccluders: OccluderSpec[] = [];
   private readonly terminalCells: TerminalCell[] = [];
+  private readonly barrelCells: BarrelCell[] = [];
   private readonly exit: DungeonExit | null;
   private readonly terminalTarget: number;
   private readonly propBudget: number;
@@ -100,11 +103,16 @@ export class Decor {
     return this.terminalCells;
   }
 
+  get barrels(): readonly BarrelCell[] {
+    return this.barrelCells;
+  }
+
   destroy(): void {
     for (const image of this.images) image.destroy();
     this.images.length = 0;
     this.propOccluders.length = 0;
     this.terminalCells.length = 0;
+    this.barrelCells.length = 0;
   }
 
   private placeProps(dungeon: Dungeon): void {
@@ -206,11 +214,11 @@ export class Decor {
     const placed: Cell[] = [];
     let walkable = this.countWalkable();
 
-    const tryBlock = (cell: Cell): boolean => {
+    const tryBlock = (cell: Cell, kind: PropKind = 'crate'): boolean => {
       this.level.blockCell(cell.x, cell.y);
       if (this.countReachable() === walkable - 1) {
         walkable -= 1;
-        this.addProp(cell.x, cell.y, 'crate');
+        this.addProp(cell.x, cell.y, kind);
         placed.push(cell);
         return true;
       }
@@ -231,6 +239,12 @@ export class Decor {
         const along = rng() < 0.5 ? { x: 1, y: 0 } : { x: 0, y: 1 };
         const next = { x: cell.x + along.x, y: cell.y + along.y };
         if (candidates.some((other) => other.x === next.x && other.y === next.y)) tryBlock(next);
+      }
+
+      if (rng() < BARREL_CHANCE) {
+        const spots = this.coverCandidates(room, placed);
+        const spot = spots[Math.floor(rng() * spots.length)];
+        if (spot) tryBlock(spot, 'barrel');
       }
     }
   }
@@ -310,6 +324,16 @@ export class Decor {
 
   private addProp(gridX: number, gridY: number, kind: PropKind): void {
     const iso = gridVectorToWorld(gridX, gridY, TILE_WIDTH, TILE_HEIGHT);
+    if (kind === 'barrel') {
+      const barrel = this.scene.add
+        .image(iso.x, iso.y, PROPS_FLOOR_KEY, DEAD_FRAME_COUNT + FLOOR_COUNT + 1)
+        .setOrigin(0.5, FLOOR_PROP_BASE_ORIGIN_Y)
+        .setDepth(iso.y);
+      this.images.push(barrel);
+      this.propOccluders.push({ sprite: barrel, baseY: iso.y });
+      this.barrelCells.push({ x: gridX, y: gridY, image: barrel });
+      return;
+    }
     const image =
       kind === 'terminal'
         ? this.scene.add
