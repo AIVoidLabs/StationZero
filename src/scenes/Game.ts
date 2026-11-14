@@ -560,7 +560,9 @@ export class Game extends Scene {
     }
 
     const lastFloor = this.floor === FLOOR_COUNT - 1;
-    if (lastFloor && combat.roster.every((drone) => drone.isDead)) {
+    const boss = combat.roster.find((drone) => ENEMY_SPECS[drone.kind].boss);
+    const finished = boss ? boss.isDead : combat.roster.every((drone) => drone.isDead);
+    if (lastFloor && finished) {
       if (this.clearMs === 0) voice.say(clearLine(this.floor), 'warden');
       this.clearMs += delta;
       if (this.clearMs >= CLEAR_TO_END_MS) this.endRun('survived');
@@ -879,6 +881,8 @@ export class Game extends Scene {
     if (exit === 'OPEN') {
       objective = t('obj.hatch');
       objectiveCalm = true;
+    } else if (lastFloor && this.combat?.roster.some((drone) => !drone.isDead && ENEMY_SPECS[drone.kind].boss)) {
+      objective = t('obj.warden');
     } else if (hostiles > 0) {
       objective = t('obj.hostiles', { n: hostiles });
     } else if (lastFloor) {

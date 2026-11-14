@@ -112,6 +112,7 @@ export const tr: Record<StringKey, string> = {
   'hud.map': 'HARİTA  %{p} KEŞFEDİLDİ',
   'hud.warden': '> WARDEN :: ',
   'hud.signalLost': 'SİNYAL KAYBI',
+  'obj.warden': 'WARDEN’I YOK ET',
   'obj.hostiles': 'TÜM DÜŞMANLARI YOK ET ({n})',
   'obj.hatch': 'ÇIKIŞ KAPAĞINA ULAŞ',
   'obj.clear': 'SEKTÖR TEMİZ',

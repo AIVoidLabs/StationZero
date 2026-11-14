@@ -110,6 +110,7 @@ export const en = {
   'hud.map': 'MAP  {p}% EXPLORED',
   'hud.warden': '> WARDEN :: ',
   'hud.signalLost': 'SIGNAL LOST',
+  'obj.warden': 'DESTROY WARDEN',
   'obj.hostiles': 'DESTROY ALL HOSTILES ({n})',
   'obj.hatch': 'REACH THE EXIT HATCH',
   'obj.clear': 'SECTOR CLEAR',
