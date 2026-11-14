@@ -26,10 +26,10 @@ Boss floors (B9, B11) hold exactly one `assembler` / `warden`; the warden starts
   refuses bad files) and the rules: nothing overlaps or sits on spawn/exit, props do not cut the level apart, loot and
   enemies are not inside props, boss counts are right.
 - **Regenerate.** When a rule or a number changes (enemy counts, loot amounts, placement code), run
-  `npm run levels:bake`. It rebuilds the maps **and** every placement through `src/systems/LevelPlan.ts` and
-  **overwrites hand edits**. Commit the diff.
+  `npm run levels:bake`. It only **creates missing floors** (maps and every placement through
+  `src/systems/LevelPlan.ts`) and never overwrites an existing file, so hand edits are safe. To rebuild a floor, delete its file and bake.
 
 `LevelPlan.ts` is the single place that decides where things go; `Decor`, `LootSystem`, `Combat` and `Hazards` only
 create objects from the JSON.
 
-A visual editor is described in [EDITOR.md](EDITOR.md). `"locked": true` in a floor file makes `levels:bake` skip it.
+A visual editor is described in [EDITOR.md](EDITOR.md). All floor files are `"locked": true`, and `levels:bake` never overwrites an existing file: it only creates floors that do not exist yet. To regenerate one, delete its file first (or use the editor).

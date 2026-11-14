@@ -237,6 +237,29 @@ export class EditorState {
     return docText(this.doc);
   }
 
+  async saveToFile(): Promise<void> {
+    if (this.parseError) {
+      this.status = `Not saved: ${this.parseError}`;
+      this.emit();
+      return;
+    }
+    const floor = this.doc.floor;
+    try {
+      const response = await window.fetch(`/__levels/save?floor=${floor}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(docToJson(this.doc)),
+      });
+      const result = (await response.json()) as { saved?: string; error?: string };
+      if (!response.ok || !result.saved) throw new Error(result.error ?? `HTTP ${response.status}`);
+      window.localStorage.removeItem(`${EDITOR_KEY_PREFIX}${floor}`);
+      this.status = `Saved ${result.saved}${this.problems.length > 0 ? ` (${this.problems.length} rule problem(s) remain)` : ''}`;
+    } catch (error) {
+      this.status = `Could not save: ${error instanceof Error ? error.message : String(error)}. Use Download JSON instead.`;
+    }
+    this.emit();
+  }
+
   playDraft(): void {
     try {
       window.localStorage.setItem(`${DRAFT_KEY_PREFIX}${this.doc.floor}`, JSON.stringify(docToJson(this.doc)));

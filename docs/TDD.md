@@ -279,7 +279,7 @@ Tasarım kararı: sonuç doğrulanamazsa **tohum değişir** (`seed + attempt`),
 Kural doğrulaması [LevelCheck.checkLevel](../src/systems/LevelCheck.ts) ayrıdır ve hem `levels:check` hem editör tarafından kullanılır: çakışmalar, spawn/çıkış üstündeki nesneler, props'un haritayı bölmesi (BFS), loot/düşman/tuzağın props içinde olması, ölünün duvara değmesi, boss sayısı (boss katında tam 1, diğerlerinde 0), düşmansız kat.
 
 ### 4.5 Araçlar
-- `npm run levels:bake` ([tools/bake-levels.mjs](../tools/bake-levels.mjs)): Vite'ı middleware modunda açıp `ssrLoadModule` ile TypeScript modüllerini yükler. Her kat için tohum `DUNGEON_SEED + floor * FLOOR_SEED_STRIDE` (`240731 + floor*8191`), `generateDungeon` → çıkışa `X` yaz → `planLevel` → JSON. **`"locked": true` olan katlar atlanır** (elle yapılan işi korur).
+- `npm run levels:bake` ([tools/bake-levels.mjs](../tools/bake-levels.mjs)): Vite'ı middleware modunda açıp `ssrLoadModule` ile TypeScript modüllerini yükler. Her kat için tohum `DUNGEON_SEED + floor * FLOOR_SEED_STRIDE` (`240731 + floor*8191`), `generateDungeon` → çıkışa `X` yaz → `planLevel` → JSON. **Var olan hiçbir dosya ezilmez**: dosyası olmayan katlar üretilir (yeni dosya `locked: true` yazılır), olanlar `exists, kept` ile atlanır. Tüm kat dosyaları `"locked": true`'dur. Bir katı baştan üretmek için dosyası silinir ya da editördeki *Regenerate floor* kullanılır.
 - `npm run levels:check` ([tools/check-levels.mjs](../tools/check-levels.mjs)): tüm katları yükler, `checkLevel` çalıştırır, sorun varsa çıkış kodu 1.
 
 ### 4.6 Kat teması
@@ -727,9 +727,9 @@ Editör ve `levels:check` aynı tahmini kullanır: [LevelRating.ts](../src/syste
 ### 14.5 Üretici, kilit, oyna
 - *Regenerate floor:* `generateDungeon(seed, floor)` + `planLevel` ile yeni harita ve yerleşimler (`levels:bake` mantığının tarayıcıdaki hali; çıkışa `X` yazma dahil).
 - *Re-plan entities:* mevcut haritayı katı biçimde ayrıştırıp (`parseLevelJson`) `planLevel` ile yalnızca varlıkları yeniden üretir. Aynı haritada **birebir aynı sonucu** vermesi, planlayıcının saf ve belirlenimsel olduğunu doğrular.
-- *Locked:* `doc.locked`; JSON'a `locked: true` yazılır, `levels:bake` o katı atlar.
+- *Locked:* `doc.locked`; JSON'a `locked: true` yazılır (bake zaten var olan dosyayı ezmez, bu alan elle yapılmış katı işaretler).
 - *Play draft:* `docToJson`'u `station-zero:draft-N` anahtarına yazar ve `/?debug&depth=N&level=draft` açar; `LevelLoader.loadDungeon` yalnızca `draftLevelRequested()` (dev ve `?level=draft`) ise taslağı bundle yerine okur.
-- *İndir/Yükle:* `Blob` ile `floor-N.json` indirir; dosya seçici ile yükler. **Diske yazılmaz**, dosyayı `src/data/levels/`'e elle koymak gerekir.
+- *Save to file:* `EditorState.saveToFile()` `docToJson` çıktısını `POST /__levels/save?floor=N` ile gönderir. Uç nokta [tools/vite-level-save.mjs](../tools/vite-level-save.mjs) Vite eklentisidir (`apply: 'serve'`, yalnızca dev sunucusunda var): `floor` tamsayısını, gövdenin o kata ait bir seviye olduğunu ve boyutu (2 MB) doğrular, yalnızca `src/data/levels/floor-N.json` yoluna yazar. Geçersiz belge (`parseError`) kaydedilmez. Kayıttan sonra taslak silinir. *İndir/Yükle* yedek yoldur: `Blob` ile indirir, dosya seçici ile yükler.
 
 ---
 
@@ -868,7 +868,7 @@ Silah çeşitliliği yerine **çevre etkileşimi** derinleştirmek (daha çok ku
 - **Windup:** ateş öncesi hazırlık/uyarı süresi.
 - **Bake:** üretici ve planlayıcıyı çalıştırıp sonucu JSON'a yazmak.
 - **Planlayıcı:** `LevelPlan`, yerleşim kararlarını veren saf modül.
-- **Kilit (`locked`):** elle yapılmış katı bake'ten koruyan JSON alanı.
+- **Kilit (`locked`):** elle yapılmış katı işaretleyen JSON alanı (bake var olan dosyayı zaten ezmez).
 - **Baskı (pressure):** derinlik ve alarmdan türeyen, ışık/ses/farkındalığı birlikte ölçekleyen değer.
 - **FloorEntry:** kata girişteki can/mermi/bayrak anlık görüntüsü; ölünce buna dönülür.
 - **Sır (secret):** ölüden alınan kalıcı yükseltme.

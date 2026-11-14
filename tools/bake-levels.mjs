@@ -18,9 +18,9 @@ try {
 
   for (let floor = 0; floor < FLOOR_COUNT; floor += 1) {
     const path = `src/data/levels/floor-${floor}.json`;
-    const existing = await readFile(path, 'utf8').then((text) => JSON.parse(text)).catch(() => null);
-    if (existing && existing.locked === true) {
-      console.log(`floor-${floor}.json  locked, skipped`);
+    const exists = await readFile(path, 'utf8').then(() => true).catch(() => false);
+    if (exists) {
+      console.log(`floor-${floor}.json  exists, kept`);
       continue;
     }
 
@@ -37,6 +37,7 @@ try {
     const level = {
       floor,
       seed: dungeon.seed,
+      locked: true,
       rows: rows.map((row) => row.join('')),
       rooms: dungeon.rooms.map((room) => ({
         x: room.x,

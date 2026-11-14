@@ -229,6 +229,7 @@ function renderTopbar(root: HTMLElement, state: EditorState, fileInput: HTMLInpu
     el('strong', { text: `STATION ZERO / LEVEL DESIGNER   B${state.doc.floor + 1}` }),
     button('Undo', () => state.undo(), !state.canUndo),
     button('Redo', () => state.redo(), !state.canRedo),
+    button('Save to file', () => void state.saveToFile(), false, 'primary'),
     button('Download JSON', () => {
       const blob = new Blob([state.exportText()], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -237,12 +238,12 @@ function renderTopbar(root: HTMLElement, state: EditorState, fileInput: HTMLInpu
       link.download = `floor-${state.doc.floor}.json`;
       link.click();
       URL.revokeObjectURL(url);
-      state.status = `Downloaded floor-${state.doc.floor}.json. Put it in src/data/levels/.`;
+      state.status = `Downloaded floor-${state.doc.floor}.json.`;
       state.changed();
     }),
     button('Upload JSON', () => fileInput.click()),
     button('Play draft', () => state.playDraft()),
-    el('label', { className: 'inline' }, [lock, el('span', { text: 'Locked (bake skips)' })]),
+    el('label', { className: 'inline' }, [lock, el('span', { text: 'Locked' })]),
     el('label', { className: 'inline' }, [el('span', { text: 'Seed' }), seed]),
     button('Regenerate floor', () => {
       if (!window.confirm('Regenerate the map and every placement from this seed? Unsaved edits on this floor are replaced.')) return;

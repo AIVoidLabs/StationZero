@@ -3,12 +3,11 @@
 A browser tool for editing the floor files in `src/data/levels/floor-N.json`. Start the dev server and open
 `http://localhost:5173/editor.html`. It uses the game's own tiles and sprites, drawn isometrically.
 
-It does **not** write to disk. Edits are autosaved as a draft in the browser (`*draft` in the floor list). When you are
-happy, press **Download JSON**, copy `floor-N.json` into `src/data/levels/`, and run `npm run levels:check`.
+**Save to file** writes `src/data/levels/floor-N.json` directly (the dev server has a small endpoint for it, `tools/vite-level-save.mjs`; it only exists while `npm run dev` runs). Edits are also autosaved as a draft in the browser (`*draft` in the floor list) until you save. Saving is refused while the file would not load (see Validation). **Download JSON** is a backup if saving is not possible.
 
 ## Layout
 - **Left:** floor list (B1-B11) and tools. **Right:** inspector for the selection, and the validation list.
-- **Top:** Undo / Redo, Download / Upload JSON, Play draft, Locked, Seed + Regenerate floor, Re-plan entities, Reset floor.
+- **Top:** Undo / Redo, Save to file, Download / Upload JSON, Play draft, Locked, Seed + Regenerate floor, Re-plan entities, Reset floor.
 
 ## Tools
 | Tool | Key | What it does |
@@ -31,8 +30,7 @@ Click a problem to jump to its cell.
 ## Generator and locking
 - **Regenerate floor** builds a new map and all placements from a seed (what `levels:bake` does).
 - **Re-plan entities** recomputes enemies, loot, props and hazards for the current map.
-- Tick **Locked** to mark the floor hand-made. `npm run levels:bake` then skips it (`locked: true` in the JSON) and will
-  not overwrite your work. `levels:check` still validates it.
+- Every floor file is marked `"locked": true`. `npm run levels:bake` **never overwrites an existing file**; it only creates floors whose file is missing (new files are written locked). To regenerate a floor, use **Regenerate floor** in the editor, or delete the file and run the bake.
 
 ## Try it
 **Play draft** stores the current floor and opens `/?debug&depth=N&level=draft` (dev server only), so you can walk it
@@ -50,5 +48,4 @@ It also shows ammo supply versus ammo needed (start ammo + loot + enemy drops, a
 1. Open a floor, let the generator give you a start (**Regenerate floor** or the bundled map).
 2. Edit the map and placements by hand: add, move or remove enemies, loot and props. Watch the score and the all-floors curve.
 3. Aim for a smooth curve: each floor a little above the one before. The boss floors (B9 and B11) are naturally steep, so tune the floors around them.
-4. When happy, tick **Locked**, **Download JSON**, copy it into `src/data/levels/`, run `npm run levels:check`.
-Locked floors are never touched by `npm run levels:bake`. Enemy health and fire rate scale with the floor at run time, so hand-placed enemies follow the same ramp as generated ones.
+4. When happy, press **Save to file**, then run `npm run levels:check`. Enemy health and fire rate scale with the floor at run time, so hand-placed enemies follow the same ramp as generated ones.
