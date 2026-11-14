@@ -1,6 +1,6 @@
 {
   "name": "station-zero",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A 2D isometric retro-futuristic dungeon crawler focused on pure survival",
   "type": "module",
   "scripts": {
@@ -12,7 +12,9 @@
     "audio:build": "node tools/build-audio.mjs && node tools/build-music.mjs && node tools/build-voice.mjs",
     "art:v2": "node tools/gen-player-sprites.mjs && node tools/gen-world-v2.mjs && node tools/gen-menu-art.mjs && node tools/gen-cutscene-art.mjs",
     "levels:bake": "node tools/bake-levels.mjs",
-    "levels:check": "node tools/check-levels.mjs"
+    "levels:check": "node tools/check-levels.mjs",
+    "release:itch": "npm run build && node tools/package-itch.mjs",
+    "publish:itch": "npm run release:itch && node tools/publish-itch.mjs"
   },
   "dependencies": {
     "phaser": "^4.2.1"

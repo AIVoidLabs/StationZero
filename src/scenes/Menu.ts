@@ -83,6 +83,15 @@ export class Menu extends Scene {
       .setOrigin(0.5, 1)
       .setDepth(5);
 
+    this.add
+      .text(GAME_WIDTH - 8, GAME_HEIGHT - 6, `v${__APP_VERSION__}`, {
+        fontFamily: 'monospace',
+        fontSize: '10px',
+        color: MENU_COLORS.dim,
+      })
+      .setOrigin(1, 1)
+      .setDepth(5);
+
     sfx.attach(this);
     music.play(this, 'music_menu');
 
