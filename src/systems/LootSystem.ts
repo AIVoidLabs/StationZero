@@ -2,6 +2,7 @@ import type { GameObjects, Scene } from 'phaser';
 import {
   DEPTH_VFX,
   FLOOR_LOOT_BASE,
+  HEALTH_PER_HOSTILE,
   FLOOR_LOOT_MIN,
   LOOT_AMMO_AMOUNT,
   LOOT_DROP_CHANCE,
@@ -11,6 +12,7 @@ import {
   TILE_HEIGHT,
   TILE_WIDTH,
 } from '../data/config';
+import { hostileCountForFloor } from '../data/enemies';
 import { t } from '../i18n';
 import type { Player } from '../entities/Player';
 import { LootPickup, type LootKind } from '../entities/props/LootPickup';
@@ -262,6 +264,43 @@ export class LootSystem {
       const pick = pool.splice(Math.floor(rng() * pool.length), 1)[0];
       if (!pick) continue;
       this.spawn(pick.x, pick.y, index % 2 === 0 ? 'ammo' : 'stim');
+    }
+
+    this.placeHealthRooms(dungeon, rng, farFromSpawn, isExit);
+  }
+
+  private placeHealthRooms(
+    dungeon: Dungeon,
+    rng: () => number,
+    farFromSpawn: (x: number, y: number) => boolean,
+    isExit: (x: number, y: number) => boolean,
+  ): void {
+    const target = Math.max(1, Math.round(hostileCountForFloor(dungeon.floor) * HEALTH_PER_HOSTILE));
+    const rooms = [...dungeon.rooms];
+    for (let index = rooms.length - 1; index > 0; index -= 1) {
+      const swap = Math.floor(rng() * (index + 1));
+      const held = rooms[index];
+      const other = rooms[swap];
+      if (held === undefined || other === undefined) continue;
+      rooms[index] = other;
+      rooms[swap] = held;
+    }
+
+    let placed = 0;
+    for (const room of rooms) {
+      if (placed >= target) break;
+      const cells: Cell[] = [];
+      for (let y = room.y; y < room.y + room.height; y += 1) {
+        for (let x = room.x; x < room.x + room.width; x += 1) {
+          if (!this.level.isWalkable(x, y) || isExit(x, y) || !farFromSpawn(x, y)) continue;
+          if (this.items.some((item) => item.gridX === x && item.gridY === y)) continue;
+          cells.push({ x, y });
+        }
+      }
+      const pick = cells[Math.floor(rng() * cells.length)];
+      if (!pick) continue;
+      this.spawn(pick.x, pick.y, 'stim');
+      placed += 1;
     }
   }
 }

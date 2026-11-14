@@ -37,7 +37,7 @@ Browser (desktop), HTML5 / WebGL via Phaser 4, 960×540 logical resolution scale
 | Move speed | 190 px/s, 8 screen-relative directions, grid collision |
 | Pistol | 12 rounds max (start full), 1 damage, range 7 tiles, 0.32 s cooldown; bullet travels at 15 tiles/s (visible streak) |
 | Melee | 1 damage, range 1.8 tiles, 95° arc, 0.28 s cooldown |
-| Loot | Stim +2 HP; ammo box +4 rounds. Every drone drops +4 ammo (tank +8, Assembler +8); stims drop 30% (falling with depth) when HP is missing plus a guaranteed number per floor (3 on B1, fewer deeper) |
+| Loot | Stim +2 HP; ammo box +4 rounds. Every drone drops +4 ammo (tank +8, Assembler +8); stims drop 30% (falling with depth) when HP is missing, and 0.4 stims per hostile are left in separate rooms plus a guaranteed number per floor (3 on B1, fewer deeper) |
 
 Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previews the target tile), left-click or Space attacks, right-click fires the pistol, `E` interacts with terminals, `M` mutes, `Esc` pauses.
 
@@ -52,7 +52,7 @@ Input: WASD/arrows (rebindable), click-to-walk with A* pathfinding (hover previe
 
 ## 5. Enemies — rogue maintenance drones
 
-- 2 HP, hover with a bob, hostile since WARDEN rebuilt them. Three on B1, rising to five by B7 (see the floor table).
+- 2 HP, hover with a bob, hostile since WARDEN rebuilt them. Four on B1, rising to six by B7 (see the floor table).
 - **States:** idle/patrol → chase → search → return/disengage. Sight: 7.5 tiles in a 120° cone, plus 1.8 tiles of peripheral awareness; sight scales up with depth (+30% at B11).
 - **Rules:** need line of sight; chase leashes (max 7 s / 11 tiles), search for 2.6 s, then return home. No infinite pursuit.
 - **Attack:** a red flash wind-up (0.45 s), then a red bullet (4.5 tiles/s, slower than the player), 1 damage; fire cooldown ~2.4 s, shorter deeper. They also sidestep player shots (50% chance) and deal contact damage in melee.
@@ -81,17 +81,17 @@ WARDEN is not a character on screen; it is a **director**.
 
 | Floor | Name | Hostiles | Notes |
 | --- | --- | --- | --- |
-| B1 | INTAKE | 3 | Teaches movement, click-to-walk, terminals, loot; Hale's recording (WARDEN's old name) |
-| B2 | CELL BLOCK | 3 | Voss: patrol loop; first dark corners |
-| B3 | INFIRMARY | 3 | Lund: WARDEN reads pulse and voice |
-| B4 | DRILL 3 | 4 | Dray: drones are rebuilt miners; steam vents |
-| B5 | PUMP STATION | 4 | Sato: cooling lines |
-| B6 | FOUNDRY | 4 + tank | Brandt: rear seam; first robot tank |
-| B7 | ARCHIVE | 5 | Pell: FILE 0; laser grids |
-| B8 | POWER GRID | 5 + tank | Moreau: backup feed |
-| B9 | DRONE FOUNDRY | 4 + boss | Iyer: first instruction; mid boss, the Assembler |
-| B10 | COMMS ARRAY | 5 + tank | Kessler: how to end it |
-| B11 | WARDEN CORE | 4 + boss | WARDEN's terminal; final boss, the WARDEN core; killing it ends the run |
+| B1 | INTAKE | 4 | Teaches movement, click-to-walk, terminals, loot; Hale's recording (WARDEN's old name) |
+| B2 | CELL BLOCK | 4 | Voss: patrol loop; first dark corners |
+| B3 | INFIRMARY | 4 | Lund: WARDEN reads pulse and voice |
+| B4 | DRILL 3 | 5 | Dray: drones are rebuilt miners; steam vents |
+| B5 | PUMP STATION | 5 | Sato: cooling lines |
+| B6 | FOUNDRY | 5 + tank | Brandt: rear seam; first robot tank |
+| B7 | ARCHIVE | 6 | Pell: FILE 0; laser grids |
+| B8 | POWER GRID | 6 + tank | Moreau: backup feed |
+| B9 | DRONE FOUNDRY | 5 + boss | Iyer: first instruction; mid boss, the Assembler |
+| B10 | COMMS ARRAY | 6 + tank | Kessler: how to end it |
+| B11 | WARDEN CORE | 5 + boss | WARDEN's terminal; final boss, the WARDEN core; killing it ends the run |
 
 - **Secrets:** each recording on B1-B10 ends with a "take" choice that grants a permanent upgrade for the rest of the run (kept in saves). The hatch is unaffected: it still opens when every hostile is dead. A `SECRETS n/10` counter sits under the vitals panel.
 

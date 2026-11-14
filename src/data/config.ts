@@ -134,6 +134,7 @@ export const LOOT_AMMO_AMOUNT = 4;
 export const FLOOR_LOOT_BASE = 3;
 export const FLOOR_LOOT_MIN = 1;
 export const LOOT_HEAL_AMOUNT = 2;
+export const HEALTH_PER_HOSTILE = 0.4;
 
 export const DEPTH_MAX_BAND = FLOOR_COUNT - 1;
 export const DEPTH_LIGHT_MIN_SCALE = 0.65;
