@@ -18,6 +18,7 @@ export interface MapState {
   readonly drones: readonly MapDrone[];
   readonly exit: { readonly x: number; readonly y: number } | null;
   readonly exitOpen: boolean;
+  readonly hazards: readonly { readonly x: number; readonly y: number }[];
 }
 
 const CELL = 5;
@@ -187,6 +188,13 @@ export class MiniMap {
   private drawLow(state: MapState, now: number): void {
     const g = this.low;
     g.clear();
+    g.fillStyle(0xe8c060, 0.95);
+    for (const hazard of state.hazards) {
+      if (!state.exploration.isSeen(hazard.x, hazard.y)) continue;
+      const cx = this.cellX(hazard.x) + CELL / 2;
+      const cy = this.cellY(hazard.y) + CELL / 2;
+      g.fillTriangle(cx, cy - 3, cx + 3, cy + 2, cx - 3, cy + 2);
+    }
     const exit = state.exit;
     if (exit && state.exploration.isSeen(exit.x, exit.y)) {
       const pulse = 0.65 + Math.sin(now / 260) * 0.35;

@@ -28,8 +28,13 @@ export interface VentSpawn extends GridPoint {
   readonly phaseMs: number;
 }
 
+export interface ShockSpawn extends GridPoint {
+  readonly phaseMs: number;
+}
+
 export interface HazardSpawns {
   readonly vents: readonly VentSpawn[];
+  readonly shocks: readonly ShockSpawn[];
 }
 
 export interface LevelEntities {

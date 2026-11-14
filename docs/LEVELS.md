@@ -12,7 +12,8 @@ Each floor is one JSON file. The game only **reads** it: nothing about where thi
     "corpse":    { "x": 6, "y": 7 },                                           // or null (B11)
     "loot":      [{ "x": 3, "y": 8, "kind": "ammo|stim", "amount": 4 }],       // amount 0 for stims
     "enemies":   [{ "x": 12, "y": 9, "kind": "drone|tank|assembler|warden", "tier": "novice|journeyman|master", "seed": 1234567 }],
-    "hazards":   { "vents": [{ "x": 7, "y": 12, "phaseMs": 1400 }] }
+    "hazards":   { "vents":  [{ "x": 7, "y": 12, "phaseMs": 1400 }],
+                 "shocks": [{ "x": 9, "y": 14, "phaseMs": 900 }] }
   }
 }
 ```

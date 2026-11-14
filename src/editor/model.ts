@@ -1,6 +1,6 @@
 import { FLOOR_COUNT } from '../data/config';
 import type { EnemyKind } from '../data/enemies';
-import type { EnemySpawn, GridPoint, LootSpawn, PlacedProp, VentSpawn } from '../data/levelTypes';
+import type { EnemySpawn, GridPoint, LootSpawn, PlacedProp, ShockSpawn, VentSpawn } from '../data/levelTypes';
 import type { Dungeon, FloorStyle, Room } from '../systems/DungeonGen';
 
 type Mut<T> = { -readonly [K in keyof T]: T[K] };
@@ -20,6 +20,7 @@ export interface EditorEntities {
   loot: Mut<LootSpawn>[];
   enemies: Mut<EnemySpawn>[];
   vents: Mut<VentSpawn>[];
+  shocks: Mut<ShockSpawn>[];
 }
 
 export interface EditorDoc {
@@ -30,7 +31,7 @@ export interface EditorDoc {
   entities: EditorEntities;
 }
 
-export type EntityType = 'prop' | 'terminal' | 'corpse' | 'loot' | 'enemy' | 'vent';
+export type EntityType = 'prop' | 'terminal' | 'corpse' | 'loot' | 'enemy' | 'vent' | 'shock';
 
 export type Selection =
   | { readonly type: EntityType; readonly index: number }
@@ -65,6 +66,7 @@ export function docFromJson(raw: unknown, floor: number): EditorDoc {
       loot: list<Mut<LootSpawn>>(entities.loot),
       enemies: list<Mut<EnemySpawn>>(entities.enemies),
       vents: list<Mut<VentSpawn>>(hazards.vents),
+      shocks: list<Mut<ShockSpawn>>(hazards.shocks),
     },
   };
 }
@@ -83,7 +85,7 @@ export function docToJson(doc: EditorDoc): Record<string, unknown> {
       corpse: e.corpse,
       loot: e.loot,
       enemies: e.enemies,
-      hazards: { vents: e.vents },
+      hazards: { vents: e.vents, shocks: e.shocks },
     },
   };
 }
@@ -140,7 +142,7 @@ export function toLenientDungeon(doc: EditorDoc): Dungeon {
     seed: doc.seed,
     floor: Math.max(0, Math.min(FLOOR_COUNT - 1, doc.floor)),
     exit,
-    entities: { props: [], terminals: [], corpse: null, loot: [], enemies: [], hazards: { vents: [] } },
+    entities: { props: [], terminals: [], corpse: null, loot: [], enemies: [], hazards: { vents: [], shocks: [] } },
   };
 }
 
@@ -159,6 +161,8 @@ export function entityPoint(doc: EditorDoc, ref: Selection): Mut<GridPoint> | nu
       return e.enemies[ref.index] ?? null;
     case 'vent':
       return e.vents[ref.index] ?? null;
+    case 'shock':
+      return e.shocks[ref.index] ?? null;
     case 'room': {
       const room = doc.rooms[ref.index];
       return room ? { x: room.x + Math.floor(room.width / 2), y: room.y + Math.floor(room.height / 2) } : null;
@@ -166,7 +170,7 @@ export function entityPoint(doc: EditorDoc, ref: Selection): Mut<GridPoint> | nu
   }
 }
 
-const PICK_ORDER: readonly EntityType[] = ['enemy', 'loot', 'vent', 'terminal', 'prop', 'corpse'];
+const PICK_ORDER: readonly EntityType[] = ['enemy', 'loot', 'vent', 'shock', 'terminal', 'prop', 'corpse'];
 
 export function entitiesAt(doc: EditorDoc, x: number, y: number): Selection[] {
   const found: Selection[] = [];
@@ -176,6 +180,7 @@ export function entitiesAt(doc: EditorDoc, x: number, y: number): Selection[] {
       type === 'enemy' ? e.enemies
       : type === 'loot' ? e.loot
       : type === 'vent' ? e.vents
+      : type === 'shock' ? e.shocks
       : type === 'terminal' ? e.terminals
       : type === 'prop' ? e.props
       : [e.corpse];
@@ -214,6 +219,9 @@ export function removeSelection(doc: EditorDoc, ref: Selection): void {
       break;
     case 'vent':
       e.vents.splice(ref.index, 1);
+      break;
+    case 'shock':
+      e.shocks.splice(ref.index, 1);
       break;
     case 'room':
       doc.rooms.splice(ref.index, 1);

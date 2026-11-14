@@ -457,6 +457,10 @@ phaseAt(time, offset, cycle, idle, warn): at = (time + offset) % cycle;
 ```
 Durum değişince `steam` sesi çalar (mesafeye göre kısılır, `distanceGain`). `aktif` iken: her 110 ms'de bir buhar parçacığı (tween ile yükselen elips), oyuncu `STEAM_RADIUS = 0.85` içindeyse `STEAM_DAMAGE = 1` (oyuncunun dokunulmazlığı yinelenen vuruşu engeller), düşmanlar da zarar görür (deliğe göre düşman başına 900 ms bekleme; **bosslar etkilenmez**). `emitLights` uyarı/aktif anında turuncu ışık verir. Delikler zeminde koyu bir ızgara (elips) olarak çizilir.
 
+### 7.1b Elektrik plakası ve tuzak görünürlüğü
+`Hazards` bir **elektrik plakası** (`shocks`, B6'dan) da yönetir: iki elektrot arasında yay çizen zemin plakası. Döngü `SHOCK_CYCLE_MS = 4200`: sessiz 2400 (zayıf kıvılcım), uyarı 900 (titreyen halka, camgöbeği titreşim, artan vızıltı `shockHum`), aktif 900 (parlak yay, `shock` sesi). Aktifken `SHOCK_RADIUS = 1.0` içinde oyuncuya 1 hasar (geri tepmeyle), düşmanlara 1 hasar (900 ms bekleme; bosslar etkilenmez). Yay, her karede yeniden çizilen rastgele **kırık çizgidir** (`jaggedArc`, additive blend).
+**Görünürlük** (buhar ve elektrik ortak, "tuzak koridorda zor görünüyor" sorununun çözümü): (1) tuzak hücresine **sarı-siyah şeritli uyarı çerçevesi** (`hazard_frame`, tuvalle üretilir); (2) tuzaklar artık **her zaman** loş ışık yayar (buhar turuncu, elektrik camgöbeği), uyarı/aktifte güçlenir; (3) **uyarı feneri**: tuzağın 38 px üstünde, karanlık katmanının ve duvarların da üzerinde (`DEPTH_DARKNESS + 3`) yanıp sönen sarı ⚠; oyuncu `HAZARD_SENSE_TILES = 7` içindeyse görünür ve yaklaştıkça belirginleşir (izometrik duvarlar tuzağı örtse bile fark edilir); (4) yakınlıkta sessizken 1.1 sn'de bir tıkırtı (`hazardTick`); (5) minimap'te görülmüş tuzaklar sarı üçgen; (6) ilk yaklaşmada ipucu.
+
 ### 7.2 Patlayan varil
 [Barrels.ts](../src/systems/Barrels.ts). Varil bir prop'tur (bloklu hücre) ve `Decor` onu `BarrelCell` listesine koyar. `Projectiles` bir mermi bloklu hücreye çarpınca `blockedHit` ile `Barrels.hitCell(x, y, byPlayer)` çağrılır.
 ```ts

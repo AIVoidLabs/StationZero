@@ -308,6 +308,9 @@ export class EditorScene extends Scene {
     } else if (tool.startsWith('enemy:')) {
       e.enemies.push({ x: cell.x, y: cell.y, kind: tool.slice(6) as keyof typeof ENEMY_SPECS, tier: ENEMY_SPECS[tool.slice(6) as keyof typeof ENEMY_SPECS].boss ? 'master' : state.placeTier, seed: randomSeed });
       selection = { type: 'enemy', index: e.enemies.length - 1 };
+    } else if (tool === 'shock') {
+      e.shocks.push({ x: cell.x, y: cell.y, phaseMs: phase(4200) });
+      selection = { type: 'shock', index: e.shocks.length - 1 };
     } else if (tool === 'vent') {
       e.vents.push({ x: cell.x, y: cell.y, phaseMs: phase(5200) });
       selection = { type: 'vent', index: e.vents.length - 1 };
@@ -418,6 +421,16 @@ export class EditorScene extends Scene {
       const iso = gridVectorToWorld(enemy.x, enemy.y, TILE_WIDTH, TILE_HEIGHT);
       g.fillStyle(enemy.tier === 'master' ? 0xe8c060 : 0x9fd0ff, 1);
       for (let index = 0; index < stripes; index += 1) g.fillRect(iso.x - 9 + index * 7, iso.y - 46, 5, 4);
+    }
+
+    for (const shock of doc.entities.shocks) {
+      const iso = gridVectorToWorld(shock.x, shock.y, TILE_WIDTH, TILE_HEIGHT);
+      g.lineStyle(2, 0x7fe0ff, 0.95);
+      g.strokeEllipse(iso.x, iso.y, 28, 14);
+      g.lineStyle(2, 0xffffff, 0.9);
+      g.lineBetween(iso.x - 12, iso.y - 4, iso.x - 4, iso.y - 8);
+      g.lineBetween(iso.x - 4, iso.y - 8, iso.x + 4, iso.y);
+      g.lineBetween(iso.x + 4, iso.y, iso.x + 12, iso.y - 4);
     }
 
     for (const vent of doc.entities.vents) {

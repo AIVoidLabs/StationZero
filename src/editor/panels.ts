@@ -53,7 +53,10 @@ const TOOL_GROUPS: readonly { readonly title: string; readonly tools: readonly T
   },
   {
     title: 'Hazards',
-    tools: [{ id: 'vent', label: 'Steam vent' }],
+    tools: [
+      { id: 'vent', label: 'Steam vent' },
+      { id: 'shock', label: 'Electric plate' },
+    ],
   },
 ];
 
@@ -334,6 +337,12 @@ function renderInspector(root: HTMLElement, state: EditorState): void {
       root.append(numberField('Phase (ms)', vent.phaseMs, (value) => edit(() => (vent.phaseMs = value))));
       break;
     }
+    case 'shock': {
+      const shock = e.shocks[selection.index];
+      if (!shock) break;
+      root.append(numberField('Phase (ms)', shock.phaseMs, (value) => edit(() => (shock.phaseMs = value))));
+      break;
+    }
     case 'room': {
       const room = doc.rooms[selection.index];
       if (!room) break;
@@ -372,6 +381,7 @@ function describe(doc: EditorDoc, selection: Selection): string {
     : selection.type === 'corpse' ? e.corpse
     : selection.type === 'loot' ? e.loot[selection.index]
     : selection.type === 'enemy' ? e.enemies[selection.index]
+    : selection.type === 'shock' ? e.shocks[selection.index]
     : e.vents[selection.index];
   return `${selection.type} at ${point ? `${point.x},${point.y}` : '?'}`;
 }

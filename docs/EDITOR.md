@@ -18,7 +18,7 @@ A browser tool for editing the floor files in `src/data/levels/floor-N.json`. St
 | Room | 6 | Drag a rectangle to add a room (style 0-2). "Carve floor" digs it out. |
 | Erase | 7 | Removes the entity on a cell. |
 | Spawn, Exit hatch | | One each. The last floor has no exit. |
-| Enemies, items, props, terminal, the dead, steam vent | | Click a floor cell to place; adjust seed, phase or amount in the inspector. |
+| Enemies, items, props, terminal, the dead, steam vent, electric plate | | Click a floor cell to place; adjust seed, phase or amount in the inspector. |
 
 Pan: right or middle mouse drag, or Space + drag. Zoom: wheel. Undo / redo: Ctrl+Z / Ctrl+Shift+Z.
 

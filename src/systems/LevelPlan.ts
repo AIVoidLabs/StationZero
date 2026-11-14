@@ -5,7 +5,9 @@ import {
   HAZARD_LOOT_CLEARANCE,
   HAZARD_MIN_SEPARATION,
   HAZARD_SPAWN_CLEARANCE,
+  SHOCK_CYCLE_MS,
   STEAM_CYCLE_MS,
+  shockCount,
   steamCount,
 } from '../data/hazards';
 import type {
@@ -15,6 +17,7 @@ import type {
   LootSpawn,
   PlacedProp,
   PropKind,
+  ShockSpawn,
   VentSpawn,
 } from '../data/levelTypes';
 import { rollTier } from '../data/tiers';
@@ -213,13 +216,13 @@ class Planner {
     return false;
   }
 
-  private placeCorpse(enemies: readonly EnemySpawn[], hazards: { vents: VentSpawn[] }): Cell | null {
+  private placeCorpse(enemies: readonly EnemySpawn[], hazards: { vents: VentSpawn[]; shocks: ShockSpawn[] }): Cell | null {
     if (this.dungeon.floor >= CORPSE_FLOORS) return null;
     const terminal = this.terminals[0];
     if (!terminal) return null;
 
     const taken = new Set<string>();
-    for (const cell of [...this.props, ...this.terminals, ...this.loot, ...enemies, ...hazards.vents]) {
+    for (const cell of [...this.props, ...this.terminals, ...this.loot, ...enemies, ...hazards.vents, ...hazards.shocks]) {
       taken.add(`${cell.x},${cell.y}`);
     }
     taken.add(`${Math.round(this.level.spawnX)},${Math.round(this.level.spawnY)}`);
@@ -493,7 +496,7 @@ class Planner {
     return pool[Math.floor(rng() * pool.length)] ?? null;
   }
 
-  private placeHazards(): { vents: VentSpawn[] } {
+  private placeHazards(): { vents: VentSpawn[]; shocks: ShockSpawn[] } {
     const dungeon = this.dungeon;
     const rng = createRng(dungeon.seed ^ HAZARD_SEED);
     const { corridor, open } = this.collectCandidates();
@@ -510,7 +513,16 @@ class Planner {
     if (steam.length < steamTotal) steam.push(...this.take(corridor, steamTotal - steam.length, placed));
 
     const vents = steam.map((cell): VentSpawn => ({ x: cell.x, y: cell.y, phaseMs: Math.floor(rng() * STEAM_CYCLE_MS) }));
-    return { vents };
+
+    const shockTotal = shockCount(dungeon.floor);
+    const shockCorridor = Math.ceil(shockTotal * STEAM_CORRIDOR_SHARE);
+    const electric: Cell[] = [
+      ...this.take(corridor, shockCorridor, placed),
+      ...this.take(open, shockTotal - shockCorridor, placed),
+    ];
+    if (electric.length < shockTotal) electric.push(...this.take(corridor, shockTotal - electric.length, placed));
+    const shocks = electric.map((cell): ShockSpawn => ({ x: cell.x, y: cell.y, phaseMs: Math.floor(rng() * SHOCK_CYCLE_MS) }));
+    return { vents, shocks };
   }
 
   private collectCandidates(): { corridor: Cell[]; open: Cell[] } {

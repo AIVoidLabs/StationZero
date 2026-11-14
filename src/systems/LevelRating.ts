@@ -1,7 +1,7 @@
 import { PISTOL_AMMO_START, PISTOL_DAMAGE } from '../data/config';
 import { fireCooldownScale, scaledAmmoDrop, scaledEnemyHp } from '../data/difficulty';
 import { ENEMY_SPECS, bossForFloor, droneCountForFloor, tankCountForFloor, type EnemyKind } from '../data/enemies';
-import { steamCount } from '../data/hazards';
+import { shockCount, steamCount } from '../data/hazards';
 import { TIER_SPECS, tierMixForFloor, type EnemyTier } from '../data/tiers';
 
 const ARMOR_WEIGHT = 0.6;
@@ -15,6 +15,7 @@ export interface RatingInput {
   readonly floor: number;
   readonly enemies: readonly { readonly kind: EnemyKind; readonly tier?: EnemyTier }[];
   readonly ventCount: number;
+  readonly shockCount?: number;
   readonly lootAmmo: number;
   readonly lootStims: number;
 }
@@ -54,7 +55,7 @@ export function rateLevel(input: RatingInput): LevelRating {
     ammoNeeded += (hp + spec.armorHp) / PISTOL_DAMAGE;
     ammoDrops += scaledAmmoDrop(spec.ammoDrop, input.floor);
   }
-  const hazardThreat = input.ventCount * VENT_THREAT;
+  const hazardThreat = (input.ventCount + (input.shockCount ?? 0)) * VENT_THREAT;
   return {
     total: enemies + hazardThreat,
     enemyThreat: enemies,
@@ -80,5 +81,5 @@ export function formulaTarget(floor: number): LevelRating {
     const tier: EnemyTier = index < masters ? 'master' : index < masters + journeymen ? 'journeyman' : 'novice';
     enemies.push({ kind, tier });
   });
-  return rateLevel({ floor, enemies, ventCount: steamCount(floor), lootAmmo: 0, lootStims: 0 });
+  return rateLevel({ floor, enemies, ventCount: steamCount(floor), shockCount: shockCount(floor), lootAmmo: 0, lootStims: 0 });
 }

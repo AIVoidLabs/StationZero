@@ -12,6 +12,7 @@ import type {
   LootSpawn,
   PlacedProp,
   PropKind,
+  ShockSpawn,
   VentSpawn,
 } from '../data/levelTypes';
 import { isEnemyTier } from '../data/tiers';
@@ -246,7 +247,14 @@ function parseEntities(value: unknown, floor: number, rows: readonly string[]): 
     const { x, y, record } = readPoint(raw, floor, `entities.hazards.vents[${index}]`, rows);
     return { x, y, phaseMs: readInteger(record, 'phaseMs', floor) };
   });
-  return { props, terminals, corpse, loot, enemies, hazards: { vents } };
+  const shocks: ShockSpawn[] =
+    hazardRaw.shocks === undefined
+      ? []
+      : readList(hazardRaw, 'shocks', floor, 'entities.hazards').map((raw, index) => {
+          const { x, y, record } = readPoint(raw, floor, `entities.hazards.shocks[${index}]`, rows);
+          return { x, y, phaseMs: readInteger(record, 'phaseMs', floor) };
+        });
+  return { props, terminals, corpse, loot, enemies, hazards: { vents, shocks } };
 }
 
 export function parseLevelJson(input: unknown, expectedFloor: number): Dungeon {

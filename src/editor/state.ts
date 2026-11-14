@@ -36,7 +36,8 @@ export type ToolId =
   | 'enemy:tank'
   | 'enemy:assembler'
   | 'enemy:warden'
-  | 'vent';
+  | 'vent'
+  | 'shock';
 
 const HISTORY_LIMIT = 200;
 const EDITOR_KEY_PREFIX = 'station-zero:editor-';
@@ -309,6 +310,7 @@ export class EditorState {
       floor: Math.max(0, Math.min(FLOOR_COUNT - 1, doc.floor)),
       enemies: e.enemies,
       ventCount: e.vents.length,
+      shockCount: e.shocks.length,
       lootAmmo: e.loot.filter((item) => item.kind === 'ammo').reduce((sum, item) => sum + (item.amount || 4), 0),
       lootStims: e.loot.filter((item) => item.kind === 'stim').length,
     });

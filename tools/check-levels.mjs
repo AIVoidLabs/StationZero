@@ -22,6 +22,7 @@ try {
       floor: summary.floor,
       enemies: e.enemies,
       ventCount: e.hazards.vents.length,
+      shockCount: e.hazards.shocks.length,
       lootAmmo: e.loot.filter((item) => item.kind === 'ammo').reduce((sum, item) => sum + (item.amount || 4), 0),
       lootStims: e.loot.filter((item) => item.kind === 'stim').length,
     });
@@ -29,7 +30,7 @@ try {
     const score = Math.round(rating.total);
     const exit = summary.exit ? `${summary.exit.x},${summary.exit.y}` : 'sealed';
     console.log(
-      `floor-${summary.floor}.json  ${summary.width}x${summary.height}  rooms=${summary.rooms}  spawn=${summary.spawnX},${summary.spawnY}  exit=${exit}  enemies=${e.enemies.length} loot=${e.loot.length} props=${e.props.length} vents=${e.hazards.vents.length}  score=${score} (formula ${Math.round(target.total)})`,
+      `floor-${summary.floor}.json  ${summary.width}x${summary.height}  rooms=${summary.rooms}  spawn=${summary.spawnX},${summary.spawnY}  exit=${exit}  enemies=${e.enemies.length} loot=${e.loot.length} props=${e.props.length} vents=${e.hazards.vents.length} shocks=${e.hazards.shocks.length}  score=${score} (formula ${Math.round(target.total)})`,
     );
     for (const problem of problems) {
       const at = problem.at ? ` (${problem.at.x},${problem.at.y})` : '';

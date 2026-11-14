@@ -519,6 +519,9 @@ export class Game extends Scene {
     for (const cell of this.hazards?.ventCells ?? []) {
       if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 4) hints.trigger('steam', t('hint.steam'));
     }
+    for (const cell of this.hazards?.shockCells ?? []) {
+      if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 4) hints.trigger('shock', t('hint.shock'));
+    }
 
     for (const item of this.loot?.pickups ?? []) {
       if (!item.isCollected && Math.hypot(item.gridX - grid.x, item.gridY - grid.y) < 3) {
@@ -864,6 +867,7 @@ export class Game extends Scene {
         })),
       exit: gate ? gate.cell : null,
       exitOpen: gate?.isOpen === true,
+      hazards: [...(this.hazards?.ventCells ?? []), ...(this.hazards?.shockCells ?? [])],
     };
   }
 
