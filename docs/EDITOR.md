@@ -37,3 +37,18 @@ Click a problem to jump to its cell.
 ## Try it
 **Play draft** stores the current floor and opens `/?debug&depth=N&level=draft` (dev server only), so you can walk it
 without copying files.
+
+## Difficulty score
+The right panel shows a live **score** for the open floor, the **formula target** (what `difficulty.ts` would place on that floor) and the difference in percent, plus a bar list of **all floors** so you can see the curve. Click a floor to open it. The same score is printed by `npm run levels:check`.
+
+The score is an estimate of how much a floor can hurt and how long it takes to clear:
+- each enemy: durability (HP scaled by the floor, plus 0.6 per armour point) x firepower (shots per second, scaled by the floor). Immobile enemies count 0.8. Bosses also count their summoned drones;
+- each steam vent: +1.5.
+It also shows ammo supply versus ammo needed (start ammo + loot + enemy drops, against the shots to kill everything). Below 1.0x the floor is starved of ammo and is flagged red. A floor scoring lower than the one above is flagged too.
+
+## Hand-made workflow
+1. Open a floor, let the generator give you a start (**Regenerate floor** or the bundled map).
+2. Edit the map and placements by hand: add, move or remove enemies, loot and props. Watch the score and the all-floors curve.
+3. Aim for a smooth curve: each floor a little above the one before. The boss floors (B9 and B11) are naturally steep, so tune the floors around them.
+4. When happy, tick **Locked**, **Download JSON**, copy it into `src/data/levels/`, run `npm run levels:check`.
+Locked floors are never touched by `npm run levels:bake`. Enemy health and fire rate scale with the floor at run time, so hand-placed enemies follow the same ramp as generated ones.

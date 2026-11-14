@@ -111,7 +111,8 @@ export function mountPanels(state: EditorState): void {
   const topbar = document.getElementById('topbar');
   const inspector = document.getElementById('inspector');
   const problems = document.getElementById('problems');
-  if (!floors || !tools || !topbar || !inspector || !problems) throw new Error('editor.html is missing a panel');
+  const difficulty = document.getElementById('difficulty');
+  if (!floors || !tools || !topbar || !inspector || !problems || !difficulty) throw new Error('editor.html is missing a panel');
 
   const fileInput = el('input');
   fileInput.type = 'file';
@@ -142,6 +143,7 @@ export function mountPanels(state: EditorState): void {
     renderTopbar(topbar, state, fileInput);
     renderInspector(inspector, state);
     renderProblems(problems, state);
+    renderDifficulty(difficulty, state);
   };
 
   state.onChange(render);
@@ -382,6 +384,56 @@ function renderProblems(root: HTMLElement, state: EditorState): void {
     const row = el('button', { className: 'problem', text: at ? `${problem.message} (${at.x},${at.y})` : problem.message });
     row.type = 'button';
     if (at) row.addEventListener('click', () => state.focusOn(at.x, at.y));
+    root.append(row);
+  }
+}
+
+function percent(value: number, reference: number): string {
+  if (reference <= 0) return '';
+  const delta = Math.round(((value - reference) / reference) * 100);
+  return `${delta >= 0 ? '+' : ''}${delta}%`;
+}
+
+function renderDifficulty(root: HTMLElement, state: EditorState): void {
+  root.replaceChildren(el('h2', { text: 'Difficulty' }));
+  const entry = state.floorRatings[state.doc.floor];
+  if (!entry) return;
+  const { rating, target } = entry;
+  const score = Math.round(rating.total);
+  const previous = state.floorRatings[state.doc.floor - 1];
+
+  root.append(
+    el('p', { className: 'score', text: `Score ${score}   (formula ${Math.round(target.total)}, ${percent(rating.total, target.total)})` }),
+    el('p', {
+      className: 'hint',
+      text: `Enemies ${Math.round(rating.enemyThreat)} + hazards ${Math.round(rating.hazardThreat)}. ${rating.counts.drone} drone, ${rating.counts.tank} tank, ${rating.counts.assembler + rating.counts.warden} boss.`,
+    }),
+  );
+  if (previous) {
+    const worse = rating.total < previous.rating.total;
+    root.append(
+      el('p', {
+        className: worse ? 'problem' : 'ok',
+        text: `vs B${state.doc.floor}: ${percent(rating.total, previous.rating.total)}${worse ? '  (easier than the floor above!)' : ''}`,
+      }),
+    );
+  }
+  const need = Math.max(1, rating.ammoNeeded);
+  const ratio = rating.ammoSupply / need;
+  root.append(
+    el('p', {
+      className: ratio < 1 ? 'problem' : 'hint',
+      text: `Ammo: ${Math.round(rating.ammoSupply)} available / ${Math.round(rating.ammoNeeded)} needed (${ratio.toFixed(1)}x). Stims: ${rating.stims}.`,
+    }),
+  );
+
+  root.append(el('h2', { text: 'All floors' }));
+  const max = Math.max(...state.floorRatings.map((item) => item.rating.total), 1);
+  for (const item of state.floorRatings) {
+    const row = el('button', { className: item.floor === state.doc.floor ? 'active' : '', text: `B${item.floor + 1}  ${Math.round(item.rating.total)}  ${percent(item.rating.total, item.target.total)}` });
+    row.type = 'button';
+    row.style.background = `linear-gradient(90deg, #4a3414 ${Math.round((item.rating.total / max) * 100)}%, transparent 0)`;
+    row.addEventListener('click', () => state.openFloor(item.floor));
     root.append(row);
   }
 }

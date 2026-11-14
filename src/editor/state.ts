@@ -3,6 +3,7 @@ import { DRAFT_KEY_PREFIX } from '../utils/devflags';
 import { generateDungeon } from '../systems/DungeonGen';
 import { checkLevel, type LevelProblem } from '../systems/LevelCheck';
 import { planLevel } from '../systems/LevelPlan';
+import { formulaTarget, rateLevel, type LevelRating } from '../systems/LevelRating';
 import { parseLevelJson } from '../systems/LevelLoader';
 import {
   cloneDoc,
@@ -48,6 +49,12 @@ const BUNDLED: readonly unknown[] = Object.entries(
   .sort((a, b) => a[0] - b[0])
   .map(([, data]) => data);
 
+export interface FloorRating {
+  readonly floor: number;
+  readonly rating: LevelRating;
+  readonly target: LevelRating;
+}
+
 export interface FloorBadge {
   readonly floor: number;
   readonly draft: boolean;
@@ -62,6 +69,7 @@ export class EditorState {
   carveRooms = true;
   problems: LevelProblem[] = [];
   parseError: string | null = null;
+  floorRatings: FloorRating[] = [];
   status = '';
   marker: { x: number; y: number } | null = null;
 
@@ -276,7 +284,22 @@ export class EditorState {
     }, VALIDATE_DELAY_MS);
   }
 
+  private ratingOf(doc: EditorDoc): LevelRating {
+    const e = doc.entities;
+    return rateLevel({
+      floor: Math.max(0, Math.min(FLOOR_COUNT - 1, doc.floor)),
+      enemies: e.enemies,
+      ventCount: e.vents.length,
+      lootAmmo: e.loot.filter((item) => item.kind === 'ammo').reduce((sum, item) => sum + (item.amount || 4), 0),
+      lootStims: e.loot.filter((item) => item.kind === 'stim').length,
+    });
+  }
+
   private validate(): void {
+    this.floorRatings = Array.from({ length: FLOOR_COUNT }, (_, floor) => {
+      const doc = floor === this.doc.floor ? this.doc : this.loadFloor(floor);
+      return { floor, rating: this.ratingOf(doc), target: formulaTarget(floor) };
+    });
     try {
       const dungeon = parseLevelJson(docToJson(this.doc), this.doc.floor);
       this.parseError = null;

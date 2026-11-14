@@ -721,6 +721,9 @@ model         (EditorDoc, JSON dönüşümü, hücre/nesne işlemleri)          
 ### 14.4 Doğrulama
 `state.validate()` belgeyi `docToJson` ile serileştirip **oyunun gerçek yükleyicisinden** geçirir (`parseLevelJson`, bkz. 4.4): şema hatası olursa tek bir `parseError` metni (ör. "134 floor cells are unreachable from the spawn"); geçerliyse `checkLevel(dungeon)` kural sorunları listelenir. Sorun satırına tıklamak `state.focusOn(x, y)` ile kamerayı oraya götürür ve kırmızı bir işaret koyar. Doğrulama 150 ms **debounce** edilir. Böylece **editörde "geçerli" olan belge, oyunda da geçerlidir** (aynı kod).
 
+### 14.4b Zorluk puanı
+Editör ve `levels:check` aynı tahmini kullanır: [LevelRating.ts](../src/systems/LevelRating.ts). `enemyThreat(kind, floor) = (dayanıklılık) × (0.5 + ateş gücü) × hareketlilik`; dayanıklılık = (boss dışı: `scaledEnemyHp(maxHp, floor)`, boss: `maxHp`) + `armorHp × 0.6`; ateş gücü = `fan × 2400 / (fireCooldownMs × fireCooldownScale(floor, 0))`; hareketsiz düşman ×0.8. Boss ayrıca `summonCap` kadar drone tehdidi ekler. Her buhar deliği +1.5. `rateLevel` ayrıca **mermi yeterliliğini** hesaplar: arz = başlangıç mermisi + loot mermileri + düşman düşürmeleri, ihtiyaç = Σ(can + zırh) / tabanca hasarı. `formulaTarget(floor)` zorluk formülünün yerleştireceği düşmanlarla aynı puanı hesaplar, böylece elle düzenlenen kat, formülden sapmasıyla (%) karşılaştırılır. `EditorState.validate` 11 katın puanını (taslaklar dahil) hesaplayıp paneldeki "All floors" listesini besler.
+
 ### 14.5 Üretici, kilit, oyna
 - *Regenerate floor:* `generateDungeon(seed, floor)` + `planLevel` ile yeni harita ve yerleşimler (`levels:bake` mantığının tarayıcıdaki hali; çıkışa `X` yazma dahil).
 - *Re-plan entities:* mevcut haritayı katı biçimde ayrıştırıp (`parseLevelJson`) `planLevel` ile yalnızca varlıkları yeniden üretir. Aynı haritada **birebir aynı sonucu** vermesi, planlayıcının saf ve belirlenimsel olduğunu doğrular.
@@ -736,7 +739,7 @@ Otomatik birim test yoktur; kalite **derleyici + kural denetçisi + oynayan botl
 
 ### 15.1 Statik denetim
 - `npm run typecheck`: TypeScript strict. Ek sıkı bayraklar: `noUncheckedIndexedAccess` (her dizi erişimi `undefined` olabilir), `exactOptionalPropertyTypes`, `noUnusedLocals/Parameters`, `noImplicitReturns`. Pratikte kullanılmayan her içe aktarma/üye derlemeyi kırar; bu **ölü kodu hızla temizletir**.
-- `npm run levels:check`: tüm katları yükler (`LevelLoader` şema doğrulaması) ve `checkLevel` kurallarını çalıştırır; çıkış kodu 1 ise sorun vardır.
+- `npm run levels:check`: tüm katları yükler (`LevelLoader` şema doğrulaması) ve `checkLevel` kurallarını çalıştırır; çıkış kodu 1 ise sorun vardır. Ayrıca her katın **zorluk puanını** ve formül hedefini yazar, bir kat üstündekinden kolaysa not düşer.
 
 ### 15.2 Oynanış botları
 Hepsi **tarayıcıda** çalışır, oyunu elle adım adım ilerletir (`game.scene.update(t, dt)`) ve sonuçları toplar.
