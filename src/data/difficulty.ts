@@ -1,11 +1,11 @@
 import { FLOOR_COUNT } from './config';
 
 export const DRONES_BASE = 6;
-export const DRONES_PER_FLOOR = 0.7;
-export const BOSS_FLOOR_DRONE_SHARE = 0.6;
-export const HP_GROWTH_PER_FLOOR = 0.1;
-export const FIRE_RATE_GAIN_PER_FLOOR = 0.05;
-export const FIRE_COOLDOWN_MIN_SCALE = 0.5;
+export const DRONES_PER_FLOOR = 0.45;
+export const BOSS_FLOOR_DRONE_SHARE = 0.7;
+export const HP_GROWTH_PER_FLOOR = 0.08;
+export const FIRE_RATE_GAIN_PER_FLOOR = 0.03;
+export const FIRE_COOLDOWN_MIN_SCALE = 0.7;
 export const ALERT_FIRE_GAIN = 0.05;
 
 function clampFloor(floor: number): number {
