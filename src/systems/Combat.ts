@@ -1,11 +1,8 @@
 import type { Scene } from 'phaser';
 import {
-  DRONE_COUNT,
-  DRONE_EXTRA_FROM_FLOOR,
-  DRONE_SECOND_EXTRA_FROM_FLOOR,
   DRONE_MIN_SPAWN_DISTANCE,
 } from '../data/config';
-import { ENEMY_SPECS, bossForFloor, tankCountForFloor, type EnemyKind } from '../data/enemies';
+import { ENEMY_SPECS, bossForFloor, droneCountForFloor, tankCountForFloor, type EnemyKind } from '../data/enemies';
 import { Drone } from '../entities/enemies/Drone';
 import type { Player } from '../entities/Player';
 import { createRng } from '../utils/random';
@@ -99,10 +96,7 @@ export class Combat {
 
     const distant = candidates.filter((candidate) => candidate.distance >= DRONE_MIN_SPAWN_DISTANCE);
     const pool = distant.length > 0 ? distant : candidates;
-    const droneCount =
-      DRONE_COUNT +
-      (dungeon.floor >= DRONE_EXTRA_FROM_FLOOR ? 1 : 0) +
-      (dungeon.floor >= DRONE_SECOND_EXTRA_FROM_FLOOR ? 1 : 0);
+    const droneCount = droneCountForFloor(dungeon.floor);
 
     const taken = new Set<string>();
     const boss = bossForFloor(dungeon.floor);

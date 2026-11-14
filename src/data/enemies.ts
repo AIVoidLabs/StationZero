@@ -186,8 +186,13 @@ export const ENEMY_SPECS: Readonly<Record<EnemyKind, EnemySpec>> = {
 
 export const TANK_FRONT_COS = 0.8;
 
+const DRONES_BY_FLOOR: readonly number[] = [2, 3, 3, 4, 4, 4, 5, 5, 4, 5, 4];
 const TANKS_BY_FLOOR: readonly number[] = [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0];
 const BOSS_BY_FLOOR: Readonly<Record<number, EnemyKind>> = { 8: 'assembler', 10: 'warden' };
+
+export function droneCountForFloor(floor: number): number {
+  return DRONES_BY_FLOOR[Math.max(0, Math.min(FLOOR_COUNT - 1, floor))] ?? 2;
+}
 
 export function tankCountForFloor(floor: number): number {
   return TANKS_BY_FLOOR[Math.max(0, Math.min(FLOOR_COUNT - 1, floor))] ?? 0;

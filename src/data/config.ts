@@ -56,9 +56,6 @@ export const LOG_REACH_TILES = 1.35;
 
 export const DRONE_WIDTH = 40;
 export const DRONE_HEIGHT = 40;
-export const DRONE_COUNT = 2;
-export const DRONE_EXTRA_FROM_FLOOR = 2;
-export const DRONE_SECOND_EXTRA_FROM_FLOOR = 6;
 export const DRONE_SPEED = 105;
 export const DRONE_CHASE_SPEED = 128;
 export const DRONE_RETURN_SPEED = 140;
