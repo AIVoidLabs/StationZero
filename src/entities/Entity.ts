@@ -23,18 +23,6 @@ export abstract class Entity extends GameObjects.Container {
     if (data?.isoY !== undefined) this.isoY = data.isoY;
   }
 
-  public setGridPosition(gridX: number, gridY: number): void {
-    this.gridX = gridX;
-    this.gridY = gridY;
-  }
-
-  public setIsoPosition(isoX: number, isoY: number): void {
-    this.isoX = isoX;
-    this.isoY = isoY;
-    this.x = isoX;
-    this.y = isoY;
-  }
-
   public destroy(fromScene?: boolean): void {
     super.destroy(fromScene);
   }

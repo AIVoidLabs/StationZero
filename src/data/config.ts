@@ -9,7 +9,6 @@ export const CAMERA_ZOOM = 2;
 export const CAMERA_LERP = 0.18;
 export const CAMERA_LOOK_AHEAD = 26;
 
-export const PLAYER_WIDTH = 32;
 export const PLAYER_HEIGHT = 48;
 export const PLAYER_SPEED = 190;
 export const PLAYER_FOOTPRINT = 0.3;
@@ -22,7 +21,6 @@ export const DUNGEON_SEED = 240731;
 
 export const FLOOR_COUNT = 11;
 export const FLOOR_SEED_STRIDE = 8191;
-export const DESCENT_DWELL_MS = 900;
 export const DESCENT_FADE_MS = 420;
 export const DESCENT_ARRIVAL_PULSE_MS = 1100;
 export const DESCENT_SIGNAL_RANGE = 14;
@@ -54,7 +52,6 @@ export const WARDEN_SILENCE_CHANCE = 0.25;
 export const WARDEN_SILENCE_DELAY_MS = 300;
 export const LOG_REACH_TILES = 1.35;
 
-export const DRONE_WIDTH = 40;
 export const DRONE_HEIGHT = 40;
 export const DRONE_SPEED = 105;
 export const DRONE_CHASE_SPEED = 128;
@@ -110,7 +107,6 @@ export const DRONE_FIRE_RANGE = 6;
 export const DRONE_FIRE_WINDUP_MS = 450;
 export const DRONE_FIRE_RECOVER_MS = 500;
 export const DRONE_FIRE_COOLDOWN_MS = 2400;
-export const DRONE_FIRE_COOLDOWN_MIN_SCALE = 0.6;
 
 export const DRONE_DODGE_COOLDOWN_MS = 1400;
 export const DRONE_DODGE_RETRY_MS = 350;
@@ -123,8 +119,6 @@ export const BULLET_HEIGHT_PX = 22;
 
 export const DRONE_MAX_HP = 2;
 export const DRONE_DAMAGE = 1;
-export const DRONE_CONTACT_COOLDOWN_MS = 800;
-export const DRONE_CONTACT_DAMAGE_RANGE = 1.25;
 
 export const LOOT_PICKUP_RANGE = 0.62;
 export const LOOT_DROP_CHANCE = 0.3;

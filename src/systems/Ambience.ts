@@ -15,7 +15,6 @@ import { createRng } from '../utils/random';
 const RNG_SEED = 0x3c0de;
 const MUTE_RAMP_SECONDS = 0.08;
 const PITCH_RAMP_SECONDS = 1.4;
-const ANALYSER_SIZE = 1024;
 
 function resolveContext(sound: unknown): AudioContext | null {
   if (typeof sound !== 'object' || sound === null) return null;
@@ -33,13 +32,10 @@ export class Ambience {
   private source: AudioBufferSourceNode | null = null;
   private ambienceGain: GainNode | null = null;
   private masterGain: GainNode | null = null;
-  private analyser: AnalyserNode | null = null;
-  private samples: Float32Array<ArrayBuffer> | null = null;
   private muted = false;
   private ducked = false;
   private voiceDucked = false;
   private unsubscribe: (() => void) | null = null;
-  private frames = 0;
   private band = 0;
 
   constructor(scene: Scene) {
@@ -51,24 +47,8 @@ export class Ambience {
     return this.source !== null;
   }
 
-  get depthBand(): number {
-    return this.band;
-  }
-
   get pitchRate(): number {
     return 1 - DEPTH_PITCH_PER_BAND * this.band;
-  }
-
-  get contextState(): AudioContextState | 'unavailable' {
-    return this.context ? this.context.state : 'unavailable';
-  }
-
-  get bufferFrames(): number {
-    return this.frames;
-  }
-
-  get isMuted(): boolean {
-    return this.muted;
   }
 
   start(): void {
@@ -98,7 +78,6 @@ export class Ambience {
     this.source = source;
     this.ambienceGain = ambience;
     this.masterGain = master;
-    this.frames = buffer.length;
   }
 
   setDepthBand(band: number): void {
@@ -182,29 +161,6 @@ export class Ambience {
     gain.linearRampToValueAtTime(this.targetMaster(), now + MUTE_RAMP_SECONDS);
   }
 
-  measure(): number {
-    const context = this.context;
-    const master = this.masterGain;
-    if (!context || !master) return 0;
-
-    if (!this.analyser) {
-      const analyser = context.createAnalyser();
-      analyser.fftSize = ANALYSER_SIZE;
-      master.connect(analyser);
-      this.analyser = analyser;
-      this.samples = new Float32Array(analyser.fftSize);
-    }
-
-    const analyser = this.analyser;
-    const samples = this.samples;
-    if (!analyser || !samples) return 0;
-
-    analyser.getFloatTimeDomainData(samples);
-    let sum = 0;
-    for (const sample of samples) sum += sample * sample;
-    return Math.sqrt(sum / samples.length);
-  }
-
   destroy(): void {
     this.unsubscribe?.();
     this.unsubscribe = null;
@@ -212,12 +168,8 @@ export class Ambience {
     this.source?.disconnect();
     this.ambienceGain?.disconnect();
     this.masterGain?.disconnect();
-    this.analyser?.disconnect();
     this.source = null;
     this.ambienceGain = null;
     this.masterGain = null;
-    this.analyser = null;
-    this.samples = null;
-    this.frames = 0;
   }
 }

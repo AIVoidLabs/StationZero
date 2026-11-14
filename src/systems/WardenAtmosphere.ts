@@ -64,10 +64,6 @@ export class WardenAtmosphere {
     return this.alarmValue;
   }
 
-  get pulsing(): boolean {
-    return this.pulseClock >= 0;
-  }
-
   setPressure(pressure: DepthPressure): void {
     const previousScale = this.pulseIntervalScale;
 

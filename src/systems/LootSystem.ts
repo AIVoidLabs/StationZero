@@ -1,4 +1,4 @@
-import type { GameObjects, Scene } from 'phaser';
+import type { Scene } from 'phaser';
 import {
   DEPTH_VFX,
   LOOT_AMMO_AMOUNT,
@@ -21,8 +21,6 @@ import { upgradeStats } from './Upgrades';
 
 const LOOT_SEED = 0x1097;
 const TEXT_COLORS: Record<LootKind, string> = { stim: '#8fe8ae', ammo: '#f0c070' };
-const HOVER_RADIUS_PX = 20;
-const HOVER_LABEL_OFFSET_Y = 34;
 
 interface Cell {
   readonly x: number;
@@ -36,8 +34,6 @@ export class LootSystem {
   private readonly rng: () => number;
   private readonly items: LootPickup[] = [];
   private readonly dropChance: number;
-  private hoverLabel: GameObjects.Text | null = null;
-  private hovered: LootPickup | null = null;
 
   constructor(scene: Scene, level: Level, dungeon: Dungeon, player: Player) {
     this.scene = scene;
@@ -66,70 +62,6 @@ export class LootSystem {
     if (cell) this.spawn(cell.x, cell.y, 'stim');
   }
 
-  hoverAt(worldX: number | null, worldY: number, player: Player): void {
-    let best: LootPickup | null = null;
-    if (worldX !== null) {
-      let bestDistance = HOVER_RADIUS_PX;
-      for (const item of this.items) {
-        if (item.isCollected) continue;
-        const distance = Math.hypot(item.x - worldX, item.y - 8 - worldY);
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          best = item;
-        }
-      }
-    }
-
-    if (best !== this.hovered) {
-      this.hovered?.setHighlight(false);
-      this.hovered = best;
-      best?.setHighlight(true);
-    }
-
-    if (!best) {
-      this.hoverLabel?.setVisible(false);
-      return;
-    }
-
-    const label = this.ensureLabel();
-    const state = player.getHealth();
-    const full = best.kind === 'stim' ? state.hp >= state.maxHp : state.ammo >= state.maxAmmo;
-    const effect =
-      best.kind === 'stim'
-        ? t('loot.stimEffect', { n: upgradeStats().stimHeal })
-        : t('loot.ammoEffect', { n: best.amount || LOOT_AMMO_AMOUNT });
-    const name = best.kind === 'stim' ? t('loot.stim') : t('loot.ammo');
-    label
-      .setText(`${name}\n${effect}${full ? `  ${t('loot.full')}` : ''}`)
-      .setColor(full ? '#9a8f7c' : TEXT_COLORS[best.kind])
-      .setPosition(best.x, best.y - HOVER_LABEL_OFFSET_Y)
-      .setVisible(true);
-  }
-
-  private ensureLabel(): GameObjects.Text {
-    if (!this.hoverLabel) {
-      this.hoverLabel = this.scene.add
-        .text(0, 0, '', {
-          fontFamily: 'monospace',
-          fontSize: '9px',
-          color: '#f0c070',
-          align: 'center',
-          resolution: 2,
-          stroke: '#050505',
-          strokeThickness: 3,
-        })
-        .setOrigin(0.5, 1)
-        .setDepth(DEPTH_VFX + 8)
-        .setVisible(false);
-    }
-    return this.hoverLabel;
-  }
-
-  spawnNear(gridX: number, gridY: number, kind: LootKind): void {
-    const cell = this.freeCellNear(Math.round(gridX), Math.round(gridY));
-    if (cell) this.spawn(cell.x, cell.y, kind);
-  }
-
   update(player: Player): void {
     if (player.isDeadState) return;
     const grid = player.gridPosition;
@@ -154,9 +86,6 @@ export class LootSystem {
   }
 
   destroy(): void {
-    this.hoverLabel?.destroy();
-    this.hoverLabel = null;
-    this.hovered = null;
     for (const item of this.items) item.destroy();
     this.items.length = 0;
   }

@@ -3,7 +3,6 @@ import { CUTSCENE_ART, cutsceneArtKey } from '../data/cutscenes';
 
 export type Direction = 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
 
-export const PLAYER_DIRECTIONS: readonly Direction[] = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 
 export const PLAYER_FRAME: Record<Direction, number> = {
   N: 0,

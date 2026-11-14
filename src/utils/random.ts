@@ -8,12 +8,3 @@ export function createRng(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-
-export function seedFromString(value: string): number {
-  let seed = 2166136261;
-  for (let i = 0; i < value.length; i += 1) {
-    seed ^= value.charCodeAt(i);
-    seed = Math.imul(seed, 16777619);
-  }
-  return seed >>> 0;
-}

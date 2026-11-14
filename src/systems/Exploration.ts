@@ -108,17 +108,6 @@ export class Exploration {
     }
   }
 
-  revealRadius(centerX: number, centerY: number, radius: number, now: number): void {
-    for (let dy = -radius; dy <= radius; dy += 1) {
-      for (let dx = -radius; dx <= radius; dx += 1) {
-        if (dx * dx + dy * dy > radius * radius) continue;
-        const x = centerX + dx;
-        const y = centerY + dy;
-        if (this.level.cellAt(x, y) === 'floor') this.mark(x, y, now);
-      }
-    }
-  }
-
   private revealRoom(room: Room, now: number): void {
     for (let y = room.y; y < room.y + room.height; y += 1) {
       for (let x = room.x; x < room.x + room.width; x += 1) {

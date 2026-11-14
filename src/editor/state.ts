@@ -6,7 +6,6 @@ import { planLevel } from '../systems/LevelPlan';
 import { formulaTarget, rateLevel, type LevelRating } from '../systems/LevelRating';
 import { parseLevelJson } from '../systems/LevelLoader';
 import {
-  cloneDoc,
   docFromJson,
   docText,
   docToJson,
@@ -331,8 +330,4 @@ export class EditorState {
   private emit(): void {
     for (const listener of this.listeners) listener();
   }
-}
-
-export function snapshotOf(doc: EditorDoc): EditorDoc {
-  return cloneDoc(doc);
 }

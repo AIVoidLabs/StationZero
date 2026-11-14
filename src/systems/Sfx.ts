@@ -45,10 +45,6 @@ class SfxEngine {
   private muted = false;
   private lastPlayed = new Map<SfxName, number>();
 
-  get ready(): boolean {
-    return this.context !== null && this.master !== null;
-  }
-
   attach(scene: Scene): void {
     if (this.context) return;
     const context = resolveContext(scene.sound);

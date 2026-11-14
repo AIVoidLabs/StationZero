@@ -81,7 +81,6 @@ export const en = {
   'end.deadTitle': 'SIGNAL LOST',
   'end.deadLine': 'The eleventh. WARDEN logs it.',
   'end.survivedTitle': 'PROTOCOL ENDED',
-  'end.survivedLine': 'The surface is safe. You are still down here.',
   'end.report': 'RUN REPORT',
   'end.floor': 'FLOOR REACHED',
   'end.hostiles': 'HOSTILES DESTROYED',
@@ -110,7 +109,6 @@ export const en = {
   'hud.noAmmo': 'NO AMMO',
   'hud.exit': 'EXIT',
   'hud.map': 'MAP  {p}% EXPLORED',
-  'hud.warden': '> WARDEN :: ',
   'hud.signalLost': 'SIGNAL LOST',
   'obj.warden': 'DESTROY WARDEN',
   'obj.hostiles': 'DESTROY ALL HOSTILES ({n})',
@@ -132,11 +130,6 @@ export const en = {
   'hint.noammo': 'OUT OF AMMO. ATTACK UP CLOSE, OR FIND AN AMMO BOX',
   'hint.lowhp': 'LOW HEALTH. FIND A GREEN STIM, OR AVOID THE FIGHT',
 
-  'loot.stim': 'HEALTH STIM',
-  'loot.ammo': 'AMMO BOX',
-  'loot.stimEffect': '+{n} HP',
-  'loot.ammoEffect': '+{n} ROUNDS',
-  'loot.full': '(FULL)',
   'loot.gainHp': '+{n} HP',
   'loot.gainAmmo': '+{n} AMMO',
 
@@ -155,7 +148,6 @@ export const en = {
 
 
 
-  'speaker.log': 'LOG',
   'exile.drone': 'They still patrol, as if nothing ended.',
   'exile.hurt': 'Keep moving. Do not stop.',
   'exile.low': 'Not like this. Not yet.',
@@ -224,16 +216,6 @@ export const en = {
   'cs.descent.b9': 'Drone Foundry. It builds on.',
   'cs.descent.b10': 'Comms Array. Ten names on the wall.',
   'cs.descent.b11': 'WARDEN Core. It was waiting.',
-  'speaker.hale': 'M. HALE (RECORDING)',
-  'speaker.voss': 'CAPT. VOSS (RECORDING)',
-  'speaker.lund': 'DR. LUND (RECORDING)',
-  'speaker.dray': 'FOREMAN DRAY (RECORDING)',
-  'speaker.sato': 'ENG. SATO (RECORDING)',
-  'speaker.brandt': 'K. BRANDT (RECORDING)',
-  'speaker.pell': 'I. PELL (RECORDING)',
-  'speaker.moreau': 'L. MOREAU (RECORDING)',
-  'speaker.iyer': 'A. IYER (RECORDING)',
-  'speaker.kessler': 'N. KESSLER (RECORDING)',
   'hud.secrets': 'SECRETS',
   'tip.b1.1': '> TIP :: HOLD THE FIRE KEY. IT AIMS WHERE YOU FACE. AMMO IS LIMITED',
   'tip.b1.2': '> TIP :: KILL EVERY HOSTILE AND THE HATCH OPENS. WALK OVER ITEMS TO TAKE THEM',

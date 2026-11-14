@@ -83,7 +83,6 @@ export const tr: Record<StringKey, string> = {
   'end.deadTitle': 'SİNYAL KAYBI',
   'end.deadLine': 'On birinci. WARDEN kaydediyor.',
   'end.survivedTitle': 'PROTOKOL SONA ERDİ',
-  'end.survivedLine': 'Yüzey güvende. Sen hâlâ aşağıdasın.',
   'end.report': 'GÖREV RAPORU',
   'end.floor': 'ULAŞILAN KAT',
   'end.hostiles': 'İMHA EDİLEN DÜŞMAN',
@@ -112,7 +111,6 @@ export const tr: Record<StringKey, string> = {
   'hud.noAmmo': 'MERMİ YOK',
   'hud.exit': 'ÇIKIŞ',
   'hud.map': 'HARİTA  %{p} KEŞFEDİLDİ',
-  'hud.warden': '> WARDEN :: ',
   'hud.signalLost': 'SİNYAL KAYBI',
   'obj.warden': 'WARDEN’I YOK ET',
   'obj.hostiles': 'TÜM DÜŞMANLARI YOK ET ({n})',
@@ -134,11 +132,6 @@ export const tr: Record<StringKey, string> = {
   'hint.noammo': 'MERMİN BİTTİ. YAKINDAN SALDIR YA DA MERMİ KUTUSU BUL',
   'hint.lowhp': 'CAN AZ. YEŞİL ENJEKTÖR BUL YA DA ÇATIŞMADAN KAÇIN',
 
-  'loot.stim': 'SAĞLIK ENJEKTÖRÜ',
-  'loot.ammo': 'MERMİ KUTUSU',
-  'loot.stimEffect': '+{n} CAN',
-  'loot.ammoEffect': '+{n} MERMİ',
-  'loot.full': '(DOLU)',
   'loot.gainHp': '+{n} CAN',
   'loot.gainAmmo': '+{n} MERMİ',
 
@@ -157,7 +150,6 @@ export const tr: Record<StringKey, string> = {
 
 
 
-  'speaker.log': 'KAYIT',
   'exile.drone': 'Hâlâ devriye geziyorlar, sanki hiçbir şey bitmemiş gibi.',
   'exile.hurt': 'Hareket etmeye devam et. Durma.',
   'exile.low': 'Böyle olmaz. Henüz değil.',
@@ -226,16 +218,6 @@ export const tr: Record<StringKey, string> = {
   'cs.descent.b9': 'Dron Fabrikası. Üretmeye devam ediyor.',
   'cs.descent.b10': 'İletişim Dizisi. Duvarda on isim.',
   'cs.descent.b11': 'WARDEN Çekirdeği. Seni bekliyordu.',
-  'speaker.hale': 'M. HALE (KAYIT)',
-  'speaker.voss': 'KAPT. VOSS (KAYIT)',
-  'speaker.lund': 'DR. LUND (KAYIT)',
-  'speaker.dray': 'USTABAŞI DRAY (KAYIT)',
-  'speaker.sato': 'MÜH. SATO (KAYIT)',
-  'speaker.brandt': 'K. BRANDT (KAYIT)',
-  'speaker.pell': 'I. PELL (KAYIT)',
-  'speaker.moreau': 'L. MOREAU (KAYIT)',
-  'speaker.iyer': 'A. IYER (KAYIT)',
-  'speaker.kessler': 'N. KESSLER (KAYIT)',
   'hud.secrets': 'SIRLAR',
   'tip.b1.1': '> İPUCU :: ATEŞ TUŞUNU BASILI TUT. BAKTIĞIN YÖNE NİŞAN ALIR. MERMİ SINIRLI',
   'tip.b1.2': '> İPUCU :: TÜM DÜŞMANLARI ÖLDÜR, KAPAK AÇILIR. EŞYALARIN ÜZERİNDEN GEÇ, ALIRSIN',

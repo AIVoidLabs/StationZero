@@ -158,11 +158,6 @@ export class MenuController {
     this.rebuild();
   }
 
-  replaceAll(page: MenuPage): void {
-    this.pages.length = 0;
-    this.push(page);
-  }
-
   refresh(): void {
     const page = this.page;
     if (!page) return;

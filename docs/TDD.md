@@ -172,7 +172,7 @@ image.setDepth(iso.y)           // prop, loot, düşman, oyuncu
 DEPTH_FLOOR = -10000,  DEPTH_CURSOR = 700000,  DEPTH_LANTERN = 800000,
 DEPTH_DARKNESS = 900000,  DEPTH_VFX = DEPTH_DARKNESS + 200
 ```
-Yer işaretleri (ölü, decal, hale) `DEPTH_FLOOR + k` ile yere yakın tutulur; her zaman oyuncunun altındadır. Karanlık katmanı (`DEPTH_DARKNESS`) ışık çizimi dışında her şeyin üstündedir, UI efektleri (`DEPTH_VFX`) karanlığın da üstündedir. [DepthSort.ts](../src/systems/DepthSort.ts) yardımcılarını (`sortByIsoDepth`, `applyIsoDepth`) sunar; pratikte nesneler yaratılırken ve hareket ederken `setDepth(y)` çağrılır.
+Yer işaretleri (ölü, decal, hale) `DEPTH_FLOOR + k` ile yere yakın tutulur; her zaman oyuncunun altındadır. Karanlık katmanı (`DEPTH_DARKNESS`) ışık çizimi dışında her şeyin üstündedir, UI efektleri (`DEPTH_VFX`) karanlığın da üstündedir. Ayrı bir sıralama sistemi yoktur: nesneler yaratılırken ve hareket ederken `setDepth(y)` çağrılır.
 
 ### 3.3 Duvar çizimi ve şeffaflık
 [Level.render](../src/systems/Level.ts): her hücre için
@@ -780,9 +780,7 @@ Her sahne `shutdown`'da sistemlerini yok eder (bkz. 2.5): sprite'lar, tween'ler,
 ## 17. Bilinen sorunlar ve genişletme noktaları
 
 ### 17.1 Teknik borç ve kısıtlar
-- **Ölü kod:** fare yönelimli kalıntılar duruyor: `TileCursor.ts` (hiçbir yerden kullanılmıyor), `LootSystem.hoverAt`, `PlayerCombat.tryRightClickPistol`, `Player.canRightClickPistol/setAttackTarget`, sabit `DRONE_FIRE_COOLDOWN_MIN_SCALE`. `tsc` public üyeleri ölü sayamadığı için silinmedi. Yol bulma tabanlı hareket (`setDestination/followPath`) yalnızca botlar için kalıyor.
-- **Ses anahtarı filtresi:** `voicelist.isVoiceKey`, artık bulunmayan `term.bN.nK` anahtarlarını da arar (zararsız, `en.ts`'ten türediği için eşleşmez).
-- **Orphan dosyalar:** eski terminal kayıt sesleri `assets/audio/voice/`'ta duruyor, artık yüklenmiyor.
+- **Bilinçli korunanlar:** yol bulma tabanlı oyuncu hareketi (`Player.setDestination/followPath/hasPath/cancelPath`) yalnızca test botları için kalıyor. Ölü kod taraması (kullanılmayan dışa aktarımlar, üyeler, sabitler, metinler, yetim ses dosyaları) yapıldı ve temizlendi.
 - **Kısıtlar:** harita boyutu 35×35 sabit (`DUNGEON_WIDTH/HEIGHT`); editör haritayı yeniden boyutlandıramaz; tek silah; ses/şiir seslendirmesi yok; çoklu dil yalnızca EN/TR; fare ile oynanış yok.
 - **Geliştirme tuzağı:** Vite bazen bir dosya yeniden yazıldığında boş modül önbelleği sunabilir ("does not provide an export named ..."); `touch` ile ya da sunucuyu yeniden başlatarak çözülür. Gizli tarayıcı sekmesinde `requestAnimationFrame` durur: testlerde `game.step` döngüsü kullanılır.
 

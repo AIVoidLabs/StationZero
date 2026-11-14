@@ -56,20 +56,6 @@ export class PlayerCombat {
     return this.tryMelee(timeNow, preferred);
   }
 
-  tryRightClickPistol(timeNow: number, preferred?: Drone): boolean {
-    if (this.player.isDeadState) return false;
-    if (!this.player.canRightClickPistol(timeNow)) return false;
-    return this.tryPistol(timeNow, preferred);
-  }
-
-  canAttackTarget(target: Drone): boolean {
-    if (this.player.isDeadState) return false;
-    if (this.player.weapon === 'PISTOL') {
-      return this.pickPistolTarget(target) === target;
-    }
-    return this.pickMeleeTarget(target) === target;
-  }
-
   private tryPistol(timeNow: number, preferred?: Drone): boolean {
     if (!this.player.canAttack(timeNow)) return false;
     if (this.player.ammoCount <= 0) return this.tryMelee(timeNow, preferred);

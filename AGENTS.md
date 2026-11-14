@@ -61,7 +61,7 @@ src/
 ├── data/          # Static data (configs, spawn tables, weights)
 ├── entities/      # Entity classes and component logic
 ├── scenes/        # Phaser Scenes (Boot, Preload, Game, UI)
-├── systems/       # Global systems (DepthSort, WardenDirector, Spawner)
+├── systems/       # Global systems (Combat, Hazards, LevelPlan, WardenAtmosphere...)
 └── utils/         # Utilities (iso.ts, grid.ts, helpers)
 
 assets/            # Raw art/audio (keep minimal and low-res)
@@ -92,7 +92,7 @@ export function isoToCartesian(isoX: number, isoY: number, tileWidth: number, ti
 
 ### Isometric Guidelines
 
-- **Depth Sorting is MANDATORY.** Sort renderable entities by `isoY` (or `y` in isometric space) every frame/update. This prevents clipping and incorrect draw order. Use `systems/DepthSort.ts`.
+- **Depth Sorting is MANDATORY.** Every renderable entity gets `setDepth(isoY)` (its `y` in isometric space) when it is created and whenever it moves. This prevents clipping and incorrect draw order.
 - **Sprite Origin** - Keep consistent sprite origins. For isometric tiles/entities, be deliberate about origin to avoid misalignment.
 - **Tile Selection** - When converting mouse/world to grid, always use `isoToCartesian` and validate against grid bounds.
 - **Camera** - Keep a tight, slightly claustrophobic feel. Camera follow should be smooth but not floaty.

@@ -36,8 +36,6 @@ import { gridVectorToWorld, worldVectorToGrid } from '../utils/iso';
 import { Entity } from './Entity';
 
 export type WeaponType = 'PISTOL' | 'MELEE';
-export type PlayerCombatState = 'IDLE' | 'MOVING_TO_ATTACK' | 'ATTACKING';
-
 const SPIN_ORDER: readonly Direction[] = ['S', 'SW', 'W', 'NW', 'N', 'NE', 'E', 'SE'];
 
 interface SpinState {
@@ -107,7 +105,6 @@ export class Player extends Entity {
   private maxAmmo: number = PISTOL_MAX_AMMO;
   private speedMul = 1;
   private iframesMs = PLAYER_IFRAMES_MS;
-  private combatState: PlayerCombatState = 'IDLE';
 
   getHealth(): { hp: number; maxHp: number; ammo: number; maxAmmo: number; weaponType: WeaponType } {
     const w = this.getActiveWeapon();
@@ -122,29 +119,9 @@ export class Player extends Entity {
     return this.ammo;
   }
 
-  get combatMode(): PlayerCombatState {
-    return this.combatState;
-  }
-
   getActiveWeapon(): WeaponType {
     if (this.weaponType === 'PISTOL' && this.ammo <= 0) return 'MELEE';
     return this.weaponType;
-  }
-
-  setAttackTarget(target: { gridX: number; gridY: number } | null): void {
-    if (target) {
-      this.combatState = 'MOVING_TO_ATTACK';
-    } else {
-      this.combatState = 'IDLE';
-    }
-  }
-
-  beginAttacking(): void {
-    this.combatState = 'ATTACKING';
-  }
-
-  isStationary(): boolean {
-    return !this.moving && this.path.length === 0;
   }
 
   consumeAmmo(): boolean {
@@ -153,17 +130,6 @@ export class Player extends Entity {
     this.ammo -= 1;
     runStats.shots += 1;
     return true;
-  }
-
-  canRightClickPistol(timeNow: number): boolean {
-    return (
-      !this.dead &&
-      !this.locked &&
-      this.getActiveWeapon() === 'PISTOL' &&
-      this.ammo > 0 &&
-      !this.hasPath &&
-      timeNow >= this.attackCooldownUntil
-    );
   }
 
   get isDeadState(): boolean {
@@ -180,10 +146,6 @@ export class Player extends Entity {
 
   get locked(): boolean {
     return this.spin !== null || this.stunMs > 0;
-  }
-
-  get isSpinning(): boolean {
-    return this.spin !== null;
   }
 
   get spinProgress(): number {
@@ -275,7 +237,6 @@ export class Player extends Entity {
     this.maxAmmo = stats.maxAmmo;
     this.speedMul = stats.speedMul;
     this.iframesMs = stats.iframesMs;
-    this.combatState = 'IDLE';
 
     this.shadow = scene.add.image(0, 0, 'shadow').setOrigin(0.5, 0.5);
     this.sprite = scene.add.image(0, 0, PLAYER_IDLE_KEY, PLAYER_FRAME[this.facing]);
@@ -291,10 +252,6 @@ export class Player extends Entity {
       .setAlpha(0);
 
     this.setDepth(iso.y);
-  }
-
-  get isMoving(): boolean {
-    return this.moving;
   }
 
   get leadDirection(): { readonly x: number; readonly y: number } {
