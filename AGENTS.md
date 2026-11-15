@@ -151,6 +151,7 @@ export function isoToCartesian(isoX: number, isoY: number, tileWidth: number, ti
 - **Keep it Readable** - Write code that another agent can understand in one pass.
 - **Test in Mind** - Even without full tests, reason about edge cases (negative coords, out of bounds, null refs).
 - **Use the Harness** - Leverage the project agents/skills/commands defined in `.opencode/` to stay consistent.
+- **Keep the Changelog** - Every player-visible change gets one line in `CHANGELOG.md` under the current version, in the same change. Bump `package.json` and add a new section (plus a `docs/DEVLOG_<version>.md`) when a release is cut.
 
 ---
 

@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.1.1
+- New Exile: the main character is redrawn from a 3D model, with larger and smoother walk and aim frames.
 - WARDEN now talks to you between fights: twelve voiced lines, at most two per floor.
 - A larger exit beacon with a distance readout replaces the small exit arrow.
 - Loading bar on startup.

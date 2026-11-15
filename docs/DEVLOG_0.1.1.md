@@ -2,10 +2,11 @@
 
 > *"If I am the monster, ask who wrote me."*
 
-0.1.1 is a small update built from the first round of feedback. The floors are busier, the exit is easier to find, and WARDEN finally has something to say.
+0.1.1 is a small update built from the first round of feedback. The Exile has a new look, the floors are busier, the exit is easier to find, and WARDEN finally has something to say.
 
 ## What is new
 
+- **A new Exile.** The main character is redrawn. The sprite is larger, and walking and aiming read more clearly in the dark.
 - **WARDEN talks to you.** Between fights it speaks, in its own voice, about the people who sent you. Twelve lines, at most two per floor, never the same one twice in a run.
 - **A proper exit beacon.** The small arrow is gone. A larger marker with a distance readout points at the hatch and sits above it when it is on screen.
 - **Busier floors.** Every floor has more drones, spiders and tanks, and more ammo, stims, crates and barrels to deal with them.
