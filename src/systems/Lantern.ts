@@ -18,6 +18,8 @@ const POOL_ALPHA_MIN = 0.4;
 const POOL_ALPHA_MAX = 0.52;
 const CORE_ALPHA_MIN = 0.48;
 const CORE_ALPHA_MAX = 0.62;
+// The core sits just under the carrier's depth so it lights the floor without washing out the sprite.
+const CORE_DEPTH_BIAS = -0.5;
 
 function hexChannel(color: number, shift: number): number {
   return (color >> shift) & 0xff;
@@ -82,7 +84,7 @@ export class Lantern {
       .image(x, y + LANTERN_OFFSET_Y, CORE_KEY)
       .setBlendMode(BlendModes.ADD)
       .setScale(CORE_BASE_SCALE)
-      .setDepth(DEPTH_LANTERN)
+      .setDepth(y + CORE_DEPTH_BIAS)
       .setAlpha(CORE_ALPHA_MIN);
 
     this.restartFlicker();
@@ -101,6 +103,7 @@ export class Lantern {
   update(x: number, y: number): void {
     this.pool.setPosition(x, y + LANTERN_OFFSET_Y);
     this.core.setPosition(x, y + LANTERN_OFFSET_Y);
+    this.core.setDepth(y + CORE_DEPTH_BIAS);
   }
 
   get intensityScale(): number {

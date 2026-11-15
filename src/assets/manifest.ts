@@ -96,9 +96,9 @@ export interface AssetSpec {
 }
 
 export const ASSETS: readonly AssetSpec[] = [
-  { key: PLAYER_IDLE_KEY, path: 'art/v2/player.png', kind: 'spritesheet', frameWidth: 32, frameHeight: 48, enabled: true },
-  { key: PLAYER_WALK_KEY, path: 'art/v2/player_walk.png', kind: 'spritesheet', frameWidth: 32, frameHeight: 48, enabled: true },
-  { key: PLAYER_AIM_KEY, path: 'art/v2/player_aim.png', kind: 'spritesheet', frameWidth: 32, frameHeight: 48, enabled: true },
+  { key: PLAYER_IDLE_KEY, path: 'art/v2/player.png', kind: 'spritesheet', frameWidth: 64, frameHeight: 48, enabled: true },
+  { key: PLAYER_WALK_KEY, path: 'art/v2/player_walk.png', kind: 'spritesheet', frameWidth: 64, frameHeight: 48, enabled: true },
+  { key: PLAYER_AIM_KEY, path: 'art/v2/player_aim.png', kind: 'spritesheet', frameWidth: 64, frameHeight: 48, enabled: true },
   { key: DRONE_DEAD_V2_KEY, path: 'art/v2/drone_dead.png', kind: 'image', enabled: true },
   { key: WARDEN_DEAD_V2_KEY, path: 'art/v2/warden_dead.png', kind: 'image', enabled: true },
   { key: WARDEN_V2_SPRITE_KEY, path: 'art/v2/warden.png', kind: 'spritesheet', frameWidth: 64, frameHeight: 64, enabled: true },
