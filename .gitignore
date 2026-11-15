@@ -152,3 +152,6 @@ vite.config.ts.timestamp-*
 # Turbo Repo
 .turbo
 release/
+
+# Local Piper TTS install (venv + voice model)
+tools/.piper/

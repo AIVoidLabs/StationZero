@@ -41,7 +41,9 @@ import { saveGame } from '../systems/SaveGame';
 import { arrivalLine, clearLine } from '../data/story';
 import { floorInfo } from '../data/floors';
 import { hints } from '../systems/Hints';
+import type { ExitPointer } from '../systems/HudKit';
 import { voice } from '../systems/Voice';
+import { WardenTaunts } from '../systems/WardenTaunts';
 import { keyName } from '../systems/Settings';
 import { t, type StringKey } from '../i18n';
 import { runFlags, type FlagSnapshot } from '../systems/RunFlags';
@@ -73,7 +75,7 @@ export interface HudState {
   objective: string;
   objectiveCalm: boolean;
   cardToken: number;
-  exitPointer: { x: number; y: number; angle: number; visible: boolean } | null;
+  exitPointer: ExitPointer | null;
   hostiles: number;
   exit: 'NONE' | 'LOCKED' | 'OPEN';
   lastFloor: boolean;
@@ -84,6 +86,10 @@ export interface HudState {
 }
 
 const SECRET_ALERT = 1;
+const FEW_HOSTILES = 3;
+const EXIT_INSET_X = 48;
+const EXIT_INSET_TOP = 112;
+const EXIT_INSET_BOTTOM = 64;
 const DEATH_TO_END_MS = 2200;
 const CLEAR_TO_END_MS = 1500;
 
@@ -151,6 +157,8 @@ export class Game extends Scene {
   private appliedAlert = 0;
   private hintClock = 0;
   private hintHp = -1;
+  private taunts: WardenTaunts | undefined = undefined;
+  private retrying = false;
   private startSeen = 0;
   private unsubscribeVoice: (() => void) | undefined = undefined;
   private exploration: Exploration | undefined = undefined;
@@ -175,6 +183,7 @@ export class Game extends Scene {
   init(data?: GameSceneData): void {
     this.carry = data?.hp !== undefined && data.ammo !== undefined ? { hp: data.hp, ammo: data.ammo } : undefined;
     this.entry = data?.entry;
+    this.retrying = data?.entry !== undefined;
     this.spinning = false;
     this.ending = false;
     this.deathMs = 0;
@@ -274,6 +283,8 @@ export class Game extends Scene {
     voice.attach(this);
     voice.clear();
     hints.clear();
+    if (floor === FLOOR_COUNT - 1) this.taunts = undefined;
+    else if (!this.retrying || !this.taunts) this.taunts = new WardenTaunts();
     this.unsubscribeVoice = voice.onSpeaking((speaking) => ambience.setVoiceDuck(speaking));
     this.time.delayedCall(1500, () => voice.say(arrivalLine(floor), 'warden'));
     if (floor === 3) this.time.delayedCall(6200, () => this.exileOnce('drill', 'exile.drill'));
@@ -437,6 +448,7 @@ export class Game extends Scene {
     this.updateDoor(delta, player, combat);
     this.updateEnding(delta, player, combat);
     this.updateHints(delta, player, combat);
+    if (!player.isDeadState) this.taunts?.tick(delta);
     this.exploration?.update(Math.round(grid.x), Math.round(grid.y), this.time.now);
 
     combat.update(delta);
@@ -520,10 +532,21 @@ export class Game extends Scene {
     if (player.isPoisoned) hints.trigger('poison', t('hint.poison'));
 
     for (const cell of this.hazards?.ventCells ?? []) {
-      if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 4) hints.trigger('steam', t('hint.steam'));
+      if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 4) this.announceOnce('steam', t('hint.steam'));
     }
     for (const cell of this.hazards?.shockCells ?? []) {
-      if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 4) hints.trigger('shock', t('hint.shock'));
+      if (Math.hypot(cell.x - grid.x, cell.y - grid.y) < 4) this.announceOnce('shock', t('hint.shock'));
+    }
+    if (this.hazards?.takePlayerHit()) this.announceOnce(`trap_${this.floor}`, t('hint.trapHit'));
+
+    const alive = combat.roster.filter((drone) => !drone.isDead);
+    if (
+      this.gate?.state === 'LOCKED' &&
+      alive.length > 0 &&
+      alive.length <= FEW_HOSTILES &&
+      combat.roster.length > FEW_HOSTILES
+    ) {
+      this.announceOnce(`few_${this.floor}`, t('hint.fewLeft', { n: alive.length }));
     }
 
     for (const item of this.loot?.pickups ?? []) {
@@ -814,6 +837,12 @@ export class Game extends Scene {
     });
   }
 
+  private announceOnce(id: string, text: string): void {
+    if (runFlags.hasLore(`h_${id}`)) return;
+    runFlags.addLore(`h_${id}`);
+    hints.announce(id, text);
+  }
+
   private exileOnce(id: string, key: string): void {
     if (runFlags.hasLore(`x_${id}`)) return;
     runFlags.addLore(`x_${id}`);
@@ -929,26 +958,30 @@ export class Game extends Scene {
     };
   }
 
-  private computeExitPointer(): { x: number; y: number; angle: number; visible: boolean } | null {
+  private computeExitPointer(): ExitPointer | null {
     const gate = this.gate;
-    if (!gate) return null;
+    const player = this.player;
+    if (!gate || !player) return null;
+    const grid = player.gridPosition;
+    const distance = Math.hypot(gate.cell.x - grid.x, gate.cell.y - grid.y);
     const camera = this.cameras.main;
     const view = camera.worldView;
     const world = gridVectorToWorld(gate.cell.x, gate.cell.y, TILE_WIDTH, TILE_HEIGHT);
     const sx = (world.x - view.x) * camera.zoom;
     const sy = (world.y - view.y) * camera.zoom;
-    const margin = 36;
     const width = camera.width;
     const height = camera.height;
-    const onScreen = sx > margin && sx < width - margin && sy > margin && sy < height - margin;
-    if (onScreen) return { x: sx, y: sy, angle: 0, visible: false };
-
+    const halfX = width / 2 - EXIT_INSET_X;
+    const halfY = (height - EXIT_INSET_TOP - EXIT_INSET_BOTTOM) / 2;
     const cx = width / 2;
-    const cy = height / 2;
+    const cy = EXIT_INSET_TOP + halfY;
+    const onScreen = Math.abs(sx - cx) < halfX && Math.abs(sy - cy) < halfY;
+    if (onScreen) return { x: sx, y: sy, angle: 0, visible: false, distance };
+
     const dx = sx - cx;
     const dy = sy - cy;
-    const scale = Math.min((cx - margin) / Math.max(1e-3, Math.abs(dx)), (cy - margin) / Math.max(1e-3, Math.abs(dy)));
-    return { x: cx + dx * scale, y: cy + dy * scale, angle: Math.atan2(dy, dx), visible: true };
+    const scale = Math.min(halfX / Math.max(1e-3, Math.abs(dx)), halfY / Math.max(1e-3, Math.abs(dy)));
+    return { x: cx + dx * scale, y: cy + dy * scale, angle: Math.atan2(dy, dx), visible: true, distance };
   }
 
   private readInput(): MoveInput | null {

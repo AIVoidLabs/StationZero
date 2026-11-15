@@ -232,7 +232,7 @@ class SfxEngine {
       case 'stepSteel':
         noise(0.07, 0.7, 'bandpass', 2200, 1000);
         tone('triangle', 340, 190, 0.09, 0.45);
-        tone('sine', 1500, 1300, 0.12, 0.1, 0.01);
+        tone('sine', 1500, 1300, 0.08, 0.04, 0.01);
         break;
       case 'stepConcrete':
         noise(0.11, 0.8, 'lowpass', 1300, 380);
@@ -243,12 +243,12 @@ class SfxEngine {
         tone('square', 720, 420, 0.05, 0.22);
         noise(0.05, 0.45, 'bandpass', 3200, 2000, 0.045);
         tone('square', 860, 500, 0.05, 0.16, 0.045);
-        tone('sine', 2300, 2100, 0.14, 0.09, 0.02);
+        tone('sine', 2300, 2100, 0.08, 0.035, 0.02);
         break;
       case 'stepTile':
         noise(0.05, 0.55, 'bandpass', 3400, 2400);
         tone('triangle', 520, 300, 0.06, 0.38);
-        tone('sine', 2100, 1900, 0.1, 0.08, 0.01);
+        tone('sine', 2100, 1900, 0.07, 0.03, 0.01);
         break;
       case 'stepWater':
         noise(0.16, 0.7, 'lowpass', 1500, 500);
@@ -257,7 +257,11 @@ class SfxEngine {
         break;
       case 'heartbeat':
         tone('sine', 62, 38, 0.16, 0.9);
+        tone('triangle', 124, 76, 0.13, 0.5);
+        noise(0.06, 0.3, 'lowpass', 420, 140);
         tone('sine', 56, 34, 0.18, 0.7, 0.2);
+        tone('triangle', 112, 68, 0.14, 0.38, 0.2);
+        noise(0.06, 0.22, 'lowpass', 380, 130, 0.2);
         break;
       case 'uiMove':
         tone('square', 880, 760, 0.035, 0.12);

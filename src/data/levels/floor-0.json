@@ -196,6 +196,16 @@
         "x": 6,
         "y": 13,
         "kind": "crate"
+      },
+      {
+        "x": 6,
+        "y": 6,
+        "kind": "barrel"
+      },
+      {
+        "x": 10,
+        "y": 6,
+        "kind": "crate"
       }
     ],
     "terminals": [
@@ -204,8 +214,8 @@
         "y": 18
       },
       {
-        "x": 15,
-        "y": 17
+        "x": 13,
+        "y": 14
       },
       {
         "x": 5,
@@ -213,8 +223,8 @@
       }
     ],
     "corpse": {
-      "x": 17,
-      "y": 16
+      "x": 14,
+      "y": 15
     },
     "loot": [
       {
@@ -258,6 +268,12 @@
         "y": 5,
         "kind": "stim",
         "amount": 0
+      },
+      {
+        "x": 11,
+        "y": 14,
+        "kind": "ammo",
+        "amount": 4
       }
     ],
     "enemies": [
@@ -344,10 +360,18 @@
         "kind": "crusher",
         "tier": "master",
         "seed": 10207533
+      },
+      {
+        "x": 24,
+        "y": 23,
+        "kind": "drone",
+        "tier": "novice",
+        "seed": 1657859
       }
     ],
     "hazards": {
-      "vents": []
+      "vents": [],
+      "shocks": []
     }
   }
 }

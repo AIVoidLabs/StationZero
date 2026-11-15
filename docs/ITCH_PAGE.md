@@ -6,7 +6,7 @@
 - **Short description / tagline (max ~100 chars):** Isometric sci-fi shooter in a sealed prison colony. Eleven floors, eleven bosses, one AI to kill.
 - **Kind of project:** HTML (upload zip / butler channel `html5`, tick "This file will be played in the browser")
 - **Classification:** Games
-- **Release status:** Released (0.1.0)
+- **Release status:** Released (0.1.1)
 - **Pricing:** No payments (or "Pay what you want")
 - **Genre:** **Shooter** (this is a pistol-and-dodge isometric shooter with boss fights; "Survival" was wrong: there is no hunger, crafting or base building)
 - **Tags (max 10):** shooter, isometric, dungeon-crawler, boss-battle, horror, sci-fi, retro, atmospheric, singleplayer, dark
@@ -33,10 +33,11 @@ GIFs in `docs/gifs/` (`combat.gif`, `dodge.gif`, `trap.gif`). The HTML descripti
 - **A boss on every floor**: the Crusher charges at you, the Dynamo sends out shock rings, the Matriarch spits poison and calls spiders, the Assembler builds drones, and WARDEN waits at the bottom
 - **Enemy ranks**: novice, journeyman and master machines with more health, harder hits and faster fire; ranks are marked on their health bars and earn XP toward your score
 - **Poison spiders**, **drones** that search, chase and lose you, and armoured **tanks** you have to flank
-- **Traps you must read**: steam vents and electric plates hum, flicker and warn before they strike
+- **Traps you must read**: steam vents and electric plates run on a cycle; they hum, fire and rest, and you cross in the quiet gap
 - **Explosive barrels** and crates: use cover, shoot the barrels
 - **The dead keep secrets**: examine the fallen attempters, read their last words, and accept a permanent upgrade
-- Lantern-lit darkness, a fog-of-war map, and a pulse monitor that races when you are hunted
+- **WARDEN talks to you**: between fights it tells you, in its own voice, why it thinks you are on the wrong side
+- Lantern-lit darkness, a fog-of-war map, an exit beacon with a distance readout, and a pulse monitor that races when you are hunted
 - Illustrated cutscenes, synthetic voices, ambience, a full ending and credits
 - Save and continue, local records, rebindable keys, English and Turkish
 
@@ -55,8 +56,9 @@ All keys can be rebound in Settings. Green pickups heal (and cure poison), amber
 - Plays in your browser (WebGL + Web Audio). Desktop with a keyboard; use the fullscreen button for the best atmosphere.
 - Headphones recommended.
 - Progress is saved in your browser's local storage on this device.
-- Feedback and bug reports welcome in the comments. Please mention the version shown in the bottom-right of the main menu (v0.1.0).
+- Feedback and bug reports welcome in the comments. Please mention the version shown in the bottom-right of the main menu (v0.1.1).
 - Source code: https://github.com/AIVoidLabs/StationZero
+- Turkish voices: Piper `tr_TR-fahrettin-medium` (Nabu Casa voice-datasets, CC0). English voices: Flite (CMU).
 
 ## Screenshots (upload in this order, 960x540 originals from `docs/screenshots/`)
 1. `gameplay.png` (exploration, the dead and a terminal)
@@ -71,5 +73,6 @@ All keys can be rebound in Settings. Green pickups heal (and cure poison), amber
 ## Cover image
 `docs/itch/cover.png` (630x500). Regenerate with `node tools/gen-cover.mjs` if the title art changes.
 
-## First devlog (optional)
-"Station Zero 0.1.0 is live. Eleven floors, eleven bosses, one AI that will not let go. Feedback welcome."
+## Devlogs
+- 0.1.0: `docs/DEVLOG_0.1.0.md`
+- 0.1.1: `docs/DEVLOG_0.1.1.md`

@@ -11,6 +11,7 @@ import { runFlags } from '../systems/RunFlags';
 import { saveGame } from '../systems/SaveGame';
 import { settings } from '../systems/Settings';
 import { sfx } from '../systems/Sfx';
+import { voice } from '../systems/Voice';
 import { cutscenesDisabledByFlag } from '../utils/devflags';
 
 export function recordsPage(ctrl: MenuController): MenuPage {
@@ -52,6 +53,7 @@ export class Menu extends Scene {
 
   create(): void {
     this.starting = false;
+    voice.attach(this);
     this.cameras.main.fadeIn(600, 5, 5, 5);
 
     this.add.image(0, 0, MENU_BG_KEY).setOrigin(0, 0).setScale(GAME_WIDTH / 480).setDepth(0);

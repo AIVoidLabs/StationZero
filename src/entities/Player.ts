@@ -12,6 +12,7 @@ import {
   DEPTH_MARKER,
   DESCENT_SPIN_SNAP_MS,
   FOOTSTEP_DISTANCE,
+  FOOTSTEP_VOLUME,
   PLAYER_KNOCKBACK_MS,
   PLAYER_KNOCKBACK_SHAKE_MS,
   PLAYER_KNOCKBACK_TILES,
@@ -368,7 +369,7 @@ export class Player extends Entity {
               ? 'stepWater'
               : 'stepSteel';
     const pitch = (this.stepSide === 0 ? 0.94 : 1.04) + (Math.random() - 0.5) * 0.08;
-    sfx.play(name, 0.55, pitch);
+    sfx.play(name, FOOTSTEP_VOLUME, pitch);
   }
 
   private updateSpin(deltaMs: number): void {

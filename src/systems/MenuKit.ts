@@ -317,10 +317,14 @@ export class MenuController {
     const scrolling = page.scrollLines !== undefined;
     const bodyLines = page.body ? page.body() : [];
     const reservedLines = Math.max(bodyLines.length, page.bodyMinLines ?? 0);
-    const bodyHeight = scrolling ? SCROLL_VIEW : reservedLines * BODY_LINE_HEIGHT;
+    this.bodyText.setText(bodyLines.join('\n'));
+    const lineHeight =
+      bodyLines.length > 0 ? Math.max(BODY_LINE_HEIGHT, (this.bodyText.height + this.bodyText.lineSpacing) / bodyLines.length) : BODY_LINE_HEIGHT;
+    const bodyHeight = scrolling ? SCROLL_VIEW : Math.ceil(reservedLines * lineHeight);
     const relItemsTop = PANEL_PADDING + TITLE_HEIGHT + (bodyHeight > 0 ? bodyHeight + 14 : 0);
     const itemsHeight = page.items.length * ITEM_HEIGHT;
-    const height = relItemsTop + itemsHeight + 12 + 26;
+    const footerHeight = text(page.footer).trim().length > 0 ? 26 : 0;
+    const height = relItemsTop + itemsHeight + 12 + footerHeight;
     this.top = Math.max(8, Math.min(this.baseTop, GAME_HEIGHT - height - 8));
     const itemsTop = this.top + relItemsTop;
     const footerY = itemsTop + itemsHeight + 12;
@@ -332,7 +336,6 @@ export class MenuController {
 
     this.bodyText.setVisible(reservedLines > 0 && !scrolling);
     this.bodyText.setPosition(this.centerX, this.top + PANEL_PADDING + TITLE_HEIGHT);
-    this.bodyText.setText(bodyLines.join('\n'));
     this.bodyText.setAlign(page.bodyLeft ? 'left' : 'center');
 
     if (page.scrollLines) this.buildScroll(page.scrollLines, this.top + PANEL_PADDING + TITLE_HEIGHT);

@@ -1,4 +1,4 @@
-import type { GameObjects, Scene } from 'phaser';
+import { BlendModes, type GameObjects, type Scene } from 'phaser';
 
 const FONT = 'monospace';
 const BRACKET = 8;
@@ -135,4 +135,148 @@ export function drawSlantCell(
   g.lineTo(x, y + height);
   g.closePath();
   g.fillPath();
+}
+
+export interface ExitPointer {
+  readonly x: number;
+  readonly y: number;
+  readonly angle: number;
+  readonly visible: boolean;
+  readonly distance: number;
+}
+
+const BEACON_CYAN = 0x3ab4d2;
+const BEACON_DARK = 0x050505;
+const CHEVRON_PITCH = 10;
+const CHEVRON_STEP_MS = 130;
+const PLATE_HEIGHT = 30;
+const PLATE_SKEW = 6;
+const INTRO_MS = 1000;
+const MARKER_LIFT = 44;
+const MARKER_FADE_NEAR = 1.5;
+const MARKER_FADE_SPAN = 1.5;
+const CHEVRON: readonly (readonly [number, number])[] = [
+  [-4, -9],
+  [1, -9],
+  [8, 0],
+  [1, 9],
+  [-4, 9],
+  [3, 0],
+];
+
+export class ExitBeacon {
+  private readonly root: GameObjects.Container;
+  private readonly glow: GameObjects.Graphics;
+  private readonly chevrons: GameObjects.Graphics;
+  private readonly plate: GameObjects.Graphics;
+  private readonly label: GameObjects.Text;
+  private readonly range: GameObjects.Text;
+  private plateWidth = 0;
+  private introMs = 0;
+  private shown = false;
+
+  constructor(scene: Scene, label: string) {
+    this.glow = scene.add.graphics().setBlendMode(BlendModes.ADD);
+    for (const radius of [34, 27, 20, 13]) {
+      this.glow.fillStyle(BEACON_CYAN, 0.07);
+      this.glow.fillCircle(0, 0, radius);
+    }
+    this.chevrons = scene.add.graphics();
+    this.plate = scene.add.graphics();
+    this.label = scene.add
+      .text(0, 0, label, { fontFamily: FONT, fontSize: '14px', fontStyle: 'bold', color: '#c9eef7' })
+      .setOrigin(0.5, 0.5);
+    this.range = scene.add.text(0, 0, '', { fontFamily: FONT, fontSize: '9px', color: '#3ab4d2' }).setOrigin(0.5, 0.5);
+    this.root = scene.add
+      .container(0, 0, [this.glow, this.plate, this.label, this.range, this.chevrons])
+      .setVisible(false);
+    this.drawPlate();
+  }
+
+  setLabel(label: string): void {
+    this.label.setText(label);
+    this.drawPlate();
+  }
+
+  update(pointer: ExitPointer | null, time: number, delta: number): void {
+    if (!pointer) {
+      this.root.setVisible(false);
+      this.shown = false;
+      return;
+    }
+    if (!this.shown) {
+      this.shown = true;
+      this.introMs = INTRO_MS;
+    }
+    this.introMs = Math.max(0, this.introMs - delta);
+    const intro = this.introMs / INTRO_MS;
+
+    const edge = pointer.visible;
+    const angle = edge ? pointer.angle : Math.PI / 2;
+    const dirX = Math.cos(angle);
+    const dirY = Math.sin(angle);
+    const bob = 4 * Math.sin(time / 190);
+    const near = edge ? 1 : Math.max(0, Math.min(1, (pointer.distance - MARKER_FADE_NEAR) / MARKER_FADE_SPAN));
+
+    this.root
+      .setVisible(near > 0.01)
+      .setPosition(pointer.x + dirX * bob, pointer.y + dirY * bob - (edge ? 0 : MARKER_LIFT))
+      .setScale(1 + 0.4 * intro * intro)
+      .setAlpha(near);
+
+    this.glow.setAlpha(0.7 + 0.3 * Math.sin(time / 320) + intro);
+    this.drawChevrons(angle, time, intro);
+
+    const reach = 30 + Math.abs(dirX) * (this.plateWidth / 2) + Math.abs(dirY) * (PLATE_HEIGHT / 2);
+    const plateX = -dirX * reach;
+    const plateY = -dirY * reach;
+    this.plate.setPosition(plateX, plateY);
+    this.label.setPosition(plateX + 2, plateY - 5);
+    this.range.setPosition(plateX + 2, plateY + 8).setText(`${Math.max(1, Math.round(pointer.distance))} M`);
+  }
+
+  private drawChevrons(angle: number, time: number, intro: number): void {
+    const g = this.chevrons;
+    const lit = Math.floor(time / CHEVRON_STEP_MS) % 5;
+    g.clear();
+    g.setRotation(angle);
+    for (let index = 0; index < 3; index += 1) {
+      const offset = (index - 1) * CHEVRON_PITCH;
+      const trace = (): void => {
+        g.beginPath();
+        CHEVRON.forEach(([px, py], point) => {
+          if (point === 0) g.moveTo(px + offset, py);
+          else g.lineTo(px + offset, py);
+        });
+        g.closePath();
+      };
+      trace();
+      g.lineStyle(3, BEACON_DARK, 1);
+      g.strokePath();
+      trace();
+      g.fillStyle(index === lit || intro > 0.5 ? 0xc9eef7 : BEACON_CYAN, index === lit ? 1 : 0.55 + 0.45 * intro);
+      g.fillPath();
+    }
+  }
+
+  private drawPlate(): void {
+    const g = this.plate;
+    const width = Math.max(58, this.label.width + 30);
+    const left = -width / 2;
+    const top = -PLATE_HEIGHT / 2;
+    this.plateWidth = width;
+    g.clear();
+    drawSlantCell(g, left - PLATE_SKEW / 2, top, width, PLATE_HEIGHT, PLATE_SKEW, BEACON_DARK, 0.88);
+    drawSlantCell(g, left - PLATE_SKEW / 2, top, 5, PLATE_HEIGHT, PLATE_SKEW, BEACON_CYAN, 1);
+    g.lineStyle(1, BEACON_CYAN, 0.9);
+    g.beginPath();
+    g.moveTo(left + PLATE_SKEW / 2, top);
+    g.lineTo(left + width + PLATE_SKEW / 2, top);
+    g.lineTo(left + width - PLATE_SKEW / 2, top + PLATE_HEIGHT);
+    g.lineTo(left - PLATE_SKEW / 2, top + PLATE_HEIGHT);
+    g.closePath();
+    g.strokePath();
+    g.fillStyle(BEACON_CYAN, 0.35);
+    g.fillRect(left + 10, top + PLATE_HEIGHT / 2 + 1, width - 18, 1);
+  }
 }

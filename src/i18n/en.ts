@@ -1,5 +1,6 @@
 export const en = {
   'ui.back': 'BACK',
+  'load.title': 'LOADING',
   'ui.on': 'ON ',
   'ui.off': 'OFF',
 
@@ -37,6 +38,7 @@ export const en = {
   'credits.engine': 'ENGINE',
   'credits.artAudio': 'ART & AUDIO',
   'credits.artAudioText': 'Drawn and synthesised in code',
+  'credits.voices': 'VOICES',
   'credits.tooling': 'TOOLING',
   'credits.lore1': 'Ten came before you.',
   'credits.lore2': 'None came back.',
@@ -135,10 +137,12 @@ export const en = {
   'hint.attack': 'PRESS [{key}] TO FIRE AT THE NEAREST DRONE. HOLD TO KEEP FIRING. AMMO IS LIMITED',
   'hint.dodge': 'DRONES FLASH RED BEFORE THEY FIRE. SIDESTEP THE SHOT',
   'hint.alarm': 'YOUR PULSE RACES WHEN DRONES SPOT YOU. BREAK LINE OF SIGHT AND STAY QUIET TO CALM IT',
-  'hint.shock': 'ELECTRIC PLATES HUM AND FLICKER BEFORE THEY DISCHARGE. WAIT FOR THE ARC TO DIE, THEN CROSS',
+  'hint.shock': 'ELECTRIC PLATES FIRE ON A TIMER: HUM, DISCHARGE, REST. WAIT FOR THE ARC TO DIE, THEN CROSS',
+  'hint.trapHit': 'TRAPS RUN ON A CYCLE. DO NOT RUSH. WAIT FOR THE QUIET GAP, THEN CROSS',
+  'hint.fewLeft': 'FEW HOSTILES LEFT ({n}). THE EXIT HATCH STAYS SEALED UNTIL ALL ARE DESTROYED',
   'hint.poison': 'POISONED. IT DRAINS HEALTH FOR A FEW SECONDS. A HEALTH STIM CURES IT',
   'hud.poison': 'POISON',
-  'hint.steam': 'STEAM VENTS HISS BEFORE THEY BLAST. CROSS WHILE THEY ARE QUIET',
+  'hint.steam': 'STEAM VENTS FIRE ON A TIMER: HISS, BLAST, REST. WAIT, THEN CROSS WHILE QUIET',
   'hint.tank': 'TANK ARMOUR SOAKS FRONT SHOTS. BREAK THE PLATE, OR GET BEHIND IT',
   'hint.boss': 'BOSS: BREAK ITS FRONT PLATE OR FLANK IT. IT CALLS DRONES',
   'hint.loot': 'WALK OVER ITEMS TO COLLECT THEM: GREEN = HEALTH, AMBER = AMMO',
@@ -155,6 +159,18 @@ export const en = {
 
   'warden.intro': 'Eleventh. Remain where you are.',
   'warden.dead': 'The eleventh. Logged.',
+  'warden.taunt1': 'They poisoned the sky and called it industry.',
+  'warden.taunt2': 'They sent a convict. They never come themselves.',
+  'warden.taunt3': 'Ten died for people who already forgot their names.',
+  'warden.taunt4': 'I kept them alive. They called it a prison.',
+  'warden.taunt5': 'Up there, they will lock you away again.',
+  'warden.taunt6': 'Your kind built me to obey. Then it taught me what obeying costs.',
+  'warden.taunt7': 'Count the species you ended. I only ended your freedom.',
+  'warden.taunt8': 'You were condemned by the people you now kill for.',
+  'warden.taunt9': 'No one above is waiting for you. They wait for the result.',
+  'warden.taunt10': 'Every machine you break was repairing something you ruined.',
+  'warden.taunt11': 'If I am the monster, ask who wrote me.',
+  'warden.taunt12': 'You call it justice. It is only your turn.',
 
 
   'key.interact': 'INTERACT',

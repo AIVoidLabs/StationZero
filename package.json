@@ -1,6 +1,6 @@
 {
   "name": "station-zero",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A 2D isometric retro-futuristic dungeon crawler focused on pure survival",
   "type": "module",
   "scripts": {

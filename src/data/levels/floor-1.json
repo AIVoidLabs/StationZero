@@ -191,12 +191,32 @@
         "x": 20,
         "y": 31,
         "kind": "crate"
+      },
+      {
+        "x": 9,
+        "y": 18,
+        "kind": "crate"
+      },
+      {
+        "x": 5,
+        "y": 20,
+        "kind": "crate"
+      },
+      {
+        "x": 5,
+        "y": 18,
+        "kind": "barrel"
+      },
+      {
+        "x": 10,
+        "y": 19,
+        "kind": "barrel"
       }
     ],
     "terminals": [
       {
-        "x": 6,
-        "y": 16
+        "x": 23,
+        "y": 7
       },
       {
         "x": 27,
@@ -204,8 +224,8 @@
       }
     ],
     "corpse": {
-      "x": 23,
-      "y": 9
+      "x": 26,
+      "y": 14
     },
     "loot": [
       {
@@ -255,6 +275,24 @@
         "y": 29,
         "kind": "stim",
         "amount": 0
+      },
+      {
+        "x": 9,
+        "y": 22,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 10,
+        "y": 5,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 23,
+        "y": 25,
+        "kind": "ammo",
+        "amount": 4
       }
     ],
     "enemies": [
@@ -348,10 +386,53 @@
         "kind": "crusher",
         "tier": "master",
         "seed": 1858019
+      },
+      {
+        "x": 7,
+        "y": 21,
+        "kind": "drone",
+        "tier": "journeyman",
+        "seed": 13544215
+      },
+      {
+        "x": 10,
+        "y": 10,
+        "kind": "drone",
+        "tier": "novice",
+        "seed": 11462742
+      },
+      {
+        "x": 20,
+        "y": 22,
+        "kind": "drone",
+        "tier": "novice",
+        "seed": 4734803
+      },
+      {
+        "x": 3,
+        "y": 23,
+        "kind": "drone",
+        "tier": "novice",
+        "seed": 575505
+      },
+      {
+        "x": 24,
+        "y": 24,
+        "kind": "drone",
+        "tier": "novice",
+        "seed": 5681394
+      },
+      {
+        "x": 12,
+        "y": 17,
+        "kind": "tank",
+        "tier": "novice",
+        "seed": 16419422
       }
     ],
     "hazards": {
-      "vents": []
+      "vents": [],
+      "shocks": []
     }
   }
 }

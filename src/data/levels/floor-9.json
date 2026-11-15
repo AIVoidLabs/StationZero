@@ -201,17 +201,37 @@
         "x": 6,
         "y": 21,
         "kind": "crate"
+      },
+      {
+        "x": 8,
+        "y": 10,
+        "kind": "barrel"
+      },
+      {
+        "x": 6,
+        "y": 11,
+        "kind": "crate"
+      },
+      {
+        "x": 9,
+        "y": 8,
+        "kind": "crate"
+      },
+      {
+        "x": 3,
+        "y": 7,
+        "kind": "crate"
       }
     ],
     "terminals": [
       {
-        "x": 13,
-        "y": 26
+        "x": 27,
+        "y": 20
       }
     ],
     "corpse": {
-      "x": 21,
-      "y": 11
+      "x": 22,
+      "y": 10
     },
     "loot": [
       {
@@ -255,6 +275,54 @@
         "y": 22,
         "kind": "stim",
         "amount": 0
+      },
+      {
+        "x": 4,
+        "y": 5,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 1,
+        "y": 10,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 1,
+        "y": 8,
+        "kind": "stim",
+        "amount": 0
+      },
+      {
+        "x": 25,
+        "y": 23,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 28,
+        "y": 31,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 12,
+        "y": 19,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 2,
+        "y": 20,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 23,
+        "y": 6,
+        "kind": "ammo",
+        "amount": 4
       }
     ],
     "enemies": [
@@ -383,6 +451,111 @@
         "kind": "matriarch",
         "tier": "master",
         "seed": 12119762
+      },
+      {
+        "x": 1,
+        "y": 6,
+        "kind": "spider",
+        "tier": "master",
+        "seed": 7257623
+      },
+      {
+        "x": 1,
+        "y": 11,
+        "kind": "spider",
+        "tier": "master",
+        "seed": 789722
+      },
+      {
+        "x": 7,
+        "y": 5,
+        "kind": "tank",
+        "tier": "master",
+        "seed": 11104237
+      },
+      {
+        "x": 2,
+        "y": 5,
+        "kind": "tank",
+        "tier": "master",
+        "seed": 12690351
+      },
+      {
+        "x": 8,
+        "y": 7,
+        "kind": "drone",
+        "tier": "master",
+        "seed": 1135189
+      },
+      {
+        "x": 3,
+        "y": 11,
+        "kind": "drone",
+        "tier": "master",
+        "seed": 1644277
+      },
+      {
+        "x": 31,
+        "y": 31,
+        "kind": "spider",
+        "tier": "journeyman",
+        "seed": 12836347
+      },
+      {
+        "x": 12,
+        "y": 18,
+        "kind": "spider",
+        "tier": "journeyman",
+        "seed": 5953032
+      },
+      {
+        "x": 2,
+        "y": 19,
+        "kind": "spider",
+        "tier": "journeyman",
+        "seed": 9869152
+      },
+      {
+        "x": 20,
+        "y": 6,
+        "kind": "spider",
+        "tier": "journeyman",
+        "seed": 7634329
+      },
+      {
+        "x": 24,
+        "y": 10,
+        "kind": "tank",
+        "tier": "journeyman",
+        "seed": 4006801
+      },
+      {
+        "x": 16,
+        "y": 23,
+        "kind": "tank",
+        "tier": "journeyman",
+        "seed": 12989179
+      },
+      {
+        "x": 8,
+        "y": 19,
+        "kind": "tank",
+        "tier": "journeyman",
+        "seed": 5131090
+      },
+      {
+        "x": 11,
+        "y": 26,
+        "kind": "tank",
+        "tier": "journeyman",
+        "seed": 12432255
+      },
+      {
+        "x": 25,
+        "y": 27,
+        "kind": "tank",
+        "tier": "journeyman",
+        "seed": 1083345
       }
     ],
     "hazards": {
@@ -398,8 +571,8 @@
           "phaseMs": 2338
         },
         {
-          "x": 10,
-          "y": 21,
+          "x": 6,
+          "y": 19,
           "phaseMs": 3663
         },
         {

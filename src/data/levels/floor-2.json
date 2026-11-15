@@ -231,17 +231,42 @@
         "x": 6,
         "y": 20,
         "kind": "crate"
+      },
+      {
+        "x": 4,
+        "y": 26,
+        "kind": "barrel"
+      },
+      {
+        "x": 8,
+        "y": 30,
+        "kind": "barrel"
+      },
+      {
+        "x": 2,
+        "y": 28,
+        "kind": "barrel"
+      },
+      {
+        "x": 8,
+        "y": 26,
+        "kind": "crate"
+      },
+      {
+        "x": 6,
+        "y": 30,
+        "kind": "crate"
       }
     ],
     "terminals": [
       {
-        "x": 24,
-        "y": 14
+        "x": 15,
+        "y": 4
       }
     ],
     "corpse": {
-      "x": 13,
-      "y": 12
+      "x": 9,
+      "y": 10
     },
     "loot": [
       {
@@ -285,6 +310,24 @@
         "y": 31,
         "kind": "stim",
         "amount": 0
+      },
+      {
+        "x": 7,
+        "y": 12,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 15,
+        "y": 29,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 24,
+        "y": 11,
+        "kind": "ammo",
+        "amount": 4
       }
     ],
     "enemies": [
@@ -378,10 +421,67 @@
         "kind": "matriarch",
         "tier": "master",
         "seed": 15969154
+      },
+      {
+        "x": 5,
+        "y": 12,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 13882828
+      },
+      {
+        "x": 6,
+        "y": 18,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 15488562
+      },
+      {
+        "x": 1,
+        "y": 27,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 13122647
+      },
+      {
+        "x": 10,
+        "y": 31,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 7063311
+      },
+      {
+        "x": 21,
+        "y": 21,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 10882361
+      },
+      {
+        "x": 30,
+        "y": 11,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 3681960
+      },
+      {
+        "x": 23,
+        "y": 28,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 11601228
+      },
+      {
+        "x": 8,
+        "y": 31,
+        "kind": "drone",
+        "tier": "journeyman",
+        "seed": 5365851
       }
     ],
     "hazards": {
-      "vents": []
+      "vents": [],
+      "shocks": []
     }
   }
 }

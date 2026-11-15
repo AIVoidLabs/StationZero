@@ -4,7 +4,7 @@ import { SECRET_COUNT } from '../data/secrets';
 import { GAME_HEIGHT, GAME_WIDTH, PISTOL_MAX_AMMO, PLAYER_MAX_HP } from '../data/config';
 import { t } from '../i18n';
 import { hints } from '../systems/Hints';
-import { PanelFrame, drawSlantCell } from '../systems/HudKit';
+import { ExitBeacon, PanelFrame, drawSlantCell } from '../systems/HudKit';
 import { MiniMap } from '../systems/MiniMap';
 import { settings } from '../systems/Settings';
 import { sfx } from '../systems/Sfx';
@@ -44,6 +44,9 @@ const SECTOR_W = 280;
 const SECTOR_H = 62;
 const SECTOR_X = GAME_WIDTH - 14 - SECTOR_W;
 const SECTOR_Y = 26;
+const TEXT_WRAP = 480;
+const HINT_BOTTOM = GAME_HEIGHT - 68;
+const TEXT_GAP = 14;
 const LOW_AMMO = 3;
 const HEARTBEAT_MS = 950;
 const ALARM_ECG_GAIN = 0.25;
@@ -106,7 +109,7 @@ export class HudScene extends Scene {
   private cardCode!: GameObjects.Text;
   private cardName!: GameObjects.Text;
   private cardTagline!: GameObjects.Text;
-  private pointer!: GameObjects.Container;
+  private exitBeacon!: ExitBeacon;
   private promptBg!: GameObjects.Rectangle;
   private promptText!: GameObjects.Text;
   private hurtVignette!: GameObjects.Image;
@@ -226,7 +229,13 @@ export class HudScene extends Scene {
       .setOrigin(0.5, 0.5)
       .setAlpha(0);
     this.subtitleText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 128, '', { ...textStyle, fontSize: '13px', color: '#9fd8e8' })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 128, '', {
+        ...textStyle,
+        fontSize: '13px',
+        color: '#9fd8e8',
+        align: 'center',
+        wordWrap: { width: TEXT_WRAP },
+      })
       .setOrigin(0.5, 0.5)
       .setAlpha(0);
     this.hintBg = this.add
@@ -235,7 +244,13 @@ export class HudScene extends Scene {
       .setStrokeStyle(1, 0xd9a441, 0.7)
       .setAlpha(0);
     this.hintText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 84, '', { ...textStyle, fontSize: '13px', color: '#ecdcb6' })
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 84, '', {
+        ...textStyle,
+        fontSize: '13px',
+        color: '#ecdcb6',
+        align: 'center',
+        wordWrap: { width: TEXT_WRAP },
+      })
       .setOrigin(0.5, 0.5)
       .setAlpha(0);
 
@@ -257,15 +272,7 @@ export class HudScene extends Scene {
       .container(GAME_WIDTH / 2, 170, [cardBg, this.cardCode, this.cardName, this.cardTagline])
       .setAlpha(0);
 
-    const arrow = this.add.graphics();
-    arrow.fillStyle(CYAN, 1);
-    arrow.fillTriangle(14, 0, -8, -9, -8, 9);
-    arrow.lineStyle(1, 0x050505, 1);
-    arrow.strokeTriangle(14, 0, -8, -9, -8, 9);
-    const pointerLabel = this.add
-      .text(0, 20, t('hud.exit'), { ...textStyle, fontSize: '9px', color: '#3ab4d2' })
-      .setOrigin(0.5, 0.5);
-    this.pointer = this.add.container(0, 0, [arrow, pointerLabel]).setVisible(false);
+    this.exitBeacon = new ExitBeacon(this, t('hud.exit'));
 
     makeVignette(this, DEATH_VIGNETTE_KEY, '52, 7, 4', 0.94);
     this.deathOverlay = this.fullImage(DEATH_VIGNETTE_KEY, 0);
@@ -310,8 +317,7 @@ export class HudScene extends Scene {
     this.ammoFrame.setLabel(t('hud.ammo'));
     this.sectorFrame.setLabel(t('hud.sector'));
     this.ammoWarn.setText(t('hud.noAmmo'));
-    const label = this.pointer.list[1] as GameObjects.Text | undefined;
-    label?.setText(t('hud.exit'));
+    this.exitBeacon.setLabel(t('hud.exit'));
     this.deathText.setText(t('hud.signalLost'));
     this.lastName = '';
     this.lastObjective = '';
@@ -351,7 +357,7 @@ export class HudScene extends Scene {
 
     this.updatePrompt(state.prompt);
     this.updateText(time);
-    this.updatePointer(state.exitPointer);
+    this.exitBeacon.update(state.exitPointer, time, delta);
     this.updateMap(game);
     this.updateDeath(state.hp);
   }
@@ -663,6 +669,17 @@ export class HudScene extends Scene {
   }
 
   private updateText(time: number): void {
+    const hint = hints.tick(time);
+    if (hint !== null && hint !== this.hintText.text) this.hintText.setText(hint);
+    const hintTarget = hint !== null ? 1 : 0;
+    this.hintText.setAlpha(this.hintText.alpha + (hintTarget - this.hintText.alpha) * 0.18);
+    this.hintBg.setAlpha(this.hintText.alpha * 0.82);
+    const hintWidth = Math.max(120, this.hintText.width + 44);
+    const hintHeight = Math.max(32, this.hintText.height + 14);
+    const hintY = HINT_BOTTOM - hintHeight / 2;
+    this.hintText.setY(hintY);
+    this.hintBg.setY(hintY).setSize(hintWidth, hintHeight).setDisplaySize(hintWidth, hintHeight);
+
     const line = voice.current;
     const subtitle = line ? `> ${voice.speakerLabel(line.speaker)} :: ${line.text.toUpperCase()}` : '';
     if (subtitle !== this.subtitleText.text) this.subtitleText.setText(subtitle);
@@ -670,28 +687,15 @@ export class HudScene extends Scene {
     this.subtitleText.setAlpha(this.subtitleText.alpha + (subtitleTarget - this.subtitleText.alpha) * 0.2);
     this.subtitleBg.setAlpha(this.subtitleText.alpha * 0.72);
     const subtitleWidth = Math.max(80, this.subtitleText.width + 40);
-    this.subtitleBg.setSize(subtitleWidth, 28).setDisplaySize(subtitleWidth, 28);
+    const subtitleHeight = Math.max(28, this.subtitleText.height + 12);
+    const subtitleBottom = HINT_BOTTOM - (hint !== null ? hintHeight : 32) - TEXT_GAP;
+    const subtitleY = subtitleBottom - subtitleHeight / 2;
+    this.subtitleText.setY(subtitleY);
+    this.subtitleBg.setY(subtitleY).setSize(subtitleWidth, subtitleHeight).setDisplaySize(subtitleWidth, subtitleHeight);
 
-    const hint = hints.tick(time);
-    if (hint !== null && hint !== this.hintText.text) this.hintText.setText(hint);
-    const hintTarget = hint !== null ? 1 : 0;
-    this.hintText.setAlpha(this.hintText.alpha + (hintTarget - this.hintText.alpha) * 0.18);
-    this.hintBg.setAlpha(this.hintText.alpha * 0.82);
-    const hintWidth = Math.max(120, this.hintText.width + 44);
-    this.hintBg.setSize(hintWidth, 32).setDisplaySize(hintWidth, 32);
-  }
-
-  private updatePointer(pointer: { x: number; y: number; angle: number; visible: boolean } | null): void {
-    if (!pointer || !pointer.visible) {
-      this.pointer.setVisible(false);
-      return;
-    }
-    const bob = 3 * Math.sin(this.time.now / 200);
-    this.pointer.setVisible(true);
-    this.pointer.setPosition(pointer.x + Math.cos(pointer.angle) * bob, pointer.y + Math.sin(pointer.angle) * bob);
-    this.pointer.setRotation(pointer.angle);
-    const label = this.pointer.list[1] as GameObjects.Text | undefined;
-    label?.setRotation(-pointer.angle);
+    const promptY = subtitleBottom - (line ? subtitleHeight : 28) - TEXT_GAP - 13;
+    this.promptBg.setY(promptY);
+    this.promptText.setY(promptY);
   }
 
   private updateMap(game: Game): void {

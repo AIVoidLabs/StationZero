@@ -1,6 +1,7 @@
 import { BlendModes, type GameObjects, type Scene } from 'phaser';
 import { DEPTH_DARKNESS, DEPTH_FLOOR, TILE_HEIGHT, TILE_WIDTH } from '../data/config';
 import {
+  HAZARD_ENEMY_RESIST,
   HAZARD_IDLE_TICK_MS,
   HAZARD_SENSE_TILES,
   SHOCK_CYCLE_MS,
@@ -155,6 +156,7 @@ export class Hazards {
   private readonly getEnemies: () => readonly Drone[];
   private readonly vents: Vent[] = [];
   private readonly shocks: Shock[] = [];
+  private playerHit = false;
 
   constructor(
     scene: Scene,
@@ -331,10 +333,17 @@ export class Hazards {
     }
 
     if (alive && distance <= STEAM_RADIUS) {
+      this.playerHit = true;
       this.player.takeDamage(STEAM_DAMAGE, now, { x: at.x - vent.cell.x, y: at.y - vent.cell.y });
     }
 
     this.hurtEnemies(vent.cell, STEAM_RADIUS, vent.enemyHurt, STEAM_ENEMY_COOLDOWN_MS, STEAM_DAMAGE, now);
+  }
+
+  takePlayerHit(): boolean {
+    const hit = this.playerHit;
+    this.playerHit = false;
+    return hit;
   }
 
   private updateShock(shock: Shock, now: number, at: { x: number; y: number }, alive: boolean): void {
@@ -380,6 +389,7 @@ export class Hazards {
 
     if (state !== 'active') return;
     if (alive && distance <= SHOCK_RADIUS) {
+      this.playerHit = true;
       this.player.takeDamage(SHOCK_DAMAGE, now, { x: at.x - shock.cell.x, y: at.y - shock.cell.y });
     }
     this.hurtEnemies(shock.cell, SHOCK_RADIUS, shock.enemyHurt, SHOCK_ENEMY_COOLDOWN_MS, SHOCK_DAMAGE, now);
@@ -400,7 +410,7 @@ export class Hazards {
       const last = hurt.get(enemy) ?? -cooldownMs;
       if (now - last < cooldownMs) continue;
       hurt.set(enemy, now);
-      enemy.takeDamage(damage);
+      enemy.takeDamage(damage * (1 - HAZARD_ENEMY_RESIST));
     }
   }
 

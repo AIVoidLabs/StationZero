@@ -161,12 +161,46 @@
         "x": 26,
         "y": 28,
         "kind": "crate"
+      },
+      {
+        "x": 5,
+        "y": 7,
+        "kind": "crate"
+      },
+      {
+        "x": 9,
+        "y": 6,
+        "kind": "crate"
+      },
+      {
+        "x": 5,
+        "y": 8,
+        "kind": "barrel"
+      },
+      {
+        "x": 17,
+        "y": 11,
+        "kind": "crate"
+      },
+      {
+        "x": 18,
+        "y": 10,
+        "kind": "crate"
+      },
+      {
+        "x": 26,
+        "y": 18,
+        "kind": "barrel"
       }
     ],
     "terminals": [
       {
         "x": 19,
         "y": 26
+      },
+      {
+        "x": 26,
+        "y": 8
       }
     ],
     "corpse": {
@@ -215,6 +249,36 @@
         "y": 20,
         "kind": "stim",
         "amount": 0
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 10,
+        "y": 3,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 26,
+        "y": 30,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 15,
+        "y": 25,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 28,
+        "y": 8,
+        "kind": "ammo",
+        "amount": 4
       }
     ],
     "enemies": [
@@ -329,18 +393,109 @@
         "kind": "crusher",
         "tier": "master",
         "seed": 1636637
+      },
+      {
+        "x": 13,
+        "y": 25,
+        "kind": "drone",
+        "tier": "journeyman",
+        "seed": 5461040
+      },
+      {
+        "x": 18,
+        "y": 25,
+        "kind": "spider",
+        "tier": "journeyman",
+        "seed": 15182930
+      },
+      {
+        "x": 3,
+        "y": 2,
+        "kind": "drone",
+        "tier": "journeyman",
+        "seed": 1293372
+      },
+      {
+        "x": 11,
+        "y": 2,
+        "kind": "spider",
+        "tier": "journeyman",
+        "seed": 8222758
+      },
+      {
+        "x": 8,
+        "y": 5,
+        "kind": "tank",
+        "tier": "journeyman",
+        "seed": 1503775
+      },
+      {
+        "x": 3,
+        "y": 5,
+        "kind": "tank",
+        "tier": "journeyman",
+        "seed": 6345231
+      },
+      {
+        "x": 10,
+        "y": 18,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 622163
+      },
+      {
+        "x": 6,
+        "y": 22,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 7603678
+      },
+      {
+        "x": 27,
+        "y": 30,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 11675929
+      },
+      {
+        "x": 23,
+        "y": 30,
+        "kind": "tank",
+        "tier": "novice",
+        "seed": 12213460
+      },
+      {
+        "x": 16,
+        "y": 12,
+        "kind": "tank",
+        "tier": "novice",
+        "seed": 16198607
+      },
+      {
+        "x": 28,
+        "y": 19,
+        "kind": "tank",
+        "tier": "novice",
+        "seed": 3620878
+      },
+      {
+        "x": 6,
+        "y": 18,
+        "kind": "drone",
+        "tier": "master",
+        "seed": 5664021
       }
     ],
     "hazards": {
       "vents": [
         {
           "x": 26,
-          "y": 22,
+          "y": 20,
           "phaseMs": 1418
         },
         {
           "x": 16,
-          "y": 15,
+          "y": 13,
           "phaseMs": 4567
         },
         {
@@ -356,7 +511,7 @@
       ],
       "shocks": [
         {
-          "x": 9,
+          "x": 13,
           "y": 12,
           "phaseMs": 3208
         }

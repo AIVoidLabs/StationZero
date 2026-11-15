@@ -134,7 +134,7 @@ WARDEN is not a character on screen; it is a **director**.
 Late-70s / early-80s retro-futurism: rusted steel, bare concrete, flickering fluorescents, analog readouts. Palette: sickly amber, harsh white, rust red, cold cyan, deep violet and a lot of black (`PALETTE` in `config.ts`). Low-resolution pixel art; **all art is generated in code** (SVG rigs → pixelated → composited), so the whole look can be regenerated deterministically (`npm run art:v2`). UI is brutalist and monospaced: boxy panels, tick marks, green VITALS, amber AMMO, red SECTOR card.
 
 ### Audio
-Diegetic, oppressive, low melody: a 24 s ventilation ambience loop, menu/end music, procedural SFX (shots, hits, pickups, door, UI), footsteps that change by floor material (steel / concrete / grate), and distinct synthetic voices (WARDEN, clerk, Ross, foreman, the Exile) in English and Turkish through ffmpeg/espeak-ng.
+Diegetic, oppressive, low melody: a 24 s ventilation ambience loop, menu/end music, procedural SFX (shots, hits, pickups, door, UI), footsteps that change by floor material (steel / concrete / grate), and distinct synthetic voices (WARDEN, clerk, Ross, foreman, the Exile) in English and Turkish through ffmpeg, flite and Piper.
 
 ### Camera and feel
 Zoom 2×, soft follow with slight look-ahead; short screen shake and a red vignette pulse on damage (optional). The health and ammo HUD flash on change.

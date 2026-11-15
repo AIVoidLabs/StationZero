@@ -66,10 +66,10 @@ All keys can be rebound in *Settings*. Tips: enemies flash red before they fire;
 | [Node.js](https://nodejs.org/) + npm | everything | Node 20.19+ or 22.12+ (developed on Node 24) |
 | A browser with WebGL and Web Audio | playing | any current Chrome, Firefox, Edge or Safari |
 | [ffmpeg](https://ffmpeg.org/) (with the `flite` filter) | `npm run audio:build` only | optional |
-| [espeak-ng](https://github.com/espeak-ng/espeak-ng) + Python 3 | Turkish voices in `npm run audio:build` only | optional |
+| [Piper](https://github.com/OHF-Voice/piper1-gpl) + Python 3 | Turkish voices in `npm run audio:build` only (venv and `tr_TR-fahrettin-medium` model in the gitignored `tools/.piper/`; the script prints the setup commands if it is missing) | optional |
 | [butler](https://itch.io/docs/butler/) | `npm run publish:itch` only | optional |
 
-Generated assets are committed to the repository, so ffmpeg/espeak-ng are **not** needed to run, develop or build the game.
+Generated assets are committed to the repository, so ffmpeg/Piper are **not** needed to run, develop or build the game.
 
 ### Dependencies
 
@@ -103,7 +103,7 @@ Open <http://localhost:5173>. The level designer is at <http://localhost:5173/ed
 | `npm run levels:bake` | Create level JSON for floors that do not exist yet (never overwrites) |
 | `npm run art:v2` | Regenerate player, world, menu and cutscene art into `assets/art/v2` |
 | `npm run art:build` | Rebuild `props.png` and `decals.png` from the gitignored `art-source/` sheets |
-| `npm run audio:build` | Rebuild ambience, music and voices into `assets/audio` (needs ffmpeg, espeak-ng) |
+| `npm run audio:build` | Rebuild ambience, music and voices into `assets/audio` (needs ffmpeg, Piper) |
 | `npm run release:itch` | Build and zip the HTML5 package into `release/` |
 | `npm run publish:itch` | Build and push to itch.io with butler (needs the `ITCH_TARGET` env var, e.g. `user/game:html5`) |
 
@@ -153,7 +153,7 @@ Floors are `src/data/levels/floor-0.json` ... `floor-10.json`, loaded by `src/sy
 
 ### Asset pipelines
 
-The art is **code-drawn and deterministic**: `tools/gen-*.mjs` build SVG rigs, pixelate them with `sharp` and pack sprite sheets into `assets/art/v2` (player, enemies and bosses, tiles, HUD, menu and cutscene stills). `props.png` and `decals.png` in `assets/art/runtime` are cut from external source sheets in the (gitignored) `art-source/` folder by `tools/build-art.mjs`. Audio is baked by `tools/build-audio.mjs` (ambience), `build-music.mjs` (menu/end music) and `build-voice.mjs` (flite for English, espeak-ng via `tools/espeak_render.py` for Turkish). Do not hand-edit generated files; change the generator and re-run it.
+The art is **code-drawn and deterministic**: `tools/gen-*.mjs` build SVG rigs, pixelate them with `sharp` and pack sprite sheets into `assets/art/v2` (player, enemies and bosses, tiles, HUD, menu and cutscene stills). `props.png` and `decals.png` in `assets/art/runtime` are cut from external source sheets in the (gitignored) `art-source/` folder by `tools/build-art.mjs`. Audio is baked by `tools/build-audio.mjs` (ambience), `build-music.mjs` (menu/end music) and `build-voice.mjs` (flite for English, Piper for Turkish). Do not hand-edit generated files; change the generator and re-run it.
 
 ## Documentation
 
@@ -178,8 +178,18 @@ Before changing code: keep scope to *Exploration + Mining + Avoidance/Combat*, k
 
 ## Credits
 
-Developer: **Bora Akgün** ([QuickOrBeDead](https://github.com/QuickOrBeDead)) · Studio: **AIVoidLabs** · Engine: [Phaser 4](https://phaser.io/) · Tooling: TypeScript, Vite, sharp, ffmpeg, espeak-ng · Built with OpenCode and Claude Code. Art and audio are drawn and synthesised in code.
+Developer: **Bora Akgün** ([QuickOrBeDead](https://github.com/QuickOrBeDead)) · Studio: **AIVoidLabs** · Engine: [Phaser 4](https://phaser.io/) · Tooling: TypeScript, Vite, sharp, ffmpeg, Piper · Built with OpenCode and Claude Code. Art and audio are drawn and synthesised in code.
 
 ## License
 
 [MIT](LICENSE) © 2026 AIVoidLabs
+
+The MIT license covers the code and the code-drawn assets. Third-party voice tools and data have their own terms:
+
+| Component | Used for | License |
+| --- | --- | --- |
+| [Flite](http://www.festvox.org/flite/) (through ffmpeg), voices `awb` and `slt` | English voice lines | BSD-style (Carnegie Mellon University) |
+| [Piper](https://github.com/OHF-Voice/piper1-gpl) | Turkish text-to-speech tool (build time only, not shipped) | GPL-3.0-or-later |
+| Piper voice `tr_TR-fahrettin-medium`, trained on [Nabu Casa voice-datasets](https://github.com/NabuCasa/voice-datasets) | Turkish voice lines in `assets/audio/voice/tr` | Dataset is CC0 (per the Piper model card) |
+
+The Turkish voice was fine-tuned from Piper's English `lessac` voice, whose training data (Blizzard 2013) has its own license; check it before a commercial release.

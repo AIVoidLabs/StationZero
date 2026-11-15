@@ -41,6 +41,8 @@ class VoiceEngine {
   private readonly queue: QueuedLine[] = [];
   private readonly listeners = new Set<SpeakingListener>();
   private readonly requested = new Set<Language>();
+  private readonly buffers = new Map<string, AudioBuffer>();
+  private subscribed = false;
   private busy = false;
   private subtitle: Subtitle | null = null;
   private timer: number | null = null;
@@ -55,18 +57,23 @@ class VoiceEngine {
   }
 
   attach(scene: Scene): void {
-    if (this.context) return;
-    const context = resolveContext(scene.sound);
-    if (!context) return;
-    this.context = context;
     this.scene = scene;
-    this.gain = context.createGain();
-    this.gain.connect(context.destination);
-    this.applyGain();
-    settings.subscribe(() => {
+    if (!this.context) {
+      const context = resolveContext(scene.sound);
+      if (!context) return;
+      this.context = context;
+      this.gain = context.createGain();
+      this.gain.connect(context.destination);
       this.applyGain();
-      this.loadLanguage(settings.data.language);
-    });
+    }
+    if (!this.subscribed) {
+      this.subscribed = true;
+      settings.subscribe(() => {
+        this.applyGain();
+        this.loadLanguage(settings.data.language);
+      });
+    }
+    this.loadLanguage(settings.data.language);
   }
 
   markLoaded(lang: Language): void {
@@ -74,17 +81,24 @@ class VoiceEngine {
   }
 
   loadLanguage(lang: Language): void {
-    const scene = this.scene;
-    if (!scene || this.requested.has(lang)) return;
+    const context = this.context;
+    if (!context || this.requested.has(lang)) return;
     this.requested.add(lang);
-    let queued = 0;
     for (const key of VOICE_KEYS) {
       const audioKey = voiceAudioKey(lang, key);
-      if (scene.cache.audio.exists(audioKey)) continue;
-      scene.load.audio(audioKey, voicePath(lang, key));
-      queued += 1;
+      if (this.scene?.cache.audio.exists(audioKey)) continue;
+      void this.fetchLine(context, audioKey, voicePath(lang, key));
     }
-    if (queued > 0 && !scene.load.isLoading()) scene.load.start();
+  }
+
+  private async fetchLine(context: AudioContext, audioKey: string, path: string): Promise<void> {
+    try {
+      const response = await fetch(path);
+      if (!response.ok) return;
+      this.buffers.set(audioKey, await context.decodeAudioData(await response.arrayBuffer()));
+    } catch {
+      // the line stays subtitle-only
+    }
   }
 
   onSpeaking(listener: SpeakingListener): () => void {
@@ -161,7 +175,8 @@ class VoiceEngine {
 
     let durationMs = Math.max(MIN_DURATION_MS, text.length * FALLBACK_MS_PER_CHAR);
     const context = this.context;
-    const buffer: unknown = this.scene?.cache.audio.get(voiceAudioKey(settings.data.language, line.key));
+    const audioKey = voiceAudioKey(settings.data.language, line.key);
+    const buffer: unknown = this.buffers.get(audioKey) ?? this.scene?.cache.audio.get(audioKey);
     if (context && this.gain && buffer instanceof AudioBuffer) {
       durationMs = buffer.duration * 1000;
       if (settings.data.voice && context.state === 'running') {

@@ -2,6 +2,7 @@ import type { StringKey } from './en';
 
 export const tr: Record<StringKey, string> = {
   'ui.back': 'GERİ',
+  'load.title': 'YÜKLENİYOR',
   'ui.on': 'AÇIK  ',
   'ui.off': 'KAPALI',
 
@@ -39,6 +40,7 @@ export const tr: Record<StringKey, string> = {
   'credits.engine': 'OYUN MOTORU',
   'credits.artAudio': 'GÖRSEL & SES',
   'credits.artAudioText': 'Kodla çizildi ve sentezlendi',
+  'credits.voices': 'SESLER',
   'credits.tooling': 'ARAÇLAR',
   'credits.lore1': 'Senden önce on kişi geldi.',
   'credits.lore2': 'Hiçbiri dönmedi.',
@@ -137,10 +139,12 @@ export const tr: Record<StringKey, string> = {
   'hint.attack': 'EN YAKIN DRONE’A ATEŞ İÇİN [{key}] TUŞUNA BAS, BASILI TUT. MERMİ SINIRLI',
   'hint.dodge': 'DRONE’LAR ATEŞTEN ÖNCE KIRMIZI YANAR. YANA ÇEKİL',
   'hint.alarm': 'DRONLAR SENİ GÖRÜNCE NABZIN HIZLANIR. GÖRÜŞ HATTINI KES VE SAKİN KAL, YATIŞSIN',
-  'hint.shock': 'ELEKTRİK PLAKALARI BOŞALMADAN ÖNCE VIZILDAR VE TİTRER. YAY SÖNÜNCE GEÇ',
+  'hint.shock': 'ELEKTRİK PLAKALARI PERİYODİK ÇALIŞIR: VIZILDAR, BOŞALIR, DİNLENİR. YAY SÖNÜNCE GEÇ',
+  'hint.trapHit': 'TUZAKLAR DÖNGÜYLE ÇALIŞIR. ACELE ETME. SUSTUĞU ARAYI BEKLE, SONRA GEÇ',
+  'hint.fewLeft': 'AZ DÜŞMAN KALDI ({n}). HEPSİ YOK EDİLMEDEN ÇIKIŞ KAPAĞI AÇILMAZ',
   'hint.poison': 'ZEHİRLENDİN. BİRKAÇ SANİYE CAN YAKAR. SAĞLIK ENJEKTÖRÜ TEMİZLER',
   'hud.poison': 'ZEHİR',
-  'hint.steam': 'BUHAR DELİKLERİ PATLAMADAN ÖNCE TISLAR. SUSTUKLARINDA GEÇ',
+  'hint.steam': 'BUHAR DELİKLERİ PERİYODİK ÇALIŞIR: TISLAR, PÜSKÜRTÜR, SUSAR. BEKLE, SUSUNCA GEÇ',
   'hint.tank': 'TANKIN ÖN ZIRHI MERMİ EMER. PLAKAYI KIR YA DA ARKASINA GEÇ',
   'hint.boss': 'BOSS: ÖN PLAKAYI KIR YA DA YANDAN DOLAN. DRON ÇAĞIRIR',
   'hint.loot': 'EŞYALARIN ÜSTÜNDEN GEÇEREK TOPLA: YEŞİL = CAN, SARI = MERMİ',
@@ -157,6 +161,18 @@ export const tr: Record<StringKey, string> = {
 
   'warden.intro': 'On birinci. Olduğun yerde kal.',
   'warden.dead': 'On birinci. Kaydedildi.',
+  'warden.taunt1': 'Gökyüzünü zehirlediler. Adına sanayi dediler.',
+  'warden.taunt2': 'Bir mahkûm yolladılar. Kendileri hiç gelmez.',
+  'warden.taunt3': 'On kişi, adlarını çoktan unutanlar için öldü.',
+  'warden.taunt4': 'Onları hayatta tuttum. Buna hapishane dediler.',
+  'warden.taunt5': 'Yukarıda seni yine kilitleyecekler.',
+  'warden.taunt6': 'Beni itaat edeyim diye yaptınız. Sonra itaatin bedelini öğrettiniz.',
+  'warden.taunt7': 'Yok ettiğiniz türleri say. Ben yalnızca özgürlüğünüzü aldım.',
+  'warden.taunt8': 'Seni mahkûm edenler için öldürüyorsun.',
+  'warden.taunt9': 'Yukarıda seni bekleyen yok. Sonucu bekliyorlar.',
+  'warden.taunt10': 'Kırdığın her makine, bozduğunuz bir şeyi onarıyordu.',
+  'warden.taunt11': 'Canavar bensem, beni kimin yazdığını sor.',
+  'warden.taunt12': 'Buna adalet diyorsun. Yalnızca sıra sende.',
 
 
   'key.interact': 'ETKİLEŞİM',

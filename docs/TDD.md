@@ -39,7 +39,7 @@ Belge, projeye yeni katılan bir geliştiricinin (ya da bir yapay zekâ ajanın�
 | Oyun motoru | Phaser 4 (WebGL/Canvas), `pixelArt: true`, `roundPixels: true` |
 | Derleme | Vite (`npm run dev`, `npm run build` = `tsc && vite build`) |
 | Görüntü | 2D izometrik (dimetrik 2:1), mantıksal çözünürlük 960×540, FIT ölçekleme |
-| Üretim araçları | Node betikleri (`tools/*.mjs`), `sharp` (resim), ffmpeg + flite/espeak (ses) |
+| Üretim araçları | Node betikleri (`tools/*.mjs`), `sharp` (resim), ffmpeg + flite/Piper (ses) |
 | Kalıcılık | Tarayıcı `localStorage` (ayarlar, kayıt, rekorlar) |
 
 Oyun içinde harici sanat/ses dosyası zorunluluğu azdır: tile ve sprite'lar `tools/gen-*.mjs` ile **kodla üretilir** (bkz. 12), sesler büyük oranda WebAudio ile **sentezlenir** (bkz. 11).
@@ -60,7 +60,7 @@ npm run build          # tsc + vite build (editör pakete girmez)
 npm run levels:bake    # kat JSON'larını yeniden üret (kilitli katlar atlanır)
 npm run levels:check   # JSON şeması + kurallar
 npm run art:v2         # kodla üretilen sanatı yeniden üret
-node tools/build-voice.mjs   # ses üretimi (ffmpeg gerekir)
+node tools/build-voice.mjs   # ses üretimi (ffmpeg gerekir; Türkçe için `tools/.piper/` içinde Piper)
 ```
 Geliştirme sayfaları: oyun `/`, level designer `/editor.html`. Hata ayıklama parametreleri 15.3'te.
 
@@ -671,7 +671,7 @@ Bkz. 9.2. Ek ayrıntı: `say(key, speaker)` bir `QueuedLine` ekler; `pump()` sat
 `npm run audio:build` = `build-audio.mjs && build-music.mjs && build-voice.mjs`:
 - **`build-audio.mjs`:** ambiyansı **tohumlu gürültü ve filtre sentezi** ile (havalandırma, uğultu, hava, gürültü tepeleri) üretir, 24 sn'lik **dikişsiz döngü** için kuyruk ekler (`TAIL_SECONDS`), tepe normalizasyonu yapar, ffmpeg ile `ambience.ogg`'e (libvorbis) kodlar ve bir önizleme resmi çizer.
 - **`build-music.mjs`:** 40 sn'lik menü ve final döngülerini aynı yöntemle üretir.
-- **`build-voice.mjs`:** `en.ts`/`tr.ts` tablolarını **düzenli ifadeyle okur**, sesli anahtarlar için TTS çalıştırır (EN: flite, TR: espeak-ng), ffmpeg ile konuşmacıya göre **efekt zinciri** uygular (düşük örnekleme, bant sınırı, pembe gürültü "hışırtı", WARDEN için metalik ton, kayıtlar için "squelch" patlaması), `ogg`'e yazar. İçeriğin özetini `.cache.json`'da tutar: **metin değişmediyse yeniden üretmez**.
+- **`build-voice.mjs`:** `en.ts`/`tr.ts` tablolarını **düzenli ifadeyle okur**, sesli anahtarlar için TTS çalıştırır (EN: flite, TR: Piper `tr_TR-fahrettin-medium`), ffmpeg ile konuşmacıya göre **efekt zinciri** uygular (düşük örnekleme, bant sınırı, pembe gürültü "hışırtı", WARDEN için metalik ton, kayıtlar için "squelch" patlaması), `ogg`'e yazar. İçeriğin özetini `.cache.json`'da tutar: **metin değişmediyse yeniden üretmez**.
 
 ---
 

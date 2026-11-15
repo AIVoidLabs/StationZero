@@ -11,6 +11,8 @@ export const SHOCK_RADIUS = 1.0;
 export const SHOCK_DAMAGE = 1;
 export const SHOCK_ENEMY_COOLDOWN_MS = 900;
 
+export const HAZARD_ENEMY_RESIST = 0.5;
+
 export const HAZARD_SENSE_TILES = 7;
 export const HAZARD_IDLE_TICK_MS = 1100;
 

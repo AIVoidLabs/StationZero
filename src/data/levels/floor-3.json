@@ -216,12 +216,32 @@
         "x": 7,
         "y": 30,
         "kind": "crate"
+      },
+      {
+        "x": 12,
+        "y": 26,
+        "kind": "barrel"
+      },
+      {
+        "x": 11,
+        "y": 30,
+        "kind": "barrel"
+      },
+      {
+        "x": 14,
+        "y": 3,
+        "kind": "barrel"
+      },
+      {
+        "x": 25,
+        "y": 17,
+        "kind": "barrel"
       }
     ],
     "terminals": [
       {
-        "x": 2,
-        "y": 12
+        "x": 27,
+        "y": 4
       }
     ],
     "corpse": {
@@ -268,6 +288,24 @@
       {
         "x": 9,
         "y": 2,
+        "kind": "stim",
+        "amount": 0
+      },
+      {
+        "x": 21,
+        "y": 27,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 2,
+        "y": 12,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 5,
+        "y": 13,
         "kind": "stim",
         "amount": 0
       }
@@ -370,6 +408,90 @@
         "kind": "assembler",
         "tier": "master",
         "seed": 10885662
+      },
+      {
+        "x": 21,
+        "y": 13,
+        "kind": "drone",
+        "tier": "journeyman",
+        "seed": 15582821
+      },
+      {
+        "x": 7,
+        "y": 26,
+        "kind": "drone",
+        "tier": "journeyman",
+        "seed": 5060207
+      },
+      {
+        "x": 11,
+        "y": 32,
+        "kind": "drone",
+        "tier": "journeyman",
+        "seed": 11636097
+      },
+      {
+        "x": 12,
+        "y": 25,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 11480896
+      },
+      {
+        "x": 8,
+        "y": 30,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 2316050
+      },
+      {
+        "x": 23,
+        "y": 27,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 5546102
+      },
+      {
+        "x": 27,
+        "y": 20,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 12320707
+      },
+      {
+        "x": 14,
+        "y": 2,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 11082534
+      },
+      {
+        "x": 8,
+        "y": 8,
+        "kind": "spider",
+        "tier": "novice",
+        "seed": 16370462
+      },
+      {
+        "x": 15,
+        "y": 8,
+        "kind": "tank",
+        "tier": "novice",
+        "seed": 13176374
+      },
+      {
+        "x": 9,
+        "y": 25,
+        "kind": "tank",
+        "tier": "novice",
+        "seed": 283194
+      },
+      {
+        "x": 29,
+        "y": 16,
+        "kind": "tank",
+        "tier": "novice",
+        "seed": 13252756
       }
     ],
     "hazards": {
@@ -384,7 +506,8 @@
           "y": 10,
           "phaseMs": 387
         }
-      ]
+      ],
+      "shocks": []
     }
   }
 }

@@ -291,6 +291,36 @@
         "y": 31,
         "kind": "stim",
         "amount": 0
+      },
+      {
+        "x": 5,
+        "y": 2,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "kind": "stim",
+        "amount": 0
+      },
+      {
+        "x": 21,
+        "y": 24,
+        "kind": "stim",
+        "amount": 0
+      },
+      {
+        "x": 25,
+        "y": 27,
+        "kind": "ammo",
+        "amount": 4
+      },
+      {
+        "x": 28,
+        "y": 2,
+        "kind": "ammo",
+        "amount": 4
       }
     ],
     "enemies": [
@@ -391,6 +421,118 @@
         "kind": "warden",
         "tier": "master",
         "seed": 11954
+      },
+      {
+        "x": 23,
+        "y": 25,
+        "kind": "drone",
+        "tier": "master",
+        "seed": 1848538
+      },
+      {
+        "x": 22,
+        "y": 31,
+        "kind": "drone",
+        "tier": "master",
+        "seed": 4180752
+      },
+      {
+        "x": 25,
+        "y": 24,
+        "kind": "spider",
+        "tier": "master",
+        "seed": 5007387
+      },
+      {
+        "x": 25,
+        "y": 31,
+        "kind": "spider",
+        "tier": "master",
+        "seed": 7998355
+      },
+      {
+        "x": 20,
+        "y": 24,
+        "kind": "tank",
+        "tier": "master",
+        "seed": 3082037
+      },
+      {
+        "x": 22,
+        "y": 28,
+        "kind": "tank",
+        "tier": "master",
+        "seed": 16119975
+      },
+      {
+        "x": 16,
+        "y": 24,
+        "kind": "drone",
+        "tier": "journeyman",
+        "seed": 14574889
+      },
+      {
+        "x": 16,
+        "y": 30,
+        "kind": "spider",
+        "tier": "journeyman",
+        "seed": 1873213
+      },
+      {
+        "x": 18,
+        "y": 26,
+        "kind": "tank",
+        "tier": "journeyman",
+        "seed": 6410748
+      },
+      {
+        "x": 25,
+        "y": 2,
+        "kind": "tank",
+        "tier": "journeyman",
+        "seed": 773295
+      },
+      {
+        "x": 31,
+        "y": 17,
+        "kind": "drone",
+        "tier": "master",
+        "seed": 473017
+      },
+      {
+        "x": 14,
+        "y": 17,
+        "kind": "spider",
+        "tier": "master",
+        "seed": 3569864
+      },
+      {
+        "x": 19,
+        "y": 2,
+        "kind": "tank",
+        "tier": "master",
+        "seed": 2399406
+      },
+      {
+        "x": 6,
+        "y": 28,
+        "kind": "spider",
+        "tier": "journeyman",
+        "seed": 3317813
+      },
+      {
+        "x": 2,
+        "y": 15,
+        "kind": "spider",
+        "tier": "journeyman",
+        "seed": 7925541
+      },
+      {
+        "x": 14,
+        "y": 13,
+        "kind": "tank",
+        "tier": "journeyman",
+        "seed": 7925344
       }
     ],
     "hazards": {

@@ -18,6 +18,13 @@ class HintQueue {
     this.queue.push({ id, text });
   }
 
+  announce(id: string, text: string): void {
+    if (!settings.data.hints) return;
+    if (this.queue.some((hint) => hint.id === id) || this.active?.hint.id === id) return;
+    this.queue.unshift({ id, text });
+    this.active = null;
+  }
+
   tick(now: number): string | null {
     if (this.active && now >= this.active.until) this.active = null;
     if (!this.active) {

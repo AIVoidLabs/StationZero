@@ -62,6 +62,12 @@ function detectLanguage(): Language {
   return navigator.language.toLowerCase().startsWith('tr') ? 'tr' : 'en';
 }
 
+function queryLanguage(): Language | null {
+  if (typeof window === 'undefined') return null;
+  const raw = new URLSearchParams(window.location.search).get('lang')?.toLowerCase();
+  return raw === 'en' || raw === 'tr' ? raw : null;
+}
+
 function defaults(): SettingsData {
   return {
     masterVolume: 80,
@@ -91,6 +97,12 @@ class SettingsStore {
   private readonly listeners = new Set<Listener>();
 
   constructor() {
+    this.load();
+    const forced = queryLanguage();
+    if (forced) this.data.language = forced;
+  }
+
+  private load(): void {
     const stored = readJson<Partial<SettingsData>>(STORAGE_KEY);
     if (!stored) return;
     this.data.masterVolume = clampVolume(stored.masterVolume, this.data.masterVolume);
