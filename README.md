@@ -14,13 +14,13 @@ Built with TypeScript (strict), Phaser 4 and Vite. All art is drawn in code and 
 
 | | |
 | --- | --- |
-| ![Exploring a floor with the lantern](docs/screenshots/gameplay.png)<br>**Explore** dark, claustrophobic floors with a lantern | ![Drones firing](docs/screenshots/combat.png)<br>**Avoid or fight**: slow red bullets, limited ammo |
+| ![Exploring a floor with the lantern](docs/screenshots/gameplay.png)<br>**Explore** dark, claustrophobic floors with a lantern | ![Poison spiders closing in on B6](docs/screenshots/combat.png)<br>**Avoid or fight**: poison spiders, limited ammo |
 | ![Pump Core boss](docs/screenshots/boss.png)<br>**A boss on every floor** | ![Electric plate trap](docs/screenshots/trap.png)<br>**Read the traps** before they strike |
 | ![A secret left by the dead](docs/screenshots/secret.png)<br>**The dead keep secrets** | ![Intro cutscene](docs/screenshots/cutscene-intro.png)<br>**Cutscenes** between floors |
 
 ## Gameplay
 
-![Strafing and shooting drones and spiders on B6](docs/gifs/combat.gif)
+![Strafing and shooting poison spiders on B6](docs/gifs/combat.gif)
 **Keep moving.** Strafe, shoot and clear a room before the poison catches up.
 
 ![Fighting the Pump Core boss while its shock ring sweeps the room](docs/gifs/dodge.gif)
