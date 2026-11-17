@@ -21,12 +21,15 @@ Built with TypeScript (strict), Phaser 4 and Vite. All art is drawn in code and 
 ## Gameplay
 
 ![Strafing and shooting poison spiders on B6](docs/gifs/combat.gif)
+
 **Keep moving.** Strafe, shoot and clear a room before the poison catches up.
 
 ![Fighting the Pump Core boss while its shock ring sweeps the room](docs/gifs/dodge.gif)
+
 **A boss on every floor.** Pump Core sends out shock rings while you dodge and fire.
 
 ![An electric plate warning, arcing and going quiet](docs/gifs/trap.gif)
+
 **Read the traps.** Electric plates hum and flicker before they arc.
 
 ## Features
